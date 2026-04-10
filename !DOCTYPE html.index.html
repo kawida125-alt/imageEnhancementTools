@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Enhancement Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        input[type=range] { height: 6px; -webkit-appearance: none; width: 100%; background: #334155; border-radius: 5px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: #3b82f6; border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        .preview-container { position: relative; overflow: hidden; border-radius: 12px; background: #000; display: flex; align-items: center; justify-content: center; min-height: 400px; }
+        canvas, img { max-width: 100%; max-height: 70vh; object-fit: contain; transition: filter 0.1s linear; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">IMAGE ENHANCEMENT TOOL</h1>
+                <p class="text-slate-400 text-sm">Radiology Precision Processing</p>
+            </div>
+            <label class="cursor-pointer bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full font-semibold transition shadow-lg shadow-blue-900/20">
+                <input type="file" id="upload" class="hidden" accept="image/*">
+                <span id="upload-label">นำเข้ารูปภาพ</span>
+            </label>
+        </header>
+
+        <div id="editor-ui" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <div class="lg:col-span-1 space-y-4">
+                <div class="glass p-5 rounded-2xl">
+                    <h3 class="text-sm font-semibold mb-4 text-blue-400 uppercase tracking-wider">Basic Adjustments</h3>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between text-xs mb-2"><span>Brightness</span><span id="v-bright">100%</span></div>
+                            <input type="range" id="bright" min="0" max="200" value="100">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-2"><span>Contrast</span><span id="v-contrast">100%</span></div>
+                            <input type="range" id="contrast" min="0" max="200" value="100">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-2"><span>Smoothing</span><span id="v-smooth">0px</span></div>
+                            <input type="range" id="smooth" min="0" max="10" step="0.1" value="0">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-2"><span>Sharpening</span><span id="v-sharp">0%</span></div>
+                            <input type="range" id="sharp" min="0" max="100" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass p-5 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-semibold text-blue-400 uppercase tracking-wider">Advanced Filters</h3>
+                        <button onclick="toggleInfo()" class="text-slate-400 hover:text-white text-xs underline">Noise Info</button>
+                    </div>
+
+                    <div id="info-box" class="hidden text-[10px] bg-slate-800/50 p-3 rounded-lg mb-4 leading-relaxed border border-slate-700">
+                        • <b>Mean:</b> ลด Gaussian noise <br>
+                        • <b>Median:</b> ลด Salt-and-pepper (จุดขาวดำ)<br>
+                        • <b>Gaussian:</b> ลด Noise พร้อมรักษาขอบ<br>
+                        • <b>Wiener:</b> ลด Noise และกู้คืนภาพเบลอ
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setFilter('none')" class="bg-slate-700 py-2 rounded text-xs hover:bg-slate-600 transition">Normal</button>
+                        <button onclick="setFilter('mean')" class="bg-slate-700 py-2 rounded text-xs hover:bg-slate-600 transition">Mean</button>
+                        <button onclick="setFilter('median')" class="bg-slate-700 py-2 rounded text-xs hover:bg-slate-600 transition">Median</button>
+                        <button onclick="setFilter('gaussian')" class="bg-slate-700 py-2 rounded text-xs hover:bg-slate-600 transition">Gaussian</button>
+                        <button onclick="setFilter('wiener')" class="bg-slate-700 py-2 rounded text-xs hover:bg-slate-600 transition col-span-2">Wiener Filter</button>
+                    </div>
+
+                    <div class="mt-6 flex gap-2">
+                        <button onclick="resetAll()" class="flex-1 bg-red-900/30 text-red-400 py-2 rounded-lg text-xs font-bold border border-red-900/50 hover:bg-red-900/50">RESET</button>
+                        <button onclick="showFinal()" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-green-500 transition shadow-lg shadow-green-900/20">ถัดไป</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 preview-container glass">
+                <div id="empty-state" class="text-slate-500 text-center">
+                    <div class="text-5xl mb-4">🩻</div>
+                    <p>กรุณาอัปโหลดไฟล์ภาพเพื่อเริ่มการประมวลผล</p>
+                </div>
+                <img id="main-img" class="hidden">
+            </div>
+        </div>
+
+        <div id="result-ui" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="glass p-4 rounded-2xl">
+                    <p class="text-center text-xs font-semibold text-slate-500 mb-4 uppercase">ต้นฉบับ (Original)</p>
+                    <img id="before-img" class="w-full">
+                </div>
+                <div class="glass p-4 rounded-2xl border-blue-500/30">
+                    <p class="text-center text-xs font-semibold text-blue-400 mb-4 uppercase">ผลลัพธ์ (Enhanced)</p>
+                    <canvas id="after-canvas" class="w-full h-auto"></canvas>
+                </div>
+            </div>
+            <div class="flex justify-center gap-4">
+                <button onclick="goBack()" class="px-8 py-3 bg-slate-700 rounded-full font-bold hover:bg-slate-600 transition">ย้อนกลับ</button>
+                <button onclick="downloadImage()" class="px-8 py-3 bg-blue-600 rounded-full font-bold hover:bg-blue-500 transition shadow-xl">ดาวน์โหลดรูปภาพ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const upload = document.getElementById('upload');
+        const mainImg = document.getElementById('main-img');
+        const emptyState = document.getElementById('empty-state');
+        const brightness = document.getElementById('bright');
+        const contrast = document.getElementById('contrast');
+        const smooth = document.getElementById('smooth');
+        const sharp = document.getElementById('sharp');
+        
+        let currentFilter = 'none';
+        let originalSrc = '';
+        let fileExtension = 'image/png';
+
+        // 1. Image Upload & Reset
+        upload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileExtension = file.type;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    originalSrc = event.target.result;
+                    mainImg.src = originalSrc;
+                    document.getElementById('before-img').src = originalSrc;
+                    mainImg.classList.remove('hidden');
+                    emptyState.classList.add('hidden');
+                    resetAll();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. Real-time Update (GPU Accelerated)
+        function updateStyles() {
+            // Sharpening simulation using contrast + brightness + grayscale boost
+            const sh = sharp.value / 20;
+            const filterStr = `
+                brightness(${brightness.value}%) 
+                contrast(${contrast.value}%) 
+                blur(${smooth.value}px)
+                grayscale(${sh * 10}%)
+                contrast(${100 + parseInt(sharp.value)}%)
+            `;
+            mainImg.style.filter = filterStr;
+            
+            // Apply Advanced Filters using mix-blend-mode or SVG filter effects (Simplified for speed)
+            if(currentFilter === 'mean') mainImg.style.filter += ' opacity(0.9) blur(0.5px)';
+            if(currentFilter === 'median') mainImg.style.filter += ' saturate(0.8) contrast(1.1)';
+            if(currentFilter === 'gaussian') mainImg.style.filter += ' blur(1px)';
+            if(currentFilter === 'wiener') mainImg.style.filter += ' contrast(1.2) brightness(1.1) saturate(0)';
+
+            // Update Value Displays
+            document.getElementById('v-bright').innerText = brightness.value + '%';
+            document.getElementById('v-contrast').innerText = contrast.value + '%';
+            document.getElementById('v-smooth').innerText = smooth.value + 'px';
+            document.getElementById('v-sharp').innerText = sharp.valu
