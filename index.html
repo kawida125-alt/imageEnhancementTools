@@ -1,3 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Enhancement</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    .hidden { display: none; }
+    img { max-width: 300px; margin-top: 10px; }
+  </style>
+</head>
+
+<body>
+
+<h1>Image Enhancement Tool</h1>
+
+<!-- Upload -->
+<input type="file" id="upload"><br><br>
+
+<!-- ก่อน-หลัง -->
+<div id="empty-state">ยังไม่มีรูป</div>
+<img id="before-img">
+<img id="main-img" class="hidden">
+
+<!-- Slider -->
+<div id="editor-ui">
+  <p>Brightness: <span id="v-bright">100%</span></p>
+  <input type="range" id="bright" min="0" max="200" value="100">
+
+  <p>Contrast: <span id="v-contrast">100%</span></p>
+  <input type="range" id="contrast" min="0" max="200" value="100">
+
+  <p>Smooth: <span id="v-smooth">0px</span></p>
+  <input type="range" id="smooth" min="0" max="10" value="0">
+
+  <p>Sharp: <span id="v-sharp">0%</span></p>
+  <input type="range" id="sharp" min="0" max="100" value="0">
+
+  <br><br>
+  <button onclick="setFilter('mean')">Mean</button>
+  <button onclick="setFilter('median')">Median</button>
+  <button onclick="setFilter('gaussian')">Gaussian</button>
+  <button onclick="setFilter('wiener')">Wiener</button>
+
+  <br><br>
+  <button onclick="resetAll()">Reset</button>
+  <button onclick="showFinal()">Show Final</button>
+</div>
+
+<!-- Result -->
+<div id="result-ui" class="hidden">
+  <canvas id="after-canvas"></canvas><br><br>
+  <button onclick="downloadImage()">Download</button>
+  <button onclick="goBack()">Back</button>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -13,7 +68,7 @@ let currentFilter = 'none';
 let originalSrc = '';
 let fileExtension = 'image/png';
 
-// ✅ Upload
+// Upload
 upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -31,7 +86,7 @@ upload.addEventListener('change', function(e) {
     }
 });
 
-// ✅ Update filter
+// Update filter
 function updateStyles() {
     const sh = sharp.value / 20;
 
@@ -56,13 +111,13 @@ function updateStyles() {
     document.getElementById('v-sharp').innerText = sharp.value + '%';
 }
 
-// ✅ Event slider
+// Event slider
 brightness.addEventListener('input', updateStyles);
 contrast.addEventListener('input', updateStyles);
 smooth.addEventListener('input', updateStyles);
 sharp.addEventListener('input', updateStyles);
 
-// ✅ ทำให้ onclick ใช้งานได้
+// Global functions
 window.setFilter = function(f) {
     currentFilter = f;
     updateStyles();
@@ -75,10 +130,6 @@ window.resetAll = function() {
     sharp.value = 0;
     currentFilter = 'none';
     updateStyles();
-}
-
-window.toggleInfo = function() {
-    document.getElementById('info-box').classList.toggle('hidden');
 }
 
 window.showFinal = function() {
@@ -114,3 +165,6 @@ window.downloadImage = function() {
 
 });
 </script>
+
+</body>
+</html>
