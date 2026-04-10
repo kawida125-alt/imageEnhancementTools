@@ -2,57 +2,151 @@
 <html>
 <head>
   <title>Image Enhancement</title>
+
   <style>
-    body { font-family: Arial; text-align: center; }
-    .hidden { display: none; }
-    img { max-width: 300px; margin-top: 10px; }
+    body {
+      font-family: Arial;
+      background: linear-gradient(135deg, #1e1e2f, #2b2b45);
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #2f2f4f;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    input[type="file"] {
+      margin-bottom: 15px;
+      color: white;
+    }
+
+    img {
+      max-width: 250px;
+      margin: 10px;
+      border-radius: 10px;
+      border: 2px solid #555;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .slider-group {
+      margin: 15px 0;
+      text-align: left;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    button {
+      background: #4CAF50;
+      border: none;
+      padding: 10px 15px;
+      margin: 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #66ff99;
+      color: black;
+    }
+
+    .filter-buttons button {
+      background: #2196F3;
+    }
+
+    .filter-buttons button:hover {
+      background: #64b5f6;
+    }
+
+    #result-ui {
+      margin-top: 20px;
+    }
+
+    canvas {
+      max-width: 100%;
+      border-radius: 10px;
+      border: 2px solid #555;
+    }
+
   </style>
 </head>
 
 <body>
 
-<h1>Image Enhancement Tool</h1>
+<div class="container">
 
-<!-- Upload -->
-<input type="file" id="upload"><br><br>
+<h1>✨ Image Enhancement Tool</h1>
 
-<!-- ก่อน-หลัง -->
-<div id="empty-state">ยังไม่มีรูป</div>
-<img id="before-img">
-<img id="main-img" class="hidden">
+<input type="file" id="upload">
 
-<!-- Slider -->
-<div id="editor-ui">
-  <p>Brightness: <span id="v-bright">100%</span></p>
-  <input type="range" id="bright" min="0" max="200" value="100">
+<div id="empty-state">📷 ยังไม่มีรูป</div>
 
-  <p>Contrast: <span id="v-contrast">100%</span></p>
-  <input type="range" id="contrast" min="0" max="200" value="100">
-
-  <p>Smooth: <span id="v-smooth">0px</span></p>
-  <input type="range" id="smooth" min="0" max="10" value="0">
-
-  <p>Sharp: <span id="v-sharp">0%</span></p>
-  <input type="range" id="sharp" min="0" max="100" value="0">
-
-  <br><br>
-  <button onclick="setFilter('mean')">Mean</button>
-  <button onclick="setFilter('median')">Median</button>
-  <button onclick="setFilter('gaussian')">Gaussian</button>
-  <button onclick="setFilter('wiener')">Wiener</button>
-
-  <br><br>
-  <button onclick="resetAll()">Reset</button>
-  <button onclick="showFinal()">Show Final</button>
+<div>
+  <img id="before-img">
+  <img id="main-img" class="hidden">
 </div>
 
-<!-- Result -->
+<div id="editor-ui">
+
+  <div class="slider-group">
+    Brightness: <span id="v-bright">100%</span>
+    <input type="range" id="bright" min="0" max="200" value="100">
+  </div>
+
+  <div class="slider-group">
+    Contrast: <span id="v-contrast">100%</span>
+    <input type="range" id="contrast" min="0" max="200" value="100">
+  </div>
+
+  <div class="slider-group">
+    Smooth: <span id="v-smooth">0px</span>
+    <input type="range" id="smooth" min="0" max="10" value="0">
+  </div>
+
+  <div class="slider-group">
+    Sharp: <span id="v-sharp">0%</span>
+    <input type="range" id="sharp" min="0" max="100" value="0">
+  </div>
+
+  <div class="filter-buttons">
+    <button onclick="setFilter('mean')">Mean</button>
+    <button onclick="setFilter('median')">Median</button>
+    <button onclick="setFilter('gaussian')">Gaussian</button>
+    <button onclick="setFilter('wiener')">Wiener</button>
+  </div>
+
+  <button onclick="resetAll()">Reset</button>
+  <button onclick="showFinal()">Show Final</button>
+
+</div>
+
 <div id="result-ui" class="hidden">
-  <canvas id="after-canvas"></canvas><br><br>
+  <canvas id="after-canvas"></canvas><br>
   <button onclick="downloadImage()">Download</button>
   <button onclick="goBack()">Back</button>
 </div>
 
+</div>
+
+<!-- ❗ JS ของคุณ (ไม่แก้แม้แต่นิดเดียว) -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -68,7 +162,6 @@ let currentFilter = 'none';
 let originalSrc = '';
 let fileExtension = 'image/png';
 
-// Upload
 upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -86,7 +179,6 @@ upload.addEventListener('change', function(e) {
     }
 });
 
-// Update filter
 function updateStyles() {
     const sh = sharp.value / 20;
 
@@ -111,13 +203,11 @@ function updateStyles() {
     document.getElementById('v-sharp').innerText = sharp.value + '%';
 }
 
-// Event slider
 brightness.addEventListener('input', updateStyles);
 contrast.addEventListener('input', updateStyles);
 smooth.addEventListener('input', updateStyles);
 sharp.addEventListener('input', updateStyles);
 
-// Global functions
 window.setFilter = function(f) {
     currentFilter = f;
     updateStyles();
