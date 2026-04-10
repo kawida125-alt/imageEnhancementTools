@@ -1,4 +1,6 @@
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+
 const upload = document.getElementById('upload');
 const mainImg = document.getElementById('main-img');
 const emptyState = document.getElementById('empty-state');
@@ -48,27 +50,25 @@ function updateStyles() {
 
     mainImg.style.filter = filterStr;
 
-    // ✅ FIX จุดที่พัง
     document.getElementById('v-bright').innerText = brightness.value + '%';
     document.getElementById('v-contrast').innerText = contrast.value + '%';
     document.getElementById('v-smooth').innerText = smooth.value + 'px';
     document.getElementById('v-sharp').innerText = sharp.value + '%';
 }
 
-// ✅ Event slider (ของเดิมคุณไม่มี)
+// ✅ Event slider
 brightness.addEventListener('input', updateStyles);
 contrast.addEventListener('input', updateStyles);
 smooth.addEventListener('input', updateStyles);
 sharp.addEventListener('input', updateStyles);
 
-// ✅ Filters
-function setFilter(f) {
+// ✅ ทำให้ onclick ใช้งานได้
+window.setFilter = function(f) {
     currentFilter = f;
     updateStyles();
 }
 
-// ✅ Reset
-function resetAll() {
+window.resetAll = function() {
     brightness.value = 100;
     contrast.value = 100;
     smooth.value = 0;
@@ -77,13 +77,11 @@ function resetAll() {
     updateStyles();
 }
 
-// ✅ Toggle info
-function toggleInfo() {
+window.toggleInfo = function() {
     document.getElementById('info-box').classList.toggle('hidden');
 }
 
-// ✅ ไปหน้าผลลัพธ์
-function showFinal() {
+window.showFinal = function() {
     document.getElementById('editor-ui').classList.add('hidden');
     document.getElementById('result-ui').classList.remove('hidden');
 
@@ -96,24 +94,23 @@ function showFinal() {
     img.onload = function() {
         canvas.width = img.width;
         canvas.height = img.height;
-
         ctx.filter = mainImg.style.filter;
         ctx.drawImage(img, 0, 0);
     }
 }
 
-// ✅ กลับ
-function goBack() {
+window.goBack = function() {
     document.getElementById('editor-ui').classList.remove('hidden');
     document.getElementById('result-ui').classList.add('hidden');
 }
 
-// ✅ ดาวน์โหลด
-function downloadImage() {
+window.downloadImage = function() {
     const canvas = document.getElementById('after-canvas');
     const link = document.createElement('a');
     link.download = 'enhanced.png';
     link.href = canvas.toDataURL(fileExtension);
     link.click();
 }
+
+});
 </script>
