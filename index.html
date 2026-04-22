@@ -39,6 +39,11 @@
       from { opacity: 0; transform: translateY(20px); } 
       to { opacity: 1; transform: translateY(0); } 
     }
+    
+    @keyframes slideOutUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-100%); opacity: 0; }
+    }
 
     /* =========================================
        3. INTRO SCREEN (LANDING PAGE)
@@ -54,7 +59,10 @@
       text-align: center;
       padding: 20px;
       box-sizing: border-box;
-      animation: fadeIn 0.8s ease;
+      position: absolute;
+      top: 0; left: 0;
+      z-index: 100;
+      transition: all 0.5s ease;
     }
 
     .intro-title {
@@ -63,6 +71,7 @@
       color: var(--accent-dark);
       margin: 0 0 10px 0;
       letter-spacing: -1.5px;
+      animation: fadeIn 0.8s ease;
     }
 
     .intro-wave {
@@ -71,6 +80,7 @@
       letter-spacing: -2px;
       margin-bottom: 20px;
       font-weight: bold;
+      animation: fadeIn 1s ease;
     }
 
     .intro-subtitle {
@@ -79,6 +89,7 @@
       max-width: 600px;
       margin-bottom: 40px;
       line-height: 1.6;
+      animation: fadeIn 1.2s ease;
     }
 
     .btn-start {
@@ -92,6 +103,7 @@
       font-weight: bold;
       transition: 0.3s;
       box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      animation: fadeIn 1.4s ease;
     }
 
     .btn-start:hover {
@@ -106,6 +118,7 @@
       margin-top: 40px;
       flex-wrap: wrap;
       justify-content: center;
+      animation: fadeIn 1.6s ease;
     }
 
     .badge {
@@ -122,11 +135,20 @@
        4. MAIN APP LAYOUT
        ========================================= */
     #main-app {
-      display: none; /* ซ่อนแอปหลักไว้ชัวร์ๆ 100% จนกว่าจะกดปุ่ม */
+      display: flex;
       flex-direction: column;
       align-items: center;
       width: 100%;
       min-height: 100vh;
+      opacity: 0; /* ซ่อนไว้ก่อน แต่ยังจองพื้นที่ */
+      pointer-events: none;
+      transition: opacity 0.5s ease 0.3s;
+    }
+
+    /* คลาสที่ใช้เมื่อเรียก Main App ขึ้นมา */
+    #main-app.active {
+      opacity: 1;
+      pointer-events: auto;
     }
 
     .header-banner {
@@ -218,7 +240,7 @@
     ช่วยคัดกรอง Noise และปรับสมดุลแสงเพื่อการวินิจฉัยที่แม่นยำยิ่งขึ้น
   </p>
   
-  <button class="btn-start" onclick="startApp()">เข้าสู่ระบบวิเคราะห์ภาพ</button>
+  <button class="btn-start" onclick="enterApp()">เข้าสู่ระบบวิเคราะห์ภาพ</button>
   
   <div class="features-badge">
     <span class="badge">🩻 รองรับ DICOM (.dcm)</span>
@@ -309,18 +331,19 @@
 
 </div> <script>
 // ==========================================
-// 💡 ฟังก์ชันสลับหน้าจอ (ทำงานทันทีที่กดปุ่ม)
+// 💡 ฟังก์ชันสลับหน้าจอ (Intro -> Main App)
 // ==========================================
-function startApp() {
+function enterApp() {
   const introScreen = document.getElementById('intro-screen');
   const mainApp = document.getElementById('main-app');
   
-  // ซ่อนหน้าแรกแบบหายขาด 100%
-  introScreen.style.display = 'none';
+  // สร้าง Effect เลื่อนหน้าต่างขึ้นไป
+  introScreen.style.animation = "slideOutUp 0.6s forwards";
   
-  // แสดงแอปหลักแบบ Flex ทันที
-  mainApp.style.display = 'flex';
-  mainApp.style.animation = "fadeIn 0.6s ease forwards";
+  setTimeout(() => {
+    introScreen.classList.add('hidden');
+    mainApp.classList.add('active'); // แสดงแอปหลัก
+  }, 500); // รอให้ Effect จบก่อน 0.5 วินาที
 }
 
 // ==========================================
@@ -401,6 +424,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
+  // จัดการอัปโหลดไฟล์รองรับ DICOM
   upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
