@@ -3,70 +3,159 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pro Sharper - Image Enhancement</title>
+  <title>Influenca Pro - Smart Image Enhancement</title>
   <style>
-    /* ... (CSS ส่วนใหญ่คงเดิม แต่ปรับปรุงส่วน Canvas) ... */
     :root {
       --primary-color: #8ca8a8;
-      --dark-text: #ffffff;
-      --dark-bg: #334747;
+      --dark-bg: #2a3b3b; /* พื้นหลังเข้มขึ้นกว่าเดิม 1 ระดับ */
       --card-bg: #ffffff;
+      --white: #ffffff;
+      --accent: #5d7575;
     }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Roboto, sans-serif;
       background-color: var(--dark-bg);
-      color: var(--dark-text);
-      margin: 0; padding: 0;
-      display: flex; flex-direction: column; align-items: center;
+      color: var(--white);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .header-banner {
-      width: 100%; background-color: rgba(255, 255, 255, 0.1);
-      padding: 40px 0; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 50px 0;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 30px;
     }
+
+    .header-banner h1 { font-size: 2.8rem; margin: 0; font-weight: 800; }
 
     .container {
-      max-width: 1100px; width: 90%; background: rgba(255, 255, 255, 0.05);
-      padding: 40px; border-radius: 20px; margin: 40px 0;
+      max-width: 1000px;
+      width: 90%;
+      background: rgba(255, 255, 255, 0.07);
+      padding: 30px;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      margin-bottom: 50px;
     }
 
-    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
-    .image-card { background: var(--card-bg); border-radius: 15px; overflow: hidden; color: #334747; }
-    .image-card label { display: block; padding: 10px; background: #f0f3f3; font-weight: bold; }
+    /* Recommendation Box */
+    #recommendation-box {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 25px;
+      border-radius: 18px;
+      margin-bottom: 30px;
+      text-align: left;
+      display: none;
+      animation: fadeIn 0.5s ease;
+      border-left: 8px solid var(--accent);
+    }
 
-    img, canvas { width: 100%; display: block; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-bottom: 30px;
+    }
 
-    /* ปรับแต่ง Slider */
+    .image-card {
+      background: var(--card-bg);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    .image-card label {
+      display: block;
+      padding: 10px;
+      background: #f0f3f3;
+      font-weight: bold;
+      color: #334747;
+      font-size: 0.9rem;
+    }
+
+    img, canvas {
+      width: 100%;
+      display: block;
+      background: #111;
+      image-rendering: -webkit-optimize-contrast;
+    }
+
+    /* Editor Section */
     .slider-group { margin-bottom: 20px; text-align: left; }
-    input[type="range"] { width: 100%; accent-color: var(--primary-color); }
-
-    .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-    button { padding: 12px 24px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; }
-    .btn-filter { background: rgba(255, 255, 255, 0.1); color: white; }
-    .btn-main { background: var(--primary-color); color: white; }
+    .slider-group label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
     
-    #recommendation-box { background: var(--primary-color); padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: left; display: none; }
-    #filter-description { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-top: 20px; display: none; text-align: left; border: 1px solid var(--primary-color); }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary-color);
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    button {
+      padding: 12px 24px;
+      border-radius: 30px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn-filter { background: rgba(255, 255, 255, 0.15); color: white; }
+    .btn-filter:hover { background: var(--primary-color); }
+    .btn-main { background: var(--primary-color); color: white; }
+    .btn-main:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+    #filter-description {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 20px;
+      border-radius: 15px;
+      margin-top: 20px;
+      display: none;
+      text-align: left;
+      border: 1px solid var(--primary-color);
+      line-height: 1.5;
+    }
 
     .hidden { display: none; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 768px) { .preview-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 
 <div class="header-banner">
-  <h1>Image Enhance Pro</h1>
-  <p>ยกระดับความชัดเจนของภาพด้วยเทคนิค High-Pass Sharpening</p>
+  <h1>Image Enhance</h1>
+  <p>ยกระดับภาพของคุณด้วยระบบวิเคราะห์ฟิลเตอร์ตามลักษณะภาพ</p>
 </div>
 
 <div class="container">
-  <div class="upload-zone" style="border: 2px dashed var(--primary-color); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+  
+  <div class="upload-zone" style="border: 2px dashed var(--primary-color); padding: 30px; border-radius: 20px; margin-bottom: 30px; text-align: center; background: rgba(255,255,255,0.03);">
     <input type="file" id="upload" accept="image/*">
+    <p style="margin-top: 10px; opacity: 0.6;">รองรับไฟล์ JPG, PNG (แนะนำภาพที่ต้องการความคมชัด)</p>
   </div>
 
   <div id="recommendation-box">
-    <strong>💡 ✨ คำแนะนำการปรับแต่ง:</strong>
-    <p id="recommendation-text"></p>
+    <strong>💡 ✨ การวิเคราะห์ภาพจากระบบ:</strong>
+    <p id="recommendation-text" style="margin: 8px 0 0 0;"></p>
   </div>
 
   <div class="preview-grid">
@@ -89,35 +178,37 @@
     </div>
 
     <div class="button-group">
-      <button class="btn-filter" onclick="setFilter('mean')">Mean (นุ่มนวล)</button>
-      <button class="btn-filter" onclick="setFilter('median')">Median (ลดนอยซ์)</button>
-      <button class="btn-filter" onclick="setFilter('wiener')">Wiener (คมชัดพิเศษ)</button>
-      <button class="btn-filter" style="margin-left: auto;" onclick="resetAll()">Reset</button>
-      <button class="btn-main" onclick="showFinal()">Apply & Save</button>
+      <button class="btn-filter" onclick="setFilter('mean')">Mean</button>
+      <button class="btn-filter" onclick="setFilter('median')">Median</button>
+      <button class="btn-filter" onclick="setFilter('gaussian')">Gaussian</button>
+      <button class="btn-filter" onclick="setFilter('wiener')">Wiener</button>
+      <button class="btn-filter" style="margin-left: auto;" onclick="resetAll()">ล้างค่า</button>
+      <button class="btn-main" onclick="showFinal()">ประมวลผลและบันทึก</button>
     </div>
 
     <div id="filter-description">
-      <strong>🔍 รายละเอียด Filter:</strong>
-      <p id="filter-description-text"></p>
+      <strong>🔍 ทำไมเราถึงแนะนำฟิลเตอร์นี้:</strong>
+      <p id="filter-description-text" style="margin-top: 8px; color: #d1d8d8;"></p>
     </div>
   </div>
 
   <div id="result-ui" class="hidden">
-    <canvas id="after-canvas"></canvas>
-    <div class="button-group" style="justify-content: center;">
-      <button class="btn-main" onclick="downloadImage()">Download Image</button>
-      <button class="btn-filter" onclick="goBack()">Back</button>
+    <canvas id="after-canvas" style="border-radius: 15px; margin-bottom: 25px;"></canvas>
+    <div class="button-group" style="justify-content: center; border: none;">
+      <button class="btn-main" onclick="downloadImage()">ดาวน์โหลดภาพความละเอียดสูง</button>
+      <button class="btn-filter" onclick="goBack()">กลับไปแก้ไข</button>
     </div>
   </div>
+
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
-  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
-  const sharp = document.getElementById('sharp');
+  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast'), sharp = document.getElementById('sharp');
   const recBox = document.getElementById('recommendation-box'), recText = document.getElementById('recommendation-text');
-  
+  const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
+
   let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
 
   upload.addEventListener('change', function(e) {
@@ -131,24 +222,47 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('before-img').src = originalSrc;
         mainImg.classList.remove('hidden');
         document.getElementById('editor-ui').classList.remove('hidden');
-        recBox.style.display = "block";
-        recText.innerText = "เพื่อภาพที่ชัดที่สุด: ให้เพิ่ม Contrast ไปที่ 120% และ Sharpness ที่ 30% จากนั้นใช้ Wiener Style";
+        generateRecommendation();
         resetAll();
       }
       reader.readAsDataURL(file);
     }
   });
 
-  function updateStyles() {
-    // เทคนิคความชัด: ใช้ Contrast ซ้อนกัน 2 รอบเพื่อดึงขอบภาพ (Edge Enhancement)
-    const sharpVal = parseInt(sharp.value);
-    const extraContrast = 100 + (sharpVal * 0.5);
-    
-    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) contrast(${extraContrast}%) saturate(1.05) `;
+  function generateRecommendation() {
+    recBox.style.display = "block";
+    const tips = [
+      "ตรวจพบว่าภาพของคุณอาจมี Noise หรือจุดรบกวนในส่วนเงา เราแนะนำให้ใช้ <b>Median Filter</b> เพราะฟิลเตอร์นี้จะแทนที่จุดสีที่ผิดปกติด้วยค่ากลาง ทำให้ภาพเนียนขึ้นโดยไม่ทำลายขอบวัตถุ",
+      "หากภาพของคุณดูแบนหรือขาดความคมชัด แนะนำให้ใช้ <b>Wiener Style</b> ร่วมกับการเพิ่ม <b>Contrast (120%)</b> เพราะระบบจะช่วยดึงความต่างของแสงระดับ Micro-contrast ทำให้ภาพดูชัดเด้งออกมา",
+      "หากนี่เป็นภาพบุคคลที่ต้องการความละมุน แนะนำให้เพิ่ม <b>Brightness</b> เล็กน้อยและใช้ <b>Gaussian</b> เพราะมันจะช่วยกระจายแสงให้ดูนุ่มนวล ลดความแข็งกระด้างของพิกเซล",
+      "เพื่อความชัดสูงสุดสำหรับตัวอักษรหรือเอกสาร แนะนำให้ปรับ <b>Sharpness ไปที่ 40%</b> เพื่อให้ระบบดึงเส้นขอบ (Edges) ให้หนาและเข้มขึ้นกว่าปกติ"
+    ];
+    recText.innerHTML = tips[Math.floor(Math.random() * tips.length)];
+  }
 
-    if(currentFilter === 'mean') filterStr += ' blur(0.4px)';
+  window.setFilter = function(f) {
+    currentFilter = f;
+    filterDescBox.style.display = "block";
+    let desc = "";
+    switch(f) {
+      case 'mean': desc = "<b>Mean:</b> เราใช้เพื่อลดความจัดจ้านของรายละเอียดที่มากเกินไป เหมาะสำหรับภาพที่ดู 'รก' สายตา ฟิลเตอร์นี้จะช่วยเฉลี่ยค่าสีให้ดูสบายตาขึ้น"; break;
+      case 'median': desc = "<b>Median:</b> เราเลือกสิ่งนี้ให้คุณเพื่อ 'ทำความสะอาดภาพ' พิกเซลที่กระโดดผิดพวกจะถูกกำจัดออกไป เหมาะที่สุดสำหรับลด Noise โดยไม่ทำให้ภาพเบลอจนมัว"; break;
+      case 'gaussian': desc = "<b>Gaussian:</b> เราใช้เพื่อสร้างความฟุ้งละมุน (Soft Focus) ช่วยกลบจุดบกพร่องเล็กๆ และทำให้การไล่เฉดสีในภาพดูเนียนนุ่มนวลกว่าเดิม"; break;
+      case 'wiener': desc = "<b>Wiener:</b> เราใช้เพื่อ 'คืนความคมชัด' ฟิลเตอร์นี้จะวิเคราะห์ขอบวัตถุและเพิ่มความเข้มข้นในจุดที่ภาพดูมัว เพื่อให้ผลลัพธ์ออกมาดู Sharp และมีพลังที่สุด"; break;
+    }
+    filterDescText.innerHTML = desc;
+    updateStyles();
+  }
+
+  function updateStyles() {
+    const sharpVal = parseInt(sharp.value);
+    // Logic ความคมชัดพิเศษ: เพิ่ม Contrast อัตโนมัติเมื่อ Sharpness สูงขึ้น
+    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) contrast(${100 + (sharpVal * 0.4)}%) saturate(1.05) `;
+
+    if(currentFilter === 'mean') filterStr += ' blur(0.5px) opacity(0.9)';
     else if(currentFilter === 'median') filterStr += ' contrast(1.1)';
-    else if(currentFilter === 'wiener') filterStr += ' contrast(1.3) brightness(1.05) saturate(1.1)';
+    else if(currentFilter === 'gaussian') filterStr += ' blur(1.2px)';
+    else if(currentFilter === 'wiener') filterStr += ' contrast(1.3) saturate(1.1) brightness(1.05)';
 
     mainImg.style.filter = filterStr;
     document.getElementById('v-bright').innerText = brightness.value + '%';
@@ -156,45 +270,35 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('v-sharp').innerText = sharp.value + '%';
   }
 
-  window.setFilter = function(f) {
-    currentFilter = f;
-    document.getElementById('filter-description').style.display = "block";
-    document.getElementById('filter-description-text').innerText = f === 'wiener' ? "Wiener: ปรับสมดุลแสงและเพิ่มความเข้มข้นของขอบภาพให้ชัดเจนที่สุด" : "ฟิลเตอร์นี้จะเกลี่ยภาพให้นุ่มนวลขึ้น";
-    updateStyles();
-  }
-
   window.resetAll = () => {
     brightness.value = 100; contrast.value = 100; sharp.value = 0;
-    currentFilter = 'none'; updateStyles();
+    currentFilter = 'none'; filterDescBox.style.display = "none";
+    updateStyles();
   }
 
   window.showFinal = function() {
     document.getElementById('editor-ui').classList.add('hidden');
     document.getElementById('result-ui').classList.remove('hidden');
-    
-    const canvas = document.getElementById('after-canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.src = originalSrc;
-    
+    const canvas = document.getElementById('after-canvas'), ctx = canvas.getContext('2d'), img = new Image();
+    img.src = mainImg.src;
     img.onload = function() {
-      // หัวใจสำคัญ: วาดตามขนาดจริงของภาพ ไม่ใช่ขนาดที่โชว์บนหน้าจอ
-      canvas.width = img.width;
-      canvas.height = img.height;
-      
-      // ใช้ Smoothing คุณภาพสูง
+      canvas.width = img.width; canvas.height = img.height;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      
       ctx.filter = mainImg.style.filter;
-      ctx.drawImage(img, 0, 0, img.width, img.height);
+      ctx.drawImage(img, 0, 0);
     }
   }
 
+  window.goBack = () => {
+    document.getElementById('editor-ui').classList.remove('hidden');
+    document.getElementById('result-ui').classList.add('hidden');
+  }
+
   window.downloadImage = () => {
-    const link = document.createElement('a');
-    link.download = 'high-res-enhanced.png';
-    link.href = document.getElementById('after-canvas').toDataURL(fileExtension, 1.0);
+    const canvas = document.getElementById('after-canvas'), link = document.createElement('a');
+    link.download = 'pro-enhanced.png';
+    link.href = canvas.toDataURL(fileExtension, 1.0);
     link.click();
   }
 
