@@ -1,236 +1,245 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Medical Image Analyzer - Professional Tool</title>
-  <style>
-    :root {
-      --medical-blue: #2c3e50;
-      --clinical-teal: #1abc9c;
-      --dark-bg: #1a1a1a;
-      --white: #ffffff;
-    }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnostic Image Enhancer - Medical Grade Tool</title>
+  <style>
+    :root {
+      --medical-blue: #2c3e50;
+      --clinical-teal: #1abc9c;
+      --dark-bg: #121212;
+      --white: #ffffff;
+      --accent: #3498db;
+    }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background-color: var(--dark-bg);
-      color: var(--white);
-      margin: 0; padding: 0;
-      display: flex; flex-direction: column; align-items: center;
-    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--white);
+      margin: 0; padding: 0;
+      display: flex; flex-direction: column; align-items: center;
+    }
 
-    .header-banner {
-      width: 100%; background-color: var(--medical-blue);
-      padding: 40px 0; text-align: center; border-bottom: 4px solid var(--clinical-teal);
-    }
+    .header-banner {
+      width: 100%; background-color: var(--medical-blue);
+      padding: 30px 0; text-align: center; border-bottom: 4px solid var(--clinical-teal);
+    }
 
-    .container {
-      max-width: 1100px; width: 90%; background: rgba(255, 255, 255, 0.05);
-      padding: 30px; border-radius: 12px; margin: 40px 0;
-      box-shadow: 0 0 30px rgba(0,0,0,0.5);
-    }
+    .container {
+      max-width: 1100px; width: 90%; background: rgba(255, 255, 255, 0.05);
+      padding: 30px; border-radius: 12px; margin: 30px 0;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
 
-    #recommendation-box {
-      background-color: #2980b9; color: white; padding: 20px;
-      border-radius: 8px; margin-bottom: 25px; text-align: left;
-      display: none; border-left: 10px solid #3498db;
-    }
+    #recommendation-box {
+      background-color: #2980b9; color: white; padding: 20px;
+      border-radius: 8px; margin-bottom: 25px; text-align: left;
+      display: none; border-left: 10px solid var(--clinical-teal);
+    }
 
-    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-    .image-card { background: #000; border: 1px solid #444; border-radius: 8px; overflow: hidden; }
-    .image-card label { display: block; padding: 8px; background: #333; font-size: 0.8rem; font-weight: bold; color: var(--clinical-teal); }
+    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+    .image-card { background: #000; border: 1px solid #444; border-radius: 8px; overflow: hidden; }
+    .image-card label { display: block; padding: 8px; background: #333; font-size: 0.8rem; font-weight: bold; color: var(--clinical-teal); }
 
-    img, canvas { width: 100%; display: block; image-rendering: pixelated; }
+    img, canvas { width: 100%; display: block; image-rendering: pixelated; }
 
-    .slider-group { margin-bottom: 18px; text-align: left; }
-    .slider-group label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; }
+    .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .slider-group { margin-bottom: 18px; text-align: left; }
+    .slider-group label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; }
+    .slider-group span { color: var(--clinical-teal); font-weight: bold; }
 
-    input[type="range"] { width: 100%; accent-color: var(--clinical-teal); }
+    input[type="range"] { width: 100%; accent-color: var(--clinical-teal); cursor: pointer; }
 
-    .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; padding-top: 20px; border-top: 1px solid #444; }
-    button { padding: 12px 20px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    
-    .btn-filter { background: #34495e; color: white; }
-    .btn-filter:hover { background: var(--clinical-teal); }
-    .btn-main { background: var(--clinical-teal); color: white; width: 100%; margin-top: 10px; }
+    .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; padding-top: 20px; border-top: 1px solid #444; grid-column: span 2; }
+    button { padding: 12px 20px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    
+    .btn-filter { background: #34495e; color: white; }
+    .btn-filter:hover { background: var(--clinical-teal); }
+    .btn-main { background: var(--clinical-teal); color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
 
-    #filter-description {
-      background: rgba(0,0,0,0.4); padding: 15px; border-radius: 6px;
-      margin-top: 20px; display: none; text-align: left; border: 1px solid #555;
-    }
+    #filter-description {
+      background: rgba(0,0,0,0.4); padding: 15px; border-radius: 6px;
+      margin-top: 20px; display: none; text-align: left; border: 1px solid #555; grid-column: span 2;
+    }
 
-    .hidden { display: none; }
-  </style>
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
 
 <div class="header-banner">
-  <h1>Medical Image Enhancement Tool</h1>
-  <p>ระบบปรับปรุงคุณภาพภาพถ่ายทางการแพทย์เพื่อการวิเคราะห์ทางคลินิก</p>
+  <h1>Diagnostic Image Enhancer</h1>
+  <p>ระบบประมวลผลและปรับปรุงภาพทางรังสีวิทยาเพื่อการวินิจฉัย</p>
 </div>
 
 <div class="container">
-  
-  <div class="upload-zone" style="border: 2px dashed var(--clinical-teal); padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center;">
-    <input type="file" id="upload" accept="image/*">
-    <p style="font-size: 0.8rem; opacity: 0.6;">รองรับภาพ X-ray, Ultrasound, CT และภาพถ่ายแผลทางคลินิก</p>
-  </div>
+  
+  <div class="upload-zone" style="border: 2px dashed var(--clinical-teal); padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center;">
+    <input type="file" id="upload" accept="image/*">
+    <p style="font-size: 0.8rem; opacity: 0.6;">รองรับไฟล์ภาพ X-ray, Ultrasound, CT และ MRI Export</p>
+  </div>
 
-  <div id="recommendation-box">
-    <strong>🔬 Clinical Recommendation:</strong>
-    <p id="recommendation-text" style="margin: 5px 0 0 0; font-size: 0.95rem;"></p>
-  </div>
+  <div id="recommendation-box">
+    <strong>🔬 Clinical Advice & Rationale:</strong>
+    <p id="recommendation-text" style="margin: 8px 0 0 0; font-size: 0.95rem; line-height: 1.6;"></p>
+  </div>
 
-  <div class="preview-grid">
-    <div class="image-card"><label>ORIGINAL SCAN</label><img id="before-img"></div>
-    <div class="image-card"><label>PROCESSED VIEW</label><img id="main-img" class="hidden"></div>
-  </div>
+  <div class="preview-grid">
+    <div class="image-card"><label>INPUT SCAN</label><img id="before-img"></div>
+    <div class="image-card"><label>PROCESSED VIEW</label><img id="main-img" class="hidden"></div>
+  </div>
 
-  <div id="editor-ui" class="hidden">
-    <div class="slider-group">
-      <label>Radiographic Brightness <span id="v-bright">100%</span></label>
-      <input type="range" id="bright" min="0" max="250" value="100">
-    </div>
-    <div class="slider-group">
-      <label>Tissue Contrast <span id="v-contrast">100%</span></label>
-      <input type="range" id="contrast" min="0" max="250" value="100">
-    </div>
-    <div class="slider-group">
-      <label>Edge Definition (ความคมชัดขอบ) <span id="v-sharp">0%</span></label>
-      <input type="range" id="sharp" min="0" max="100" value="0">
-    </div>
+  <div id="editor-ui" class="hidden">
+    <div class="editor-grid">
+      <div class="slider-group">
+        <label>Radiographic Brightness <span id="v-bright">100%</span></label>
+        <input type="range" id="bright" min="0" max="250" value="100">
+      </div>
+      <div class="slider-group">
+        <label>Tissue Contrast <span id="v-contrast">100%</span></label>
+        <input type="range" id="contrast" min="0" max="250" value="100">
+      </div>
+      <div class="slider-group">
+        <label>Smoothing (Tissue De-noise) <span id="v-smooth">0px</span></label>
+        <input type="range" id="smooth" min="0" max="10" value="0">
+      </div>
+      <div class="slider-group">
+        <label>Sharpness (ขอบชัด) <span id="v-sharp">0%</span></label>
+        <input type="range" id="sharp" min="0" max="100" value="0">
+      </div>
 
-    <div class="button-group">
-      <button class="btn-filter" onclick="setFilter('median')">Denoise (ลดสัญญาณรบกวน)</button>
-      <button class="btn-filter" onclick="setFilter('wiener')">Edge Enhance (เน้นขอบ)</button>
-      <button class="btn-filter" onclick="setFilter('mean')">Tissue Smooth (เกลี่ยเนื้อเยื่อ)</button>
-      <button class="btn-filter" onclick="setFilter('gaussian')">Diffuse (ลดความแข็งของแสง)</button>
-      <button class="btn-filter" style="margin-left: auto; background: #c0392b;" onclick="resetAll()">Reset</button>
-      <button class="btn-main" onclick="showFinal()">GENERATE FINAL CLINICAL IMAGE</button>
-    </div>
+      <div class="button-group">
+        <button class="btn-filter" onclick="setFilter('median')">Denoise (ลดสัญญาณรบกวน)</button>
+        <button class="btn-filter" onclick="setFilter('wiener')">Edge Enhance (เน้นขอบ)</button>
+        <button class="btn-filter" onclick="setFilter('mean')">Tissue Smooth (เกลี่ยเนื้อเยื่อ)</button>
+        <button class="btn-filter" style="margin-left: auto; background: #c0392b;" onclick="resetAll()">Reset</button>
+        <button class="btn-main" onclick="showFinal()">GENERATE DIAGNOSTIC OUTPUT IMAGE</button>
+    </div>
 
-    <div id="filter-description">
-      <strong>📋 Rationale (เหตุผลทางเทคนิค):</strong>
-      <p id="filter-description-text" style="margin-top: 8px; color: #bdc3c7; font-size: 0.9rem;"></p>
-    </div>
-  </div>
+    <div id="filter-description">
+      <strong>📋 Rationale (เหตุผลทางเทคนิค):</strong>
+      <p id="filter-description-text" style="margin-top: 8px; color: #bdc3c7; font-size: 0.9rem;"></p>
+    </div>
+  </div>
 
-  <div id="result-ui" class="hidden">
-    <canvas id="after-canvas"></canvas>
-    <div class="button-group" style="justify-content: center; border: none;">
-      <button class="btn-main" style="width: auto;" onclick="downloadImage()">💾 SAVE DIAGNOSTIC IMAGE</button>
-      <button class="btn-filter" onclick="goBack()">RETURN TO EDITOR</button>
-    </div>
-  </div>
+  <div id="result-ui" class="hidden">
+    <canvas id="after-canvas"></canvas>
+    <div class="button-group" style="justify-content: center; border: none;">
+      <button class="btn-main" style="width: auto; padding: 15px 40px;" onclick="downloadImage()">💾 SAVE DIAGNOSTIC IMAGE</button>
+      <button class="btn-filter" onclick="goBack()">RETURN TO ANALYZER</button>
+    </div>
+  </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
-  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast'), sharp = document.getElementById('sharp');
-  const recBox = document.getElementById('recommendation-box'), recText = document.getElementById('recommendation-text');
-  const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
+  const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
+  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
+  const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
+  const recBox = document.getElementById('recommendation-box'), recText = document.getElementById('recommendation-text');
+  const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
 
-  let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
+  let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
 
-  upload.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      fileExtension = file.type;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        originalSrc = event.target.result;
-        mainImg.src = originalSrc;
-        document.getElementById('before-img').src = originalSrc;
-        mainImg.classList.remove('hidden');
-        document.getElementById('editor-ui').classList.remove('hidden');
-        generateMedicalRecommendation();
-        resetAll();
-      }
-      reader.readAsDataURL(file);
-    }
-  });
+  upload.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      fileExtension = file.type;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        originalSrc = event.target.result;
+        mainImg.src = originalSrc;
+        document.getElementById('before-img').src = originalSrc;
+        mainImg.classList.remove('hidden');
+        document.getElementById('editor-ui').classList.remove('hidden');
+        generateMedicalRecommendation();
+        resetAll();
+      }
+      reader.readAsDataURL(file);
+    }
+  });
 
-  function generateMedicalRecommendation() {
-    recBox.style.display = "block";
-    const medicalTips = [
-      "<b>สำหรับภาพ X-ray/CT:</b> แนะนำให้เพิ่ม Contrast เป็น 130% เพื่อแยกแยะความหนาแน่นของกระดูกและเนื้อเยื่ออ่อน (Soft Tissue) ให้ชัดเจนขึ้น",
-      "<b>สำหรับภาพ Ultrasound:</b> มักมีสัญญาณรบกวนสูง แนะนำให้ใช้ <b>Denoise (Median)</b> เพื่อลด Speckle Noise โดยไม่ทำให้ขอบโครงสร้างสำคัญเบลอ",
-      "<b>สำหรับการตรวจหาความผิดปกติของเส้นขอบ:</b> ใช้ <b>Edge Enhance</b> ร่วมกับ Sharpness 30% เพื่อช่วยให้รอยร้าวหรือขอบเนื้องอกเด่นชัดขึ้น",
-      "<b>ภาพถ่ายทางคลินิก (ผิวหนัง):</b> แนะนำให้ใช้ <b>Tissue Smooth</b> เพื่อลดเงาสะท้อนจากแฟลช และเพิ่ม Brightness เพื่อให้เห็นสีที่แท้จริงของรอยโรค"
-    ];
-    recText.innerHTML = medicalTips[Math.floor(Math.random() * medicalTips.length)];
-  }
+  function generateMedicalRecommendation() {
+    recBox.style.display = "block";
+    const medicalTips = [
+      "<b>คำแนะนำเฉพาะทาง:</b> หากต้องการเพิ่ม Contrast ให้ลองเพิ่ม Brightness ตามเล็กน้อย (+10%) เพื่อไม่ให้ส่วนเงา (shadows) เข้มจัดจนรายละเอียดในเนื้อเยื่อหายไป",
+      "<b>สำหรับภาพ X-ray/CT มืด:</b> ปรับ Brightness (120%) และเพิ่ม Contrast เล็กน้อย (110%) เพื่อแยกแยะความหนาแน่นของกระดูกและเนื้อเยื่อให้ชัดเจน",
+      "<b>ต้องการความคมชัดขอบ:</b> หากดู fractures ให้เพิ่ม Contrast (130%) และปรับ Sharpness (40%) เพื่อให้เส้นรอยร้าวคมชัดขึ้น",
+      "<b>ภาพถ่าย Ultrasound:</b> มักมีสัญญาณรบกวนสูง แนะนำให้ใช้ <b>Denoise</b> ร่วมกับ Smoothing (Tissue Smooth) เพื่อเกลี่ยเนื้อเยื่อให้เนียนตา"
+    ];
+    recText.innerHTML = medicalTips[Math.floor(Math.random() * medicalTips.length)];
+  }
 
-  window.setFilter = function(f) {
-    currentFilter = f;
-    filterDescBox.style.display = "block";
-    let rationale = "";
-    switch(f) {
-      case 'median': 
-        rationale = "<b>Denoise (Median):</b> เหมาะสำหรับภาพสแกนที่มีจุดสีรบกวน ระบบจะคำนวณค่ามัธยฐานเพื่อลบค่าพิกเซลที่กระโดดผิดปกติ ช่วยให้การอ่านผลแม่นยำขึ้น"; break;
-      case 'wiener': 
-        rationale = "<b>Edge Enhance:</b> เน้นการเพิ่มความต่างสีที่ขอบวัตถุ เหมาะสำหรับการดูรอยแตกของกระดูกหรือการแพร่กระจายของก้อนเนื้อ"; break;
-      case 'mean': 
-        rationale = "<b>Tissue Smooth:</b> ลดความกระด้างของภาพถ่ายรอยโรคบนผิวหนัง ช่วยให้เห็นขอบเขตภาพรวมของเนื้อเยื่อที่ผิดปกติได้ชัดเจนขึ้น"; break;
-      case 'gaussian': 
-        rationale = "<b>Diffuse:</b> ลดความเปรียบต่างที่สูงเกินไปในภาพถ่ายที่มีแสงจ้าเกินไป เพื่อป้องกันการวินิจฉัยที่คลาดเคลื่อนจากเงาสะท้อน"; break;
-    }
-    filterDescText.innerHTML = rationale;
-    updateStyles();
-  }
+  window.setFilter = function(f) {
+    currentFilter = f;
+    filterDescBox.style.display = "block";
+    let rationale = "";
+    switch(f) {
+      case 'median': 
+        rationale = "<b>Denoise (Median):</b> ใช้ค่ามัธยฐานเกลี่ยพิกเซลเพื่อกำจัดสัญญาณรบกวน (Speckle Noise) ในภาพอย่างมีประสิทธิภาพ เหมาะกับภาพ Ultrasound"; break;
+      case 'wiener': 
+        rationale = "<b>Edge Enhance:</b> ปรับปรุงความคมชัดที่ขอบของวัตถุโดยการเพิ่ม micro-contrast เหมาะสำหรับการดูรอยแตกของกระดูกเล็กๆ"; break;
+      case 'mean': 
+        rationale = "<b>Tissue Smooth:</b> ลดรายละเอียดพิกเซลส่วนเกินโดยเฉลี่ยค่าสี เหมาะสำหรับเกลี่ยเนื้อเยื่ออ่อนให้ดูมีความสม่ำเสมอขึ้น"; break;
+    }
+    filterDescText.innerHTML = rationale;
+    updateStyles();
+  }
 
-  function updateStyles() {
-    const sVal = parseInt(sharp.value);
-    // เพิ่ม Contrast อัตโนมัติเมื่อต้องการความคมชัด (Edge Definition)
-    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) contrast(${100 + (sVal * 0.5)}%) grayscale(100%) `;
+  function updateStyles() {
+    const sVal = parseInt(sharp.value);
+    const smVal = parseInt(smooth.value);
+    
+    // Grayscale บังคับ Grayscale และเพิ่ม Micro-contrast เมื่อปรับ Sharp
+    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%) `;
 
-    if(currentFilter === 'median') filterStr += ' contrast(1.1)';
-    else if(currentFilter === 'wiener') filterStr += ' contrast(1.4) brightness(1.05)';
-    else if(currentFilter === 'mean') filterStr += ' blur(0.5px) opacity(0.9)';
-    else if(currentFilter === 'gaussian') filterStr += ' blur(1px)';
+    if(currentFilter === 'median') filterStr += ' contrast(1.1)';
+    else if(currentFilter === 'wiener') filterStr += ' contrast(1.3) brightness(1.05)';
+    else if(currentFilter === 'mean') filterStr += ' blur(0.5px) opacity(0.9)';
 
-    mainImg.style.filter = filterStr;
-    document.getElementById('v-bright').innerText = brightness.value + '%';
-    document.getElementById('v-contrast').innerText = contrast.value + '%';
-    document.getElementById('v-sharp').innerText = sharp.value + '%';
-  }
+    mainImg.style.filter = filterStr;
+    document.getElementById('v-bright').innerText = brightness.value + '%';
+    document.getElementById('v-contrast').innerText = contrast.value + '%';
+    document.getElementById('v-smooth').innerText = smVal + 'px';
+    document.getElementById('v-sharp').innerText = sVal + '%';
+  }
 
-  window.resetAll = () => {
-    brightness.value = 100; contrast.value = 100; sharp.value = 0;
-    currentFilter = 'none'; filterDescBox.style.display = "none";
-    updateStyles();
-  }
+  window.resetAll = () => {
+    brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0;
+    currentFilter = 'none'; filterDescBox.style.display = "none";
+    updateStyles();
+  }
 
-  window.showFinal = function() {
-    document.getElementById('editor-ui').classList.add('hidden');
-    document.getElementById('result-ui').classList.remove('hidden');
-    const canvas = document.getElementById('after-canvas'), ctx = canvas.getContext('2d'), img = new Image();
-    img.src = originalSrc;
-    img.onload = function() {
-      canvas.width = img.width; canvas.height = img.height;
-      ctx.imageSmoothingEnabled = false; // ป้องกันภาพเบลอจากการสเกลในทางแพทย์
-      ctx.filter = mainImg.style.filter;
-      ctx.drawImage(img, 0, 0);
-    }
-  }
+  window.showFinal = function() {
+    document.getElementById('editor-ui').classList.add('hidden');
+    document.getElementById('result-ui').classList.remove('hidden');
+    const canvas = document.getElementById('after-canvas'), ctx = canvas.getContext('2d'), img = new Image();
+    img.src = originalSrc;
+    img.onload = function() {
+      canvas.width = img.width; canvas.height = img.height;
+      ctx.imageSmoothingEnabled = false; // ป้องกันพิกเซลเพี้ยนเมื่อสเกล
+      ctx.filter = mainImg.style.filter;
+      ctx.drawImage(img, 0, 0);
+    }
+  }
 
-  window.goBack = () => {
-    document.getElementById('editor-ui').classList.remove('hidden');
-    document.getElementById('result-ui').classList.add('hidden');
-  }
+  window.goBack = () => {
+    document.getElementById('editor-ui').classList.remove('hidden');
+    document.getElementById('result-ui').classList.add('hidden');
+  }
 
-  window.downloadImage = () => {
-    const canvas = document.getElementById('after-canvas'), link = document.createElement('a');
-    link.download = 'medical-processed.png';
-    link.href = canvas.toDataURL(fileExtension, 1.0);
-    link.click();
-  }
+  window.downloadImage = () => {
+    const canvas = document.getElementById('after-canvas'), link = document.createElement('a');
+    link.download = 'medical_processed_image.png';
+    link.href = canvas.toDataURL(fileExtension, 1.0);
+    link.click();
+  }
 
-  brightness.addEventListener('input', updateStyles);
-  contrast.addEventListener('input', updateStyles);
-  sharp.addEventListener('input', updateStyles);
+  brightness.addEventListener('input', updateStyles);
+  contrast.addEventListener('input', updateStyles);
+  sharp.addEventListener('input', updateStyles);
+  smooth.addEventListener('input', updateStyles);
 });
 </script>
 </body>
