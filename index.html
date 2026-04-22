@@ -106,7 +106,7 @@
       padding-bottom: 10px;
     }
 
-    /* --- อัปเดตสีป้ายสถานะให้มองเห็นชัดเจนเตะตา --- */
+    /* --- ปรับปรุงสีป้ายสถานะให้สว่างและมองเห็นชัดเจนขึ้น --- */
     .status-tag { 
       display: inline-block; 
       padding: 8px 20px; 
@@ -117,14 +117,14 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     
-    /* สีแดงสำหรับมีปัญหา */
+    /* สีแดงสำหรับมีปัญหา (ใช้พื้นขาวตัดขอบแดงเพื่อให้เด่น) */
     .text-danger { 
       background: #fffafa; 
       color: #c0392b; 
       border: 2px solid #e74c3c; 
     }
     
-    /* สีเขียวเข้มสำหรับภาพปกติดี (มองชัดขึ้นมาก) */
+    /* สีเขียวเข้มสำหรับภาพปกติดี (ใช้พื้นขาวตัดขอบเขียวให้เด่นชัด) */
     .text-success { 
       background: #f2fcf5; 
       color: #145a32; 
@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (meanBrightness >= 80 && meanBrightness <= 170 && contrastSD > 40 && noiseCount < 800) {
         statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure)"; statusClass = "text-success";
-        advice = "ค่าความสว่างและคอนทราสต์ของภาพอยู่ในเกณฑ์ที่ดีมากครับ ถือว่า<b>ปกติดี</b> แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย (ประมาณ 20%)</b> เพื่อเน้นขอบโครงสร้างทางกายวิภาคให้คมชัดยิ่งขึ้น";
+        advice = "ค่าความสว่างและคอนทราสต์ของภาพอยู่ในเกณฑ์ที่ดีมากครับ ถือว่า<b>ปกติดี</b> แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย (ประมาณ 20%)</b> เพื่อเน้นขอบโครงสร้างทางกายวิภาคให้คมชัดยิ่งขึ้น ไม่จำเป็นต้องใช้ฟิลเตอร์แก้ปัญหาหนักครับ";
       } else if (noiseCount >= 800) {
         statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise / Speckle)"; statusClass = "text-danger";
         advice = "ตรวจพบจุดรบกวนสูง (อาจเป็นภาพ Ultrasound หรือใช้รังสีต่ำ) แนะนำให้กดใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดเกรนออกโดยรักษาความคมของภาพไว้";
@@ -343,13 +343,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
       recContent.innerHTML = `
         <div class="status-tag ${statusClass}">${statusText}</div>
-        <p style="margin-bottom:0; font-size: 0.95rem;">${advice}</p>
+        <p style="margin-bottom:0;">${advice}</p>
       `;
 
       document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
       if(focusBtn) {
         const targetBtn = document.getElementById(focusBtn);
-        if(targetBtn) targetBtn.style.border = "2px solid var(--accent-dark)";
+        if(targetBtn) targetBtn.style.border = "2px solid #222";
       }
     };
   }
