@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diagnostic Image Enhancer</title>
+  <title>Diagnostic Image Enhancer - DICOM Supported</title>
+  <script src="https://cdn.jsdelivr.net/npm/daikon@1.2.43/release/daikon-min.js"></script>
+  
   <style>
     :root {
       --primary: #769b9b;
@@ -106,37 +108,15 @@
       padding-bottom: 10px;
     }
 
-    /* --- ปรับปรุงสีป้ายสถานะให้สว่างและมองเห็นชัดเจนขึ้น --- */
     .status-tag { 
-      display: inline-block; 
-      padding: 8px 20px; 
-      border-radius: 30px; 
-      font-weight: 900; 
-      font-size: 1rem; 
-      margin-bottom: 15px; 
+      display: inline-block; padding: 8px 20px; 
+      border-radius: 30px; font-weight: 900; font-size: 1rem; margin-bottom: 15px; 
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     
-    /* สีแดงสำหรับมีปัญหา (ใช้พื้นขาวตัดขอบแดงเพื่อให้เด่น) */
-    .text-danger { 
-      background: #fffafa; 
-      color: #c0392b; 
-      border: 2px solid #e74c3c; 
-    }
-    
-    /* สีเขียวเข้มสำหรับภาพปกติดี (ใช้พื้นขาวตัดขอบเขียวให้เด่นชัด) */
-    .text-success { 
-      background: #f2fcf5; 
-      color: #145a32; 
-      border: 2px solid #27ae60; 
-    }
-    
-    /* สีน้ำเงินสำหรับคอนทราสต์ต่ำ */
-    .text-info { 
-      background: #f4f9fd; 
-      color: #154360; 
-      border: 2px solid #2980b9; 
-    }
+    .text-danger { background: #fffafa; color: #c0392b; border: 2px solid #e74c3c; }
+    .text-success { background: #f2fcf5; color: #145a32; border: 2px solid #27ae60; }
+    .text-info { background: #f4f9fd; color: #154360; border: 2px solid #2980b9; }
 
     .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
     .image-card { 
@@ -209,8 +189,8 @@
 <div class="container">
   
   <div class="upload-zone">
-    <p>เลือกไฟล์ภาพสแกน (X-ray, CT Scan, Ultrasound)</p>
-    <input type="file" id="upload" accept="image/*">
+    <p>เลือกไฟล์ภาพสแกน (DICOM .dcm, X-ray, CT Scan, Ultrasound)</p>
+    <input type="file" id="upload" accept="image/*,.dcm,application/dicom">
   </div>
 
   <div id="recommendation-box">
@@ -288,6 +268,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
 
+  // 🧠 วิเคราะห์พิกเซลภาพ
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     
@@ -354,9 +335,90 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
+  // จัดการการอัปโหลดไฟล์ (รองรับ DICOM และรูปภาพปกติ)
   upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
-    if (file) {
+    if (!file) return;
+
+    // เช็คว่าเป็นไฟล์ DICOM หรือไม่
+    if (file.name.toLowerCase().endsWith('.dcm') || file.type === 'application/dicom') {
+      fileExtension = 'image/png'; // จะเซฟเป็น PNG เพื่อนำไปใช้ต่อ
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const arrayBuffer = event.target.result;
+          const data = new DataView(arrayBuffer);
+          const image = daikon.Series.parseImage(data);
+          
+          if (image === null) {
+            alert("ไม่สามารถอ่านข้อมูลภาพจากไฟล์ DICOM นี้ได้");
+            return;
+          }
+
+          const cols = image.getCols();
+          const rows = image.getRows();
+          const pixels = image.getInterpretedData(); // ดึงค่าพิกเซล
+          
+          // ดึงค่า Windowing จาก DICOM (เพื่อความสว่าง/คอนทราสต์ที่ถูกต้อง)
+          let wc = image.getWindowCenter();
+          let ww = image.getWindowWidth();
+          
+          if (Array.isArray(wc)) wc = wc[0];
+          if (Array.isArray(ww)) ww = ww[0];
+          
+          // หากไม่มี Windowing ฝังมา ให้คำนวณอัตโนมัติ
+          if (wc === undefined || ww === undefined) {
+            let minP = Infinity, maxP = -Infinity;
+            for (let i = 0; i < pixels.length; i++) {
+              if (pixels[i] < minP) minP = pixels[i];
+              if (pixels[i] > maxP) maxP = pixels[i];
+            }
+            ww = maxP - minP;
+            wc = minP + (ww / 2);
+          }
+          
+          let min = wc - (ww / 2);
+          let max = wc + (ww / 2);
+
+          // สร้าง Canvas ลับเพื่อวาด DICOM ออกมาเป็นภาพ PNG
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = cols;
+          tempCanvas.height = rows;
+          const ctx = tempCanvas.getContext('2d');
+          const imgData = ctx.createImageData(cols, rows);
+          
+          for (let i = 0; i < pixels.length; i++) {
+            let val = ((pixels[i] - min) / (max - min)) * 255;
+            val = Math.max(0, Math.min(255, val));
+            const idx = i * 4;
+            imgData.data[idx] = val;     // R
+            imgData.data[idx+1] = val;   // G
+            imgData.data[idx+2] = val;   // B
+            imgData.data[idx+3] = 255;   // Alpha
+          }
+          
+          ctx.putImageData(imgData, 0, 0);
+          
+          // ส่งภาพเข้าสู่ระบบเดิม
+          originalSrc = tempCanvas.toDataURL('image/png');
+          mainImg.src = originalSrc;
+          document.getElementById('before-img').src = originalSrc;
+          mainImg.classList.remove('hidden');
+          document.getElementById('editor-ui').classList.remove('hidden');
+          
+          analyzeDiagnosticImage();
+          resetAll();
+
+        } catch (err) {
+          console.error(err);
+          alert("เกิดข้อผิดพลาดในการประมวลผลไฟล์ DICOM กรุณาตรวจสอบไฟล์อีกครั้ง");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      
+    } else {
+      // กรณีเป็นไฟล์รูปภาพปกติ (JPG, PNG)
       fileExtension = file.type;
       const reader = new FileReader();
       reader.onload = (event) => {
