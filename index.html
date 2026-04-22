@@ -39,11 +39,6 @@
       from { opacity: 0; transform: translateY(20px); } 
       to { opacity: 1; transform: translateY(0); } 
     }
-    
-    @keyframes slideOutUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-100%); opacity: 0; display: none; }
-    }
 
     /* =========================================
        3. INTRO SCREEN (LANDING PAGE)
@@ -59,9 +54,7 @@
       text-align: center;
       padding: 20px;
       box-sizing: border-box;
-      position: absolute;
-      top: 0; left: 0;
-      z-index: 100;
+      animation: fadeIn 0.8s ease;
     }
 
     .intro-title {
@@ -70,7 +63,6 @@
       color: var(--accent-dark);
       margin: 0 0 10px 0;
       letter-spacing: -1.5px;
-      animation: fadeIn 0.8s ease forwards;
     }
 
     .intro-wave {
@@ -79,7 +71,6 @@
       letter-spacing: -2px;
       margin-bottom: 20px;
       font-weight: bold;
-      animation: fadeIn 1s ease forwards;
     }
 
     .intro-subtitle {
@@ -88,7 +79,6 @@
       max-width: 600px;
       margin-bottom: 40px;
       line-height: 1.6;
-      animation: fadeIn 1.2s ease forwards;
     }
 
     .btn-start {
@@ -102,7 +92,6 @@
       font-weight: bold;
       transition: 0.3s;
       box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-      animation: fadeIn 1.4s ease forwards;
     }
 
     .btn-start:hover {
@@ -117,7 +106,6 @@
       margin-top: 40px;
       flex-wrap: wrap;
       justify-content: center;
-      animation: fadeIn 1.6s ease forwards;
     }
 
     .badge {
@@ -134,7 +122,7 @@
        4. MAIN APP LAYOUT
        ========================================= */
     #main-app {
-      display: none; /* ซ่อนแอปหลักไว้เด็ดขาดจนกว่าจะกดปุ่ม */
+      display: none; /* ซ่อนแอปหลักไว้ชัวร์ๆ 100% จนกว่าจะกดปุ่ม */
       flex-direction: column;
       align-items: center;
       width: 100%;
@@ -230,7 +218,7 @@
     ช่วยคัดกรอง Noise และปรับสมดุลแสงเพื่อการวินิจฉัยที่แม่นยำยิ่งขึ้น
   </p>
   
-  <button id="btn-enter" class="btn-start">เข้าสู่ระบบวิเคราะห์ภาพ</button>
+  <button class="btn-start" onclick="startApp()">เข้าสู่ระบบวิเคราะห์ภาพ</button>
   
   <div class="features-badge">
     <span class="badge">🩻 รองรับ DICOM (.dcm)</span>
@@ -320,31 +308,25 @@
   </div>
 
 </div> <script>
-document.addEventListener("DOMContentLoaded", function () {
+// ==========================================
+// 💡 ฟังก์ชันสลับหน้าจอ (ทำงานทันทีที่กดปุ่ม)
+// ==========================================
+function startApp() {
+  const introScreen = document.getElementById('intro-screen');
+  const mainApp = document.getElementById('main-app');
   
-  // ==========================================
-  // 💡 ระบบสลับหน้าจอ (Intro -> Main App)
-  // ==========================================
-  const btnEnter = document.getElementById('btn-enter');
-  if(btnEnter) {
-    btnEnter.addEventListener('click', function() {
-      const introScreen = document.getElementById('intro-screen');
-      const mainApp = document.getElementById('main-app');
-      
-      // ทำ Effect เลื่อนขึ้น
-      introScreen.style.animation = "slideOutUp 0.6s forwards";
-      
-      setTimeout(() => {
-        introScreen.classList.add('hidden');
-        mainApp.style.display = 'flex'; // แสดงแอปหลัก
-        mainApp.style.animation = "fadeIn 0.8s ease forwards";
-      }, 500); // รอให้ Effect จบ
-    });
-  }
+  // ซ่อนหน้าแรกแบบหายขาด 100%
+  introScreen.style.display = 'none';
+  
+  // แสดงแอปหลักแบบ Flex ทันที
+  mainApp.style.display = 'flex';
+  mainApp.style.animation = "fadeIn 0.6s ease forwards";
+}
 
-  // ==========================================
-  // 🧠 Logic แอปพลิเคชันหลัก (ทำงานทั้งหมด)
-  // ==========================================
+// ==========================================
+// 🧠 Logic แอปพลิเคชันหลัก
+// ==========================================
+document.addEventListener("DOMContentLoaded", function () {
   const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
   const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
   const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
@@ -419,7 +401,6 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // จัดการอัปโหลดไฟล์รองรับ DICOM
   upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -506,4 +487,56 @@ document.addEventListener("DOMContentLoaded", function () {
     switch(f) {
       case 'median': text = "<b>Median Filter:</b> แทนที่พิกเซลด้วยค่ากลาง ลด 'Impulse Noise' ได้ดีที่สุดโดยไม่ทำให้ขอบภาพเบลอ เหมาะกับภาพ Ultrasound ที่มีเกรนหยาบ"; break;
       case 'wiener': text = "<b>Wiener Style:</b> เน้นการกู้คืนรายละเอียดขอบภาพที่เสียไป (Deblurring) และเพิ่ม Micro-contrast เหมาะกับการหารอยร้าวเล็กๆ"; break;
-      case 'mean': text = "<b>Mean Filter:</b> เกลี่ยค่าเฉล
+      case 'mean': text = "<b>Mean Filter:</b> เกลี่ยค่าเฉลี่ยของพิกเซลรอบข้าง ลดความกระด้างของแสง เหมาะสำหรับดูขอบเขตภาพรวมของเนื้อเยื่ออ่อน"; break;
+    }
+    filterDescText.innerHTML = text; updateStyles();
+  }
+
+  function updateStyles() {
+    const sVal = parseInt(sharp.value); const smVal = parseInt(smooth.value);
+    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%) `;
+    
+    if(currentFilter === 'median') filterStr += ' contrast(1.1)';
+    else if(currentFilter === 'wiener') filterStr += ' contrast(1.35) brightness(1.05)';
+    else if(currentFilter === 'mean') filterStr += ' opacity(0.95)';
+    
+    mainImg.style.filter = filterStr;
+    document.getElementById('v-bright').innerText = brightness.value + '%';
+    document.getElementById('v-contrast').innerText = contrast.value + '%';
+    document.getElementById('v-smooth').innerText = smVal + 'px';
+    document.getElementById('v-sharp').innerText = sVal + '%';
+  }
+
+  window.resetAll = () => { brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; currentFilter = 'none'; filterDescBox.style.display = "none"; updateStyles(); }
+  
+  window.showFinal = function() { 
+    document.getElementById('editor-ui').classList.add('hidden'); 
+    document.getElementById('result-ui').classList.remove('hidden'); 
+    const canvas = document.getElementById('after-canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image(); 
+    img.src = mainImg.src; 
+    img.onload = function() { 
+      canvas.width = img.width; 
+      canvas.height = img.height; 
+      ctx.imageSmoothingEnabled = false; 
+      ctx.filter = mainImg.style.filter; 
+      ctx.drawImage(img, 0, 0); 
+    } 
+  }
+  
+  window.goBack = () => { document.getElementById('editor-ui').classList.remove('hidden'); document.getElementById('result-ui').classList.add('hidden'); }
+  
+  window.downloadImage = () => { 
+    const canvas = document.getElementById('after-canvas');
+    const link = document.createElement('a'); 
+    link.download = 'medical_report_image.png'; 
+    link.href = canvas.toDataURL(fileExtension, 1.0); 
+    link.click(); 
+  }
+  
+  brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
+});
+</script>
+</body>
+</html>
