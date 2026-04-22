@@ -135,20 +135,12 @@
        4. MAIN APP LAYOUT
        ========================================= */
     #main-app {
-      display: flex;
+      display: none; /* ป้องกันการกระตุก ซ่อนไว้ก่อน 100% */
       flex-direction: column;
       align-items: center;
       width: 100%;
       min-height: 100vh;
-      opacity: 0; /* ซ่อนไว้ก่อน แต่ยังจองพื้นที่ */
-      pointer-events: none;
-      transition: opacity 0.5s ease 0.3s;
-    }
-
-    /* คลาสที่ใช้เมื่อเรียก Main App ขึ้นมา */
-    #main-app.active {
-      opacity: 1;
-      pointer-events: auto;
+      animation: fadeIn 0.5s ease;
     }
 
     .header-banner {
@@ -240,7 +232,7 @@
     ช่วยคัดกรอง Noise และปรับสมดุลแสงเพื่อการวินิจฉัยที่แม่นยำยิ่งขึ้น
   </p>
   
-  <button class="btn-start" onclick="enterApp()">เข้าสู่ระบบวิเคราะห์ภาพ</button>
+  <button id="btn-start" class="btn-start">เข้าสู่ระบบวิเคราะห์ภาพ</button>
   
   <div class="features-badge">
     <span class="badge">🩻 รองรับ DICOM (.dcm)</span>
@@ -331,236 +323,6 @@
 
 </div> <script>
 // ==========================================
-// 💡 ฟังก์ชันสลับหน้าจอ (Intro -> Main App)
+// 💡 ฟังก์ชันสลับหน้าจอ (ทำงานชัวร์ 100%)
 // ==========================================
-function enterApp() {
-  const introScreen = document.getElementById('intro-screen');
-  const mainApp = document.getElementById('main-app');
-  
-  // สร้าง Effect เลื่อนหน้าต่างขึ้นไป
-  introScreen.style.animation = "slideOutUp 0.6s forwards";
-  
-  setTimeout(() => {
-    introScreen.classList.add('hidden');
-    mainApp.classList.add('active'); // แสดงแอปหลัก
-  }, 500); // รอให้ Effect จบก่อน 0.5 วินาที
-}
-
-// ==========================================
-// 🧠 Logic แอปพลิเคชันหลัก
-// ==========================================
-document.addEventListener("DOMContentLoaded", function () {
-  const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
-  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
-  const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
-  const recBox = document.getElementById('recommendation-box'), recContent = document.getElementById('recommendation-content');
-  const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
-
-  let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
-
-  function analyzeDiagnosticImage() {
-    recBox.style.display = "block";
-    
-    const img = new Image();
-    img.src = mainImg.src;
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = 100; canvas.height = 100;
-      ctx.drawImage(img, 0, 0, 100, 100);
-      
-      const pixelData = ctx.getImageData(0, 0, 100, 100).data;
-      let totalGray = 0; let grayValues = [];
-      let noiseCount = 0;
-      
-      for (let i = 0; i < pixelData.length; i += 4) {
-        let grayValue = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
-        totalGray += grayValue; grayValues.push(grayValue);
-        
-        if (i > 4) {
-          let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
-          if (Math.abs(grayValue - prevGray) > 40) noiseCount++;
-        }
-      }
-      
-      const meanBrightness = totalGray / grayValues.length;
-      let sumSquaredDiff = 0;
-      for (let i = 0; i < grayValues.length; i++) { sumSquaredDiff += Math.pow(grayValues[i] - meanBrightness, 2); }
-      const contrastSD = Math.sqrt(sumSquaredDiff / grayValues.length);
-      
-      let advice = ""; let statusClass = ""; let statusText = ""; let focusBtn = "";
-
-      if (meanBrightness >= 80 && meanBrightness <= 170 && contrastSD > 40 && noiseCount < 800) {
-        statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure)"; statusClass = "text-success";
-        advice = "ค่าความสว่างและคอนทราสต์ของภาพอยู่ในเกณฑ์ที่ดีมาก ถือว่า<b>ปกติดี</b> แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย (ประมาณ 20%)</b> เพื่อเน้นขอบโครงสร้างทางกายวิภาคให้คมชัดยิ่งขึ้น";
-      } else if (noiseCount >= 800) {
-        statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise / Speckle)"; statusClass = "text-danger";
-        advice = "ตรวจพบจุดรบกวนสูง (อาจเป็นภาพ Ultrasound หรือใช้รังสีต่ำ) แนะนำให้กดใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดเกรนออกโดยรักษาความคมของภาพไว้";
-        focusBtn = "btn-median";
-      } else if (contrastSD <= 40) {
-        statusText = "💡 ภาพแบน ขาดความเปรียบต่าง (Low Contrast)"; statusClass = "text-info";
-        advice = "ภาพมีฮิสโตแกรมที่แคบ (เทากลืนกัน) ทำให้แยกแยะเนื้อเยื่อยาก แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม Contrast เพื่อดึงมิติภาพออกมาครับ";
-        focusBtn = "btn-wiener";
-      } else if (meanBrightness < 80) {
-        statusText = "⚠️ ภาพมืดเกินไป (Underexposed)"; statusClass = "text-danger";
-        advice = "รังสีอาจทะลุผ่านวัตถุน้อย ทำให้ภาพค่อนข้างมืด แนะนำให้เพิ่ม <b>Brightness</b> ขึ้น และใช้ <b>Tissue Smooth (Mean)</b> เพื่อเกลี่ยพิกเซลที่อาจหยาบจากการดึงแสง";
-        focusBtn = "btn-mean";
-      } else {
-        statusText = "⚠️ ภาพสว่างจัด (Overexposed)"; statusClass = "text-danger";
-        advice = "ภาพสว่างจนรายละเอียดบางส่วนกลืนกัน ให้ลองลด <b>Brightness</b> ลง และใช้ <b>Edge Enhance</b> เพื่อพยายามกู้รายละเอียดขอบเขตเนื้อเยื่อกลับมา";
-        focusBtn = "btn-wiener";
-      }
-
-      recContent.innerHTML = `
-        <div class="status-tag ${statusClass}">${statusText}</div>
-        <p style="margin-bottom:0; color: white;">${advice}</p>
-      `;
-
-      document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-      if(focusBtn) {
-        const targetBtn = document.getElementById(focusBtn);
-        if(targetBtn) targetBtn.style.border = "2px solid #222";
-      }
-    };
-  }
-
-  // จัดการอัปโหลดไฟล์รองรับ DICOM
-  upload.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.name.toLowerCase().endsWith('.dcm') || file.type === 'application/dicom') {
-      fileExtension = 'image/png';
-      
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          const arrayBuffer = event.target.result;
-          const data = new DataView(arrayBuffer);
-          const image = daikon.Series.parseImage(data);
-          
-          if (image === null) { alert("ไม่สามารถอ่านข้อมูลภาพจากไฟล์ DICOM นี้ได้"); return; }
-
-          const cols = image.getCols();
-          const rows = image.getRows();
-          const pixels = image.getInterpretedData();
-          
-          let wc = image.getWindowCenter();
-          let ww = image.getWindowWidth();
-          
-          if (Array.isArray(wc)) wc = wc[0];
-          if (Array.isArray(ww)) ww = ww[0];
-          
-          if (wc === undefined || ww === undefined) {
-            let minP = Infinity, maxP = -Infinity;
-            for (let i = 0; i < pixels.length; i++) {
-              if (pixels[i] < minP) minP = pixels[i];
-              if (pixels[i] > maxP) maxP = pixels[i];
-            }
-            ww = maxP - minP;
-            wc = minP + (ww / 2);
-          }
-          
-          let min = wc - (ww / 2);
-          let max = wc + (ww / 2);
-
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = cols;
-          tempCanvas.height = rows;
-          const ctx = tempCanvas.getContext('2d');
-          const imgData = ctx.createImageData(cols, rows);
-          
-          for (let i = 0; i < pixels.length; i++) {
-            let val = ((pixels[i] - min) / (max - min)) * 255;
-            val = Math.max(0, Math.min(255, val));
-            const idx = i * 4;
-            imgData.data[idx] = val; imgData.data[idx+1] = val; imgData.data[idx+2] = val; imgData.data[idx+3] = 255;
-          }
-          
-          ctx.putImageData(imgData, 0, 0);
-          originalSrc = tempCanvas.toDataURL('image/png');
-          mainImg.src = originalSrc;
-          document.getElementById('before-img').src = originalSrc;
-          mainImg.classList.remove('hidden');
-          document.getElementById('editor-ui').classList.remove('hidden');
-          
-          analyzeDiagnosticImage();
-          resetAll();
-        } catch (err) { console.error(err); alert("เกิดข้อผิดพลาดในการประมวลผลไฟล์ DICOM"); }
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      fileExtension = file.type;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        originalSrc = event.target.result;
-        mainImg.src = originalSrc;
-        document.getElementById('before-img').src = originalSrc;
-        mainImg.classList.remove('hidden');
-        document.getElementById('editor-ui').classList.remove('hidden');
-        analyzeDiagnosticImage();
-        resetAll();
-      }
-      reader.readAsDataURL(file);
-    }
-  });
-
-  window.setFilter = function(f) {
-    currentFilter = f; filterDescBox.style.display = "block";
-    let text = "";
-    switch(f) {
-      case 'median': text = "<b>Median Filter:</b> แทนที่พิกเซลด้วยค่ากลาง ลด 'Impulse Noise' ได้ดีที่สุดโดยไม่ทำให้ขอบภาพเบลอ เหมาะกับภาพ Ultrasound ที่มีเกรนหยาบ"; break;
-      case 'wiener': text = "<b>Wiener Style:</b> เน้นการกู้คืนรายละเอียดขอบภาพที่เสียไป (Deblurring) และเพิ่ม Micro-contrast เหมาะกับการหารอยร้าวเล็กๆ"; break;
-      case 'mean': text = "<b>Mean Filter:</b> เกลี่ยค่าเฉลี่ยของพิกเซลรอบข้าง ลดความกระด้างของแสง เหมาะสำหรับดูขอบเขตภาพรวมของเนื้อเยื่ออ่อน"; break;
-    }
-    filterDescText.innerHTML = text; updateStyles();
-  }
-
-  function updateStyles() {
-    const sVal = parseInt(sharp.value); const smVal = parseInt(smooth.value);
-    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%) `;
-    
-    if(currentFilter === 'median') filterStr += ' contrast(1.1)';
-    else if(currentFilter === 'wiener') filterStr += ' contrast(1.35) brightness(1.05)';
-    else if(currentFilter === 'mean') filterStr += ' opacity(0.95)';
-    
-    mainImg.style.filter = filterStr;
-    document.getElementById('v-bright').innerText = brightness.value + '%';
-    document.getElementById('v-contrast').innerText = contrast.value + '%';
-    document.getElementById('v-smooth').innerText = smVal + 'px';
-    document.getElementById('v-sharp').innerText = sVal + '%';
-  }
-
-  window.resetAll = () => { brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; currentFilter = 'none'; filterDescBox.style.display = "none"; updateStyles(); }
-  
-  window.showFinal = function() { 
-    document.getElementById('editor-ui').classList.add('hidden'); 
-    document.getElementById('result-ui').classList.remove('hidden'); 
-    const canvas = document.getElementById('after-canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image(); 
-    img.src = mainImg.src; 
-    img.onload = function() { 
-      canvas.width = img.width; 
-      canvas.height = img.height; 
-      ctx.imageSmoothingEnabled = false; 
-      ctx.filter = mainImg.style.filter; 
-      ctx.drawImage(img, 0, 0); 
-    } 
-  }
-  
-  window.goBack = () => { document.getElementById('editor-ui').classList.remove('hidden'); document.getElementById('result-ui').classList.add('hidden'); }
-  
-  window.downloadImage = () => { 
-    const canvas = document.getElementById('after-canvas');
-    const link = document.createElement('a'); 
-    link.download = 'medical_report_image.png'; 
-    link.href = canvas.toDataURL(fileExtension, 1.0); 
-    link.click(); 
-  }
-  
-  brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
-});
-</script>
-</body>
-</html>
+// ใช้ EventListener เพื่อให้
