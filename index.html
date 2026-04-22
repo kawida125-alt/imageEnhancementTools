@@ -3,286 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diagnostic Image Analyzer Pro - Clinical Artifact Fixer</title>
+  <title>Diagnostic Image Enhancer</title>
   <style>
     :root {
-      --primary: #8ca8a8; /* Medical Sage Green */
-      --secondary: #34495e;
-      --clinical-teal: #16a085;
-      --bg-light: #f4f7f7;
-      --white: #ffffff;
-      --danger: #c0392b;
-      --success: #27ae60;
-      --info: #3498db;
+      --primary: #769b9b;       /* สีเขียวตุ่น Sage Green แบบในภาพ */
+      --primary-dark: #587a7a;
+      --secondary: #4a6363;     /* สีเขียวเข้มสำหรับ Footer/Text */
+      --accent-dark: #2a3a3a;   /* สีปุ่มเข้ม */
+      --bg-light: #eef3f3;      /* สีพื้นหลังรวมแบบสว่าง */
+      --card-bg: #ffffff;       /* สีพื้นหลังการ์ด */
+      --input-bg: #dce5e5;      /* สีพื้นหลังกล่องอัปโหลด */
+      --danger: #e74c3c;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-light);
       color: var(--secondary);
       margin: 0; padding: 0;
       display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh;
     }
 
+    /* --- Header Section (สไตล์ Influenca) --- */
     .header-banner {
-      width: 100%; background-color: var(--secondary);
-      padding: 40px 0; text-align: center; border-bottom: 4px solid var(--clinical-teal);
-      color: white;
+      width: 100%;
+      background-color: var(--bg-light);
+      padding: 80px 20px 40px 20px;
+      text-align: center;
     }
 
+    .header-banner h1 {
+      font-size: 3.5rem;
+      margin: 0 0 10px 0;
+      font-weight: 900;
+      color: #111;
+      position: relative;
+      display: inline-block;
+    }
+
+    /* เส้นหยักใต้หัวข้อ */
+    .header-banner h1::after {
+      content: '〰〰〰';
+      display: block;
+      font-size: 1.5rem;
+      color: var(--secondary);
+      margin-top: -5px;
+      letter-spacing: -2px;
+      opacity: 0.7;
+    }
+
+    .header-banner p {
+      color: #666;
+      max-width: 600px;
+      margin: 15px auto;
+      line-height: 1.6;
+      font-size: 1.1rem;
+    }
+
+    /* --- Container & Cards --- */
     .container {
-      max-width: 1100px; width: 92%; background: var(--white);
-      padding: 35px; border-radius: 15px; margin: 30px 0;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      max-width: 1000px; width: 92%;
+      margin-bottom: 80px;
+      flex: 1;
     }
 
-    /* Recommendation Box - ปรับปรุงหัวข้อและสี */
-    #recommendation-box {
-      background-color: #f0f7f7; padding: 25px; border-radius: 12px;
-      margin-bottom: 30px; display: none; border-left: 8px solid var(--primary);
-      animation: fadeIn 0.5s ease;
+    /* Upload Zone (สไตล์ช่อง Form ในภาพ) */
+    .upload-zone {
+      background-color: var(--input-bg);
+      padding: 40px;
+      border-radius: 20px;
+      margin-bottom: 40px;
+      text-align: center;
+      border: 2px dashed rgba(74, 99, 99, 0.3);
+      transition: 0.3s;
     }
-
-    .status-tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; margin-bottom: 10px; }
-    .tag-danger { background: #ffebee; color: var(--danger); }
-    .tag-success { background: #e8f5e9; color: var(--success); }
-    .tag-info { background: #d9edf7; color: var(--info); }
-
-    /* Layout */
-    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
-    .image-card { background: #000; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    .image-card label { display: block; padding: 10px; background: #f8f9fa; color: var(--secondary); font-weight: bold; font-size: 0.8rem; border-bottom: 1px solid #ddd; }
-
-    img, canvas { width: 100%; display: block; image-rendering: -webkit-optimize-contrast; }
-
-    .editor-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .slider-group { margin-bottom: 15px; }
-    .slider-group label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
-    .slider-group span { color: var(--clinical-teal); }
-
-    input[type="range"] { width: 100%; accent-color: var(--clinical-teal); cursor: pointer; }
-
-    .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; grid-column: span 2; }
-    button { padding: 12px 24px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
     
-    .btn-filter { background: #ecf0f1; color: var(--secondary); border: 1px solid #d1d8e0; }
-    .btn-filter:hover { background: var(--primary); color: white; }
-    .btn-main { background: var(--clinical-teal); color: white; width: 100%; margin-top: 10px; }
-
-    #filter-description {
-      background: #fdfdfd; padding: 20px; border-radius: 8px;
-      margin-top: 20px; display: none; text-align: left; border: 1px solid #eee; grid-column: span 2;
+    .upload-zone p {
+      color: var(--secondary);
+      font-weight: 700;
+      margin-top: 0; margin-bottom: 20px;
     }
 
-    .hidden { display: none; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
-</head>
-<body>
-
-<div class="header-banner">
-  <h1>Diagnostic Image Enhancer</h1>
-  <p>ระบบประมวลผลและปรับปรุงภาพทางรังสีวิทยาเพื่อการวินิจฉัย</p>
-</div>
-
-<div class="container">
-  
-  <div class="upload-zone" style="border: 2px dashed #cbd5e0; padding: 35px; border-radius: 12px; margin-bottom: 30px; text-align: center; background: #fafafa;">
-    <input type="file" id="upload" accept="image/*">
-    <p style="margin-top: 10px; color: #7f8c8d;">รองรับไฟล์ภาพ X-ray, Ultrasound, CT Scan (DICOM Exported PNG/JPG)</p>
-  </div>
-
-  <div id="recommendation-box">
-    <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #d1e0e0; padding-bottom: 10px;">🩺 Clinical Advice & Diagnostic Plan</div>
-    <div id="recommendation-content">
-      กำลังวิเคราะห์พิกเซลภาพ...
-    </div>
-  </div>
-
-  <div class="preview-grid">
-    <div class="image-card"><label>INPUT SCAN (RAW)</label><img id="before-img"></div>
-    <div class="image-card"><label>DIAGNOSTIC VIEW</label><img id="main-img" class="hidden"></div>
-  </div>
-
-  <div id="editor-ui" class="hidden">
-    <div class="editor-section">
-      <div class="slider-group">
-        <label>Brightness (Level) <span id="v-bright">100%</span></label>
-        <input type="range" id="bright" min="0" max="250" value="100">
-      </div>
-      <div class="slider-group">
-        <label>Contrast (Width) <span id="v-contrast">100%</span></label>
-        <input type="range" id="contrast" min="0" max="250" value="100">
-      </div>
-      <div class="slider-group">
-        <label>Smoothing (Tissue Blend) <span id="v-smooth">0px</span></label>
-        <input type="range" id="smooth" min="0" max="10" value="0">
-      </div>
-      <div class="slider-group">
-        <label>Sharpness (Edge Definition) <span id="v-sharp">0%</span></label>
-        <input type="range" id="sharp" min="0" max="100" value="0">
-      </div>
-
-      <div class="button-group">
-        <button class="btn-filter" onclick="setFilter('median')">Denoise (ลดสัญญาณรบกวน)</button>
-        <button class="btn-filter" onclick="setFilter('wiener')">Edge Enhance (เน้นขอบ)</button>
-        <button class="btn-filter" onclick="setFilter('mean')">Tissue Smooth (เกลี่ยเนื้อเยื่อ)</button>
-        <button class="btn-filter" style="margin-left: auto; background: #e74c3c; color: white;" onclick="resetAll()">Reset</button>
-        <button class="btn-main" onclick="showFinal()">GENERATE FINAL CLINICAL IMAGE</button>
-      </div>
-
-      <div id="filter-description">
-        <strong style="color: var(--clinical-teal);">🔍 หลักการประมวลผล:</strong>
-        <p id="filter-description-text" style="margin-top: 8px; color: #555; font-size: 0.9rem; line-height: 1.5;"></p>
-      </div>
-    </div>
-  </div>
-
-  <div id="result-ui" class="hidden">
-    <canvas id="after-canvas" style="border-radius: 12px; margin-bottom: 20px;"></canvas>
-    <div class="button-group" style="justify-content: center; border: none;">
-      <button class="btn-main" style="width: auto; padding: 15px 45px;" onclick="downloadImage()">💾 SAVE DIAGNOSTIC IMAGE</button>
-      <button class="btn-filter" onclick="goBack()">RETURN TO EDITOR</button>
-    </div>
-  </div>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
-  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
-  const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
-  const recBox = document.getElementById('recommendation-box'), recContent = document.getElementById('recommendation-content');
-  const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
-
-  let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
-
-  // 🖼️ วิเคราะห์ภาพทางการแพทย์ (Heuristic Pixel Analysis)
-  function analyzeDiagnosticImage() {
-    recBox.style.display = "block";
-    
-    // สร้าง Canvas เล็กๆ เพื่ออ่านค่าพิกเซลแบบไม่กินทรัพยากร
-    const img = new Image();
-    img.src = mainImg.src;
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = 100; canvas.height = 100; // ย่อขนาดเพื่อวิเคราะห์เร็วขึ้น
-      ctx.drawImage(img, 0, 0, 100, 100);
-      
-      const pixelData = ctx.getImageData(0, 0, 100, 100).data;
-      let totalGray = 0;
-      let grayValues = [];
-      
-      // ลูปหาค่า Grayscale ของแต่ละพิกเซล
-      for (let i = 0; i < pixelData.length; i += 4) {
-        let grayValue = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
-        totalGray += grayValue;
-        grayValues.push(grayValue);
-      }
-      
-      // คำนวณค่าเฉลี่ยแสง (Exposure)
-      const meanBrightness = totalGray / grayValues.length;
-      
-      // คำนวณค่า Contrast (Standard Deviation เบื้องต้น)
-      let sumSquaredDiff = 0;
-      for (let i = 0; i < grayValues.length; i++) {
-        sumSquaredDiff += Math.pow(grayValues[i] - meanBrightness, 2);
-      }
-      const contrastSD = Math.sqrt(sumSquaredDiff / grayValues.length);
-      
-      // 💡 ประเมินผลและสร้างคำแนะนำ
-      let advice = "";
-      let statusClass = "";
-      let statusText = "";
-
-      // 1. ถ้านอยซ์เยอะ (ความถี่ของการโดดของสีเยอะ) -> ใช้ Median Filter
-      // (ขั้นตอนนี้ต้องใช้เทคนิคขั้นสูงกว่านี้ในการอ่าน แต่เราจำลองได้)
-      const simulatedNoiseLevel = Math.random(); // จำลองระดับนอยซ์ (เพื่อโชว์เคส)
-      
-      // 🩺 Logic การวิเคราะห์ (ปรับแก้ให้สอดคล้องกับพฤติกรรมภาพจริง)
-      if (meanBrightness >= 90 && meanBrightness <= 160 && contrastSD > 45) {
-        // ภาพปกติ
-        statusText = "✅ ภาพดูปกติดี"; statusClass = "tag-success";
-        advice = "<b>Clinical Advice:</b> Exposure และ Contrast ของภาพอยู่ในเกณฑ์มาตรฐาน แนะนำให้ปรับเพิ่ม <b>Edge Definition (Sharpness) 20%</b> เพื่อช่วยให้ขอบเขตโครงสร้างทางกายวิภาคชัดเจนขึ้นโดยไม่ต้องใช้ฟิลเตอร์หลัก";
-      } else if (Math.abs(meanBrightness - 125) < 30 && contrastSD <= 40) {
-        // คอนทราสต์ต่ำ
-        statusText = "💡 ภาพขาดคอนทราสต์"; statusClass = "tag-info";
-        advice = "<b>Clinical Advice:</b> ภาพดูแบน/ขุ่น แนะนำให้เพิ่ม <b>Tissue Contrast 130%</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อแยกแยะความหนาแน่นของเนื้อเยื่อให้ดีขึ้น";
-      } else if (meanBrightness < 70) {
-        // มืดไป
-        statusText = "⚠️ ภาพมืดเกินไป (Underexposed)"; statusClass = "tag-danger";
-        advice = "<b>Clinical Advice:</b> ภาพมืดเกินไป ทำให้วินิจฉัยรอยโรคได้ยาก แนะนำให้เพิ่ม <b>Brightness 140%+</b> และใช้ <b>Tissue Smooth</b> เพื่อเกลี่ยเนื้อเยื่อให้สม่ำเสมอ";
-      } else if (meanBrightness > 190) {
-        // สว่างไป
-        statusText = "⚠️ ภาพสว่างเกินไป (Overexposed)"; statusClass = "tag-danger";
-        advice = "<b>Clinical Advice:</b> ภาพสว่างเกินไปทำให้รายละเอียดส่วนสว่างกลายเป็นสีขาวล้วน แนะนำให้ลด <b>Brightness</b> จนเริ่มเห็นรายละเอียด และใช้ <b>Edge Enhance</b>";
-      } else {
-        // มีนอยซ์เยอะ (สมมติกรณีที่เหลือคือมีนอยซ์สูง)
-        statusText = "⚠️ ตรวจพบ Noise หรือ Grain สูง"; statusClass = "tag-danger";
-        advice = "<b>Clinical Advice:</b> ตรวจพบสัญญาณรบกวน (Artifact) ค่อนข้างเยอะ อาจเกิดจาก Low Dose X-ray หรือ Ultrasound แนะนำให้ใช้ <b>Denoise (Median)</b> เป็นอันดับแรก";
-      }
-
-      recContent.innerHTML = `
-        <div class="status-tag ${statusClass}">${statusText}</div><br>
-        <p style="margin-top: 10px;">${advice}</p>
-        <p style="font-size: 0.9rem; color: #7f8c8d;"><b>Rationale:</b> Brightness ≈ ${meanBrightness.toFixed(1)}, Contrast ≈ ${contrastSD.toFixed(1)} ( Heuristic Analysis )</p>
-      `;
-    };
-  }
-
-  // (ส่วนที่เหลือของโค้ดเหมือนเดิม)
-  upload.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      fileExtension = file.type;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        originalSrc = event.target.result;
-        mainImg.src = originalSrc;
-        document.getElementById('before-img').src = originalSrc;
-        mainImg.classList.remove('hidden');
-        document.getElementById('editor-ui').classList.remove('hidden');
-        
-        // เมื่อโหลดรูปเสร็จ ให้รันระบบวิเคราะห์พิกเซล
-        analyzeDiagnosticImage();
-        resetAll();
-      }
-      reader.readAsDataURL(file);
-    }
-  });
-
-  window.setFilter = function(f) {
-    currentFilter = f; filterDescBox.style.display = "block";
-    let text = "";
-    switch(f) {
-      case 'median': text = "Median Filter: แทนที่พิกเซลด้วยค่ากลาง ลด 'Impulse Noise' ได้ดีที่สุดโดยไม่ทำให้ขอบภาพเบลอ เหมาะกับภาพ X-ray/CT ที่มีจุดเกรน"; break;
-      case 'wiener': text = "Wiener Style: เน้นการกู้คืนรายละเอียดขอบภาพที่เสียไป (Deblurring) และเพิ่ม Micro-contrast ที่รอยต่อ เหมาะกับการหารอยร้าวเล็กๆ"; break;
-      case 'mean': text = "Mean Filter: เกลี่ยค่าเฉลี่ยของพิกเซลรอบข้าง ลดสัญญาณรบกวนได้พอสมควร แต่จะทำให้ภาพเบลอเล็กน้อย เหมาะสำหรับดูขอบเขตภาพรวมเนื้อเยื่อ"; break;
-    }
-    filterDescText.innerHTML = text; updateStyles();
-  }
-
-  function updateStyles() {
-    const sVal = parseInt(sharp.value); const smVal = parseInt(smooth.value);
-    //Grayscale + Windowing บังคับ Grayscale ภาพทางการแพทย์ และเพิ่ม Micro-contrast ตามระดับ Sharpness
-    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%) `;
-    if(currentFilter === 'median') filterStr += ' contrast(1.1)';
-    else if(currentFilter === 'wiener') filterStr += ' contrast(1.35) brightness(1.05)';
-    else if(currentFilter === 'mean') filterStr += ' opacity(0.95)';
-    mainImg.style.filter = filterStr;
-    document.getElementById('v-bright').innerText = brightness.value + '%';
-    document.getElementById('v-contrast').innerText = contrast.value + '%';
-    document.getElementById('v-smooth').innerText = smVal + 'px';
-    document.getElementById('v-sharp').innerText = sVal + '%';
-  }
-
-  window.resetAll = () => { brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; currentFilter = 'none'; filterDescBox.style.display = "none"; updateStyles(); }
-  window.showFinal = function() { document.getElementById('editor-ui').classList.add('hidden'); document.getElementById('result-ui').classList.remove('hidden'); const canvas = document.getElementById('after-canvas'), ctx = canvas.getContext('2d'), img = new Image(); img.src = mainImg.src; img.onload = function() { canvas.width = img.width; canvas.height = img.height; ctx.imageSmoothingEnabled = false; ctx.filter = mainImg.style.filter; ctx.drawImage(img, 0, 0); } }
-  window.goBack = () => { document.getElementById('editor-ui').classList.remove('hidden'); document.getElementById('result-ui').classList.add('hidden'); }
-  window.downloadImage = () => { const canvas = document.getElementById('after-canvas'), link = document.createElement('a'); link.download = 'medical_report_image.png'; link.href = canvas.toDataURL(fileExtension, 1.0); link.click(); }
-  brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
-});
-</script>
-</body>
-</html>
+    .upload-zone input[type="file"] {
+      background: var(--white);
+      padding: 12px 20px;
+      border-radius: 30px;
+      color: var(--secondary);
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,
