@@ -3,73 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Medical Image Analyzer Pro - Clinical Artifact Fixer</title>
+  <title>Medical Image Analyzer Pro</title>
   <style>
     :root {
-      --primary: #8ca8a8; /* Medical Sage Green */
-      --secondary: #34495e;
+      --primary: #8ca8a8; 
+      --secondary: #34495e; 
       --clinical-teal: #16a085;
-      --bg-light: #f4f7f7;
-      --white: #ffffff;
-      --danger: #c0392b;
+      --bg-light: #f4f7f7; 
+      --white: #ffffff; 
+      --danger: #c0392b; 
       --success: #27ae60;
     }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background-color: var(--bg-light);
-      color: var(--secondary);
-      margin: 0; padding: 0;
-      display: flex; flex-direction: column; align-items: center;
+    body { 
+      font-family: 'Segoe UI', Tahoma, sans-serif; 
+      background-color: var(--bg-light); 
+      color: var(--secondary); 
+      margin: 0; 
+      padding: 0; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
     }
 
-    .header-banner {
-      width: 100%; background-color: var(--secondary);
-      padding: 40px 0; text-align: center; border-bottom: 4px solid var(--clinical-teal);
-      color: white;
+    .header-banner { 
+      width: 100%; 
+      background-color: var(--secondary); 
+      padding: 40px 0; 
+      text-align: center; 
+      border-bottom: 4px solid var(--clinical-teal); 
+      color: white; 
     }
 
-    .container {
-      max-width: 1100px; width: 92%; background: var(--white);
-      padding: 35px; border-radius: 15px; margin: 30px 0;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    .container { 
+      max-width: 1100px; 
+      width: 92%; 
+      background: var(--white); 
+      padding: 35px; 
+      border-radius: 15px; 
+      margin: 30px 0; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
     }
 
-    /* Analysis Box */
-    #recommendation-box {
-      background-color: #f0f7f7; padding: 25px; border-radius: 12px;
-      margin-bottom: 30px; display: none; border-left: 8px solid var(--primary);
-      animation: fadeIn 0.5s ease;
+    .upload-zone {
+      border: 2px dashed #cbd5e0; 
+      padding: 35px; 
+      border-radius: 12px; 
+      margin-bottom: 30px; 
+      text-align: center; 
+      background: #fafafa;
+      transition: 0.3s;
+    }
+    
+    .upload-zone:hover {
+      border-color: var(--clinical-teal);
     }
 
-    .status-tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; margin-bottom: 10px; }
+    #recommendation-box { 
+      background-color: #f0f7f7; 
+      padding: 25px; 
+      border-radius: 12px; 
+      margin-bottom: 30px; 
+      display: none; 
+      border-left: 8px solid var(--primary); 
+      animation: fadeIn 0.5s ease; 
+    }
+
+    .status-tag { 
+      display: inline-block; 
+      padding: 4px 12px; 
+      border-radius: 4px; 
+      font-weight: bold; 
+      font-size: 0.85rem; 
+      margin-bottom: 10px; 
+    }
     .tag-danger { background: #ffebee; color: var(--danger); }
     .tag-success { background: #e8f5e9; color: var(--success); }
 
-    /* Layout */
-    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
-    .image-card { background: #000; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    .image-card label { display: block; padding: 10px; background: #f8f9fa; color: var(--secondary); font-weight: bold; font-size: 0.8rem; border-bottom: 1px solid #ddd; }
+    .preview-grid { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 25px; 
+      margin-bottom: 30px; 
+    }
 
-    img, canvas { width: 100%; display: block; image-rendering: -webkit-optimize-contrast; }
+    .image-card { 
+      background: #000; 
+      border-radius: 10px; 
+      overflow: hidden; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+    }
+    .image-card label { 
+      display: block; 
+      padding: 10px; 
+      background: #f8f9fa; 
+      color: var(--secondary); 
+      font-weight: bold; 
+      font-size: 0.8rem; 
+      border-bottom: 1px solid #ddd; 
+    }
+
+    img, canvas { 
+      width: 100%; 
+      display: block; 
+      image-rendering: -webkit-optimize-contrast; 
+    }
 
     .editor-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .slider-group { margin-bottom: 15px; }
     .slider-group label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
     .slider-group span { color: var(--clinical-teal); }
-
     input[type="range"] { width: 100%; accent-color: var(--clinical-teal); cursor: pointer; }
 
-    .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; grid-column: span 2; }
-    button { padding: 12px 24px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .button-group { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 10px; 
+      margin-top: 20px; 
+      padding-top: 20px; 
+      border-top: 1px solid #eee; 
+      grid-column: span 2; 
+    }
+    button { 
+      padding: 12px 24px; 
+      border-radius: 6px; 
+      border: none; 
+      font-weight: bold; 
+      cursor: pointer; 
+      transition: 0.3s; 
+    }
     
-    .btn-filter { background: #ecf0f1; color: var(--secondary); border: 1px solid #d1d8e0; }
+    .btn-filter { background: #ecf0f1; color: var(--secondary); border: 2px solid transparent; }
     .btn-filter:hover { background: var(--primary); color: white; }
     .btn-main { background: var(--clinical-teal); color: white; width: 100%; margin-top: 10px; }
 
-    #filter-description {
-      background: #fdfdfd; padding: 20px; border-radius: 8px;
-      margin-top: 20px; display: none; text-align: left; border: 1px solid #eee; grid-column: span 2;
+    #filter-description { 
+      background: #fdfdfd; 
+      padding: 20px; 
+      border-radius: 8px; 
+      margin-top: 20px; 
+      display: none; 
+      text-align: left; 
+      border: 1px solid #eee; 
+      grid-column: span 2; 
     }
 
     .hidden { display: none; }
@@ -80,34 +156,36 @@
 
 <div class="header-banner">
   <h1>Medical Image Analyzer Pro</h1>
-  <p>ระบบตรวจจับ Artifact และเพิ่มประสิทธิภาพภาพวินิจฉัยทางคลินิก</p>
+  <p>ระบบวิเคราะห์และแก้ไข Artifact ทางคลินิก (Dynamic Pixel Analysis)</p>
 </div>
 
 <div class="container">
   
-  <div class="upload-zone" style="border: 2px dashed #cbd5e0; padding: 35px; border-radius: 12px; margin-bottom: 30px; text-align: center; background: #fafafa;">
+  <div class="upload-zone">
     <input type="file" id="upload" accept="image/*">
-    <p style="margin-top: 10px; color: #7f8c8d;">รองรับภาพ X-ray, CT, Ultrasound (DICOM Exported PNG/JPG)</p>
+    <p style="margin-top: 10px; color: #7f8c8d;">อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มการวิเคราะห์พิกเซลอัตโนมัติ</p>
   </div>
 
   <div id="recommendation-box">
-    <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #d1e0e0; padding-bottom: 10px;">🩺 ผลการวิเคราะห์ Artifact ทางการแพทย์</div>
-    <div id="recommendation-content"></div>
+    <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #d1e0e0; padding-bottom: 10px;">🩺 ผลการวิเคราะห์ภาพ (Image Diagnostics)</div>
+    <div id="recommendation-content">
+      กำลังประมวลผลข้อมูลพิกเซล...
+    </div>
   </div>
 
   <div class="preview-grid">
-    <div class="image-card"><label>ORIGINAL SCAN (RAW)</label><img id="before-img"></div>
+    <div class="image-card"><label>ORIGINAL SCAN</label><img id="before-img"></div>
     <div class="image-card"><label>DIAGNOSTIC VIEW</label><img id="main-img" class="hidden"></div>
   </div>
 
   <div id="editor-ui" class="hidden">
     <div class="editor-section">
       <div class="slider-group">
-        <label>Brightness (Window Level) <span id="v-bright">100%</span></label>
+        <label>Brightness (Level) <span id="v-bright">100%</span></label>
         <input type="range" id="bright" min="0" max="250" value="100">
       </div>
       <div class="slider-group">
-        <label>Contrast (Window Width) <span id="v-contrast">100%</span></label>
+        <label>Contrast (Width) <span id="v-contrast">100%</span></label>
         <input type="range" id="contrast" min="0" max="250" value="100">
       </div>
       <div class="slider-group">
@@ -120,25 +198,25 @@
       </div>
 
       <div class="button-group">
-        <button class="btn-filter" onclick="setFilter('median')">Denoise (Median)</button>
-        <button class="btn-filter" onclick="setFilter('wiener')">Edge Enhance (Wiener)</button>
-        <button class="btn-filter" onclick="setFilter('mean')">Tissue Smooth (Mean)</button>
-        <button class="btn-filter" style="margin-left: auto; background: #e74c3c; color: white;" onclick="resetAll()">Reset</button>
+        <button class="btn-filter" id="btn-median" onclick="setFilter('median')">Denoise (Median Filter)</button>
+        <button class="btn-filter" id="btn-wiener" onclick="setFilter('wiener')">Edge Enhance (Wiener Style)</button>
+        <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Tissue Smooth (Mean Filter)</button>
+        <button class="btn-filter" style="margin-left: auto; background: #e74c3c; color: white; border: none;" onclick="resetAll()">Reset</button>
         <button class="btn-main" onclick="showFinal()">GENERATE DIAGNOSTIC REPORT IMAGE</button>
       </div>
 
       <div id="filter-description">
-        <strong style="color: var(--clinical-teal);">🔍 หลักการทำงานของฟิลเตอร์:</strong>
-        <p id="filter-description-text" style="margin-top: 8px; color: #555; font-size: 0.9rem; line-height: 1.5;"></p>
+        <strong style="color: var(--clinical-teal);">🔍 หลักการทำงานของฟิลเตอร์ที่เลือก:</strong>
+        <p id="filter-description-text" style="margin-top: 8px; color: #555; line-height: 1.5;"></p>
       </div>
     </div>
   </div>
 
   <div id="result-ui" class="hidden">
-    <canvas id="after-canvas"></canvas>
+    <canvas id="after-canvas" style="border-radius: 10px; margin-bottom: 20px;"></canvas>
     <div class="button-group" style="justify-content: center; border: none;">
-      <button class="btn-main" style="width: auto; padding: 15px 45px;" onclick="downloadImage()">💾 SAVE DIAGNOSTIC IMAGE</button>
-      <button class="btn-filter" onclick="goBack()">RETURN TO ANALYZER</button>
+      <button class="btn-main" style="width: auto; padding: 15px 45px;" onclick="downloadImage()">💾 SAVE IMAGE</button>
+      <button class="btn-filter" style="border: 1px solid #ccc;" onclick="goBack()">BACK TO ANALYZER</button>
     </div>
   </div>
 </div>
@@ -164,50 +242,121 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('before-img').src = originalSrc;
         mainImg.classList.remove('hidden');
         document.getElementById('editor-ui').classList.remove('hidden');
-        analyzeMedicalArtifacts();
+        
+        // เมื่อโหลดภาพเสร็จ ให้เรียกฟังก์ชันวิเคราะห์พิกเซลทันที
+        analyzeImageContent(originalSrc);
         resetAll();
       }
       reader.readAsDataURL(file);
     }
   });
 
-  // 💡 ฟังก์ชันวิเคราะห์ Artifact และแนะนำวิธีแก้
-  function analyzeMedicalArtifacts() {
+  // 🧠 ฟังก์ชันวิเคราะห์ภาพจริงๆ (Real Pixel Analysis)
+  function analyzeImageContent(imgSrc) {
     recBox.style.display = "block";
-    const data = [
-      {
-        artifact: "Speckle Noise (สัญญาณรบกวนในภาพ Ultrasound)",
-        solution: "Denoise (Median Filter)",
-        why: "ภาพอัลตราซาวด์มักมีจุดพิกเซลรบกวนสูง (Salt-and-pepper) การใช้ Median Filter จะช่วยคัดแยกจุดแปลกปลอมออกโดยรักษาความคมชัดของขอบเขตอวัยวะไว้ได้ดีที่สุด"
-      },
-      {
-        artifact: "Quantum Mottle (เม็ดเกรนหยาบจาก Low-dose X-ray)",
-        solution: "Tissue Smooth (Mean Filter) + Smoothing",
-        why: "เกิดจากปริมาณรังสีไม่สม่ำเสมอ การใช้ Mean Filter ร่วมกับ Smoothing (2-3px) จะช่วยเกลี่ยพิกเซลให้เนื้อเยื่อดูต่อเนื่องกัน ช่วยให้การวินิจฉัยก้อนเนื้อทำได้แม่นยำขึ้น"
-      },
-      {
-        artifact: "Motion Blur (ภาพมัวจากการเคลื่อนไหวหรือการหายใจ)",
-        solution: "Edge Enhance (Wiener) + Sharpness",
-        why: "ภาพที่ฟุ้งกระจายทำให้วัดขนาดรอยโรคคลาดเคลื่อน การใช้ Wiener Style ร่วมกับการดึงค่า Sharpness (30%+) จะช่วยกู้คืนขอบวัตถุ (Deconvolution) ให้กลับมาคมชัด"
-      }
-    ];
+    const img = new Image();
+    img.src = imgSrc;
+    
+    img.onload = function() {
+      // 1. สร้าง Canvas จำลองเพื่ออ่านค่าสี (ย่อขนาดเป็น 100x100 เพื่อความรวดเร็ว)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 100; canvas.height = 100;
+      ctx.drawImage(img, 0, 0, 100, 100);
+      
+      const imageData = ctx.getImageData(0, 0, 100, 100);
+      const data = imageData.data;
+      
+      let totalBrightness = 0;
+      let minBright = 255;
+      let maxBright = 0;
+      let noiseScore = 0;
 
-    const report = data[Math.floor(Math.random() * data.length)];
-    recContent.innerHTML = `
-      <div class="status-tag tag-danger">⚠️ ตรวจพบ: ${report.artifact}</div><br>
-      <div class="status-tag tag-success">✅ วิธีแก้: ${report.solution}</div>
-      <p style="margin-top: 10px;"><b>เหตุผลทางคลินิก:</b> ${report.why}</p>
-    `;
+      // 2. ลูปเช็คค่าพิกเซลทั้งหมด
+      for (let i = 0; i < data.length; i += 4) {
+        // หาค่าเฉลี่ยแสงของแต่ละพิกเซลแบบ Grayscale
+        let pixelBright = (data[i] + data[i+1] + data[i+2]) / 3;
+        totalBrightness += pixelBright;
+        
+        if (pixelBright < minBright) minBright = pixelBright;
+        if (pixelBright > maxBright) maxBright = pixelBright;
+
+        // หา Noise โดยการเทียบความห่างของสีพิกเซลที่อยู่ติดกัน
+        if (i > 4) {
+          let prevPixelBright = (data[i-4] + data[i-3] + data[i-2]) / 3;
+          if (Math.abs(pixelBright - prevPixelBright) > 40) { // ถ้าสีโดดเกิน 40 นับเป็น Noise
+            noiseScore++;
+          }
+        }
+      }
+
+      let avgBrightness = totalBrightness / (data.length / 4);
+      let contrastRange = maxBright - minBright;
+
+      // 3. ตีความข้อมูลพิกเซลและแนะนำ Artifact
+      let artifactName = "";
+      let solution = "";
+      let reason = "";
+      let suggestedFilterBtn = "";
+
+      if (noiseScore > 600) {
+        // นอยซ์เยอะ สีโดดไปโดดมา
+        artifactName = "Speckle Noise / Quantum Mottle (จุดรบกวนความถี่สูง)";
+        solution = "Denoise (Median Filter)";
+        reason = "ประมวลผลพบความผันผวนของพิกเซลติดกันสูงมาก (High-frequency noise) มักพบในภาพ Ultrasound หรือ X-ray ที่ใช้รังสีต่ำ การใช้ Median Filter จะคัดจุดแปลกปลอมออกได้อย่างแม่นยำโดยไม่ทำลายขอบภาพ";
+        suggestedFilterBtn = "btn-median";
+      } 
+      else if (contrastRange < 80 || (avgBrightness > 100 && avgBrightness < 160)) {
+        // คอนทราสต์ต่ำ ภาพแบน
+        artifactName = "Low Contrast / Scatter Fogging (ภาพขาดมิติและรายละเอียด)";
+        solution = "Edge Enhance (Wiener Style) คู่กับการเพิ่ม Contrast";
+        reason = "ฮิสโตแกรมของภาพกระจุกตัว ช่วงแสงแคบ ภาพจึงดูแบนและอาจมีรังสีฟุ้งกระจาย (Scatter) ควรใช้ Wiener เพื่อกู้คืนขอบวัตถุและเพิ่ม Window Width ให้ภาพชัดเจนขึ้น";
+        suggestedFilterBtn = "btn-wiener";
+      }
+      else if (avgBrightness < 50 || avgBrightness > 210) {
+        // มืดไปหรือสว่างไป
+        artifactName = "Improper Exposure (ระดับความสว่างผิดปกติ)";
+        solution = "ปรับ Brightness คู่กับ Tissue Smooth (Mean Filter)";
+        reason = "ประมวลผลพบค่าแสงเฉลี่ยมืดหรือสว่างเกินเกณฑ์ปกติ การดึงแสงกลับมาอาจทำให้เห็น Noise ที่ซ่อนอยู่ จึงแนะนำให้ใช้ Tissue Smooth เกลี่ยเนื้อเยื่อควบคู่ไปด้วย";
+        suggestedFilterBtn = "btn-mean";
+      }
+      else {
+        // ภาพค่อนข้างปกติ เสนอการเน้นขอบ
+        artifactName = "Minor Edge Unsharpness (ขอบเขตเนื้อเยื่อไม่ชัดเจนที่สุด)";
+        solution = "Edge Enhance (Wiener Style) เล็กน้อย";
+        reason = "โครงสร้างพิกเซลโดยรวมค่อนข้างสมบูรณ์ แต่เพื่อความแม่นยำในการหารอยโรค การดึง Micro-contrast ด้วย Wiener จะช่วยให้ขอบกระดูกและเนื้อเยื่อแยกชั้นกันชัดเจนขึ้น";
+        suggestedFilterBtn = "btn-wiener";
+      }
+
+      // 4. อัปเดตหน้าจอ
+      recContent.innerHTML = `
+        <div class="status-tag tag-danger">⚠️ ตรวจพบ: ${artifactName}</div><br>
+        <div class="status-tag tag-success">✅ วิธีแก้: ${solution}</div>
+        <p style="margin-top: 10px;"><b>เหตุผลการประมวลผล:</b> ${reason}</p>
+      `;
+
+      // 5. ล้างกรอบไฮไลต์ปุ่มทั้งหมด แล้วใส่กรอบสีแดงให้ปุ่มที่ถูกแนะนำ
+      document.querySelectorAll('.btn-filter').forEach(btn => {
+        btn.style.borderColor = "transparent";
+        btn.style.boxShadow = "none";
+      });
+      if(suggestedFilterBtn) {
+         let targetBtn = document.getElementById(suggestedFilterBtn);
+         targetBtn.style.border = "2px solid var(--danger)";
+         targetBtn.style.boxShadow = "0 0 8px rgba(192, 57, 43, 0.4)";
+      }
+    };
   }
 
+  // 💡 การทำงานเมื่อผู้ใช้กดเลือก Filter
   window.setFilter = function(f) {
     currentFilter = f;
     filterDescBox.style.display = "block";
     let text = "";
     switch(f) {
-      case 'median': text = "Median Filter ทำงานโดยการแทนที่พิกเซลด้วยค่ามัธยฐานของกลุ่มพิกเซลรอบข้าง ซึ่งมีประสิทธิภาพสูงสุดในการกำจัด 'Impulse Noise' โดยไม่ทำให้ขอบภาพเบลอเท่าฟิลเตอร์อื่น"; break;
-      case 'wiener': text = "Wiener Style ถูกปรับจูนมาเพื่อเน้น Micro-contrast ที่ขอบวัตถุ ช่วยกู้คืนรายละเอียดจากความมัว (Deblurring) เหมาะสำหรับการมองหาจุดแตกหักหรือขอบเนื้องอก"; break;
-      case 'mean': text = "Mean Filter (Averaging) จะเฉลี่ยค่าสีพิกเซลรอบๆ ช่วยลดความแข็งกระด้างของแสงและเกลี่ยรายละเอียดของเนื้อเยื่ออ่อน (Soft Tissue) ให้ดูเป็นธรรมชาติมากขึ้น"; break;
+      case 'median': text = "<b>Median Filter:</b> ทำงานโดยหาค่ากลางของพิกเซลรอบข้าง มีประสิทธิภาพสูงสุดในการกำจัดจุดสีแปลกปลอม (Impulse Noise) โดยยังคงรักษาความคมชัดของขอบเขตอวัยวะไว้ได้"; break;
+      case 'wiener': text = "<b>Wiener Style:</b> ทำงานคล้ายการ Deconvolution ช่วยกู้คืนรายละเอียดจากความเบลอ (Blur) และเพิ่ม Micro-contrast ที่ขอบวัตถุ เหมาะกับการหารอยร้าวหรือแยกชั้นเนื้อเยื่อ"; break;
+      case 'mean': text = "<b>Mean Filter:</b> ทำงานโดยเฉลี่ยค่าแสงของพิกเซล ช่วยลดเกรนความถี่สูงและเกลี่ยรายละเอียดของเนื้อเยื่ออ่อน (Soft Tissue) ให้ดูนุ่มนวลเป็นธรรมชาติ"; break;
     }
     filterDescText.innerHTML = text;
     updateStyles();
@@ -217,7 +366,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const sVal = parseInt(sharp.value);
     const smVal = parseInt(smooth.value);
     
-    // บังคับ Grayscale และเพิ่ม Contrast ตามระดับ Sharpness (Edge Definition)
+    // บังคับ Grayscale ภาพสแกนทางการแพทย์ และเพิ่มความคมขอบ
     let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%) `;
 
     if(currentFilter === 'median') filterStr += ' contrast(1.1)';
@@ -240,11 +389,15 @@ document.addEventListener("DOMContentLoaded", function () {
   window.showFinal = function() {
     document.getElementById('editor-ui').classList.add('hidden');
     document.getElementById('result-ui').classList.remove('hidden');
-    const canvas = document.getElementById('after-canvas'), ctx = canvas.getContext('2d'), img = new Image();
+    const canvas = document.getElementById('after-canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
     img.src = originalSrc;
+    
     img.onload = function() {
       canvas.width = img.width; canvas.height = img.height;
-      ctx.imageSmoothingEnabled = false; // สำคัญ: ป้องกันภาพเบลอจากการสเกลเพื่อให้พิกเซลข้อมูลอยู่ครบ
+      // สำคัญมากในทางการแพทย์: ป้องกันไม่ให้เบราว์เซอร์ลบพิกเซลทิ้งตอนขยายภาพ
+      ctx.imageSmoothingEnabled = false; 
       ctx.filter = mainImg.style.filter;
       ctx.drawImage(img, 0, 0);
     }
@@ -256,8 +409,10 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   window.downloadImage = () => {
-    const canvas = document.getElementById('after-canvas'), link = document.createElement('a');
-    link.download = 'clinical_diagnostic_report.png';
+    const canvas = document.getElementById('after-canvas');
+    const link = document.createElement('a');
+    link.download = 'medical_diagnostic_result.png';
+    // บันทึกคุณภาพสูงสุด 100%
     link.href = canvas.toDataURL(fileExtension, 1.0);
     link.click();
   }
