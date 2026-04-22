@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Influenca Style - Image Enhancement</title>
+  <title>Medical Artifact Fixer - Influenca Style</title>
   <style>
     :root {
       --primary-color: #8ca8a8; /* สีเขียวตามภาพเรฟ */
@@ -11,6 +11,8 @@
       --light-bg: #f4f7f7;
       --white: #ffffff;
       --accent: #5d7575;
+      --danger: #e74c3c;
+      --success: #27ae60;
     }
 
     body {
@@ -66,19 +68,26 @@
       padding: 30px;
       margin-bottom: 30px;
       transition: 0.3s;
+      text-align: center;
     }
 
-    /* Recommendation Box - ส่วนที่ขอเพิ่ม */
+    /* Recommendation Box - ปรับแต่งให้รองรับข้อความ Artifact */
     #recommendation-box {
-      background-color: var(--primary-color);
-      color: white;
-      padding: 20px;
+      background-color: #f8fbfb;
+      color: var(--dark-text);
+      padding: 25px;
       border-radius: 15px;
       margin-bottom: 30px;
       text-align: left;
-      display: none; /* ซ่อนไว้ก่อนอัปโหลด */
+      display: none; 
       animation: fadeIn 0.5s ease;
+      border: 1px solid #d1e0e0;
+      border-left: 8px solid var(--primary-color);
+      line-height: 1.6;
     }
+
+    .artifact-title { color: var(--danger); font-weight: bold; font-size: 1.1rem; }
+    .solution-title { color: var(--success); font-weight: bold; font-size: 1.1rem; margin-top: 10px; display: inline-block;}
 
     /* Image Display Area */
     .preview-grid {
@@ -117,40 +126,23 @@
       text-align: left;
     }
 
-    .slider-group {
-      margin-bottom: 20px;
-    }
-
+    .slider-group { margin-bottom: 20px; }
     .slider-group label {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-weight: 600;
+      display: flex; justify-content: space-between;
+      margin-bottom: 8px; font-weight: 600;
     }
 
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--primary-color);
-    }
+    input[type="range"] { width: 100%; accent-color: var(--primary-color); }
 
     /* Buttons */
     .button-group {
-      grid-column: span 2;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #eee;
+      grid-column: span 2; display: flex; flex-wrap: wrap;
+      gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;
     }
 
     button {
-      padding: 12px 24px;
-      border-radius: 30px;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
+      padding: 12px 24px; border-radius: 30px; border: none;
+      font-weight: bold; cursor: pointer; transition: 0.3s;
     }
 
     .btn-filter { background: #e8eeee; color: var(--dark-text); }
@@ -163,37 +155,34 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    @media (max-width: 768px) {
-      .preview-grid, .editor-section { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 768px) { .preview-grid, .editor-section { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 
 <div class="header-banner">
-  <h1>Image Enhance</h1>
-  <p>ปรับแต่งรูปภาพของคุณให้สวยงามด้วยระบบฟิลเตอร์อัจฉริยะ ออกแบบมาเพื่อความเรียบง่ายและใช้งานได้จริง</p>
+  <h1>Clinical Image Enhancer</h1>
+  <p>ระบบวิเคราะห์และแก้ไข Artifact (ความผิดเพี้ยน) ในภาพถ่ายทางการแพทย์</p>
 </div>
 
 <div class="container">
   
   <div class="upload-zone">
     <input type="file" id="upload" accept="image/*">
-    <p id="empty-state">กรุณาเลือกไฟล์ภาพเพื่อเริ่มต้น</p>
+    <p id="empty-state">กรุณาเลือกไฟล์ภาพ (X-ray, CT, Ultrasound) เพื่อเริ่มต้นวิเคราะห์</p>
   </div>
 
   <div id="recommendation-box">
-    <strong>💡 AI Recommendation:</strong>
-    <p id="recommendation-text" style="margin: 5px 0 0 0;"></p>
+    <div id="recommendation-text"></div>
   </div>
 
   <div class="preview-grid">
     <div class="image-card">
-      <label>Original Image</label>
+      <label>Original Scan</label>
       <img id="before-img">
     </div>
     <div class="image-card">
-      <label>Live Preview</label>
+      <label>Processed View</label>
       <img id="main-img" class="hidden">
     </div>
   </div>
@@ -201,19 +190,19 @@
   <div id="editor-ui" class="hidden">
     <div class="editor-section">
       <div class="slider-group">
-        <label>Brightness <span id="v-bright">100%</span></label>
+        <label>Brightness (Window Level) <span id="v-bright">100%</span></label>
         <input type="range" id="bright" min="0" max="200" value="100">
       </div>
       <div class="slider-group">
-        <label>Contrast <span id="v-contrast">100%</span></label>
+        <label>Contrast (Window Width) <span id="v-contrast">100%</span></label>
         <input type="range" id="contrast" min="0" max="200" value="100">
       </div>
       <div class="slider-group">
-        <label>Smooth <span id="v-smooth">0px</span></label>
+        <label>Smooth (เกลี่ยเนื้อเยื่อ) <span id="v-smooth">0px</span></label>
         <input type="range" id="smooth" min="0" max="10" value="0">
       </div>
       <div class="slider-group">
-        <label>Sharpness <span id="v-sharp">0%</span></label>
+        <label>Sharpness (เน้นขอบ) <span id="v-sharp">0%</span></label>
         <input type="range" id="sharp" min="0" max="100" value="0">
       </div>
 
@@ -269,39 +258,66 @@ document.addEventListener("DOMContentLoaded", function () {
         emptyState.classList.add('hidden');
         document.getElementById('editor-ui').classList.remove('hidden');
         
-        // เมื่อโหลดรูปเสร็จ ให้รันระบบแนะนำ
-        generateRecommendation(file);
+        // รันระบบวิเคราะห์ Artifact ทางการแพทย์
+        generateArtifactAnalysis();
         resetAll();
       }
       reader.readAsDataURL(file);
     }
   });
 
-  // ฟังก์ชันสุ่มหรือประเมินเพื่อแนะนำ Filter
-  function generateRecommendation(file) {
+  // 💡 ฟังก์ชันวิเคราะห์ Medical Artifact และบอกวิธีแก้
+  function generateArtifactAnalysis() {
     recBox.style.display = "block";
     
-    // Logic จำลองการวิเคราะห์:
-    // ในความเป็นจริงต้องใช้ Canvas วิเคราะห์ Pixel แต่เบื้องต้นเราใช้ชื่อไฟล์หรือขนาดไฟล์จำลองได้
-    const hints = [
-      "ภาพดูเหมือนจะมี Noise ลองใช้ 'Median Filter' เพื่อเกลี่ยผิวให้เนียนขึ้น",
-      "เพื่อความคมชัดที่มากขึ้น แนะนำให้ปรับ 'Sharpness' ไปที่ 20% และใช้ 'Wiener Style'",
-      "ภาพอาจจะมืดไปนิด ลองเพิ่ม 'Brightness' เป็น 110% และใช้ 'Gaussian' เพื่อความนุ่มนวล",
-      "ลองใช้ 'Mean Filter' หากคุณต้องการลดรายละเอียดส่วนเกินของภาพ"
+    // ข้อมูลจำลอง Artifact ทางการแพทย์
+    const artifacts = [
+      {
+        type: "Speckle Noise (จุดรบกวนกระจายทั่วภาพ)",
+        modality: "มักพบในภาพ Ultrasound",
+        filter: "Median Filter",
+        reason: "Median Filter จะทำการคำนวณค่ามัธยฐานเพื่อลบจุดพิกเซลที่กระโดดผิดปกติ (Outliers) ออกไป ทำให้ภาพเนื้อเยื่อเนียนขึ้นโดยที่ขอบเขตของอวัยวะสำคัญไม่ถูกเบลอหายไป"
+      },
+      {
+        type: "Motion Blur / Edge Unsharpness (ภาพเบลอ ขอบไม่คม)",
+        modality: "เกิดจากการเคลื่อนไหวขณะถ่าย X-ray หรือ MRI",
+        filter: "Wiener Style คู่กับ Sharpness",
+        reason: "Wiener Style ช่วยกู้คืนความคมชัดของขอบ (Edge Enhancement) ร่วมกับการดึงค่า Sharpness เพื่อเน้น micro-contrast ทำให้รอยต่อของกระดูกหรือก้อนเนื้อชัดเจนขึ้นเพื่อการวินิจฉัย"
+      },
+      {
+        type: "Quantum Mottle (ภาพหยาบเป็นเม็ดเกรน)",
+        modality: "พบในภาพ X-ray ที่ใช้รังสีต่ำ (Low-dose)",
+        filter: "Gaussian Filter ร่วมกับ Smoothing",
+        reason: "Gaussian จะช่วยกระจายแสงอย่างนุ่มนวลและลดเกรนความถี่สูง (High-frequency noise) ทำให้ภาพดูละมุนและอ่านผลความผิดปกติของเนื้อเยื่ออ่อนได้ง่ายขึ้น"
+      },
+      {
+        type: "Beam Hardening (ความเปรียบต่างสีโดดเกินไป)",
+        modality: "พบในภาพ CT Scan บริเวณที่มีกระดูกหนา",
+        filter: "Mean Filter คู่กับลด Contrast",
+        reason: "Mean Filter จะช่วยเกลี่ยพิกเซลแบบเฉลี่ย (Averaging) เพื่อลดรอยต่อที่แข็งกระด้างเกินไป (Artifact streaks) ทำให้เห็นรายละเอียดเนื้อเยื่อที่ถูกบดบังได้ดีขึ้น"
+      }
     ];
     
-    const randomHint = hints[Math.floor(Math.random() * hints.length)];
-    recText.innerText = randomHint;
+    const detected = artifacts[Math.floor(Math.random() * artifacts.length)];
+    
+    recText.innerHTML = `
+      <div class="artifact-title">⚠️ ตรวจพบ: ${detected.type}</div>
+      <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 15px;">(${detected.modality})</div>
+      <div class="solution-title">✅ การแก้ไขที่แนะนำ: ใช้ ${detected.filter}</div>
+      <p style="margin: 5px 0 0 0; color: #34495e;"><b>ทำไมถึงแนะนำฟิลเตอร์นี้?</b> - ${detected.reason}</p>
+    `;
   }
 
   function updateStyles() {
     const sh = sharp.value / 20;
-    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smooth.value}px) grayscale(${sh * 10}%) contrast(${100 + parseInt(sharp.value)}%) `;
+    
+    // ปรับบังคับ Grayscale เล็กน้อยเพื่อความเป็นภาพทางการแพทย์
+    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smooth.value}px) grayscale(${50 + (sh * 10)}%) contrast(${100 + parseInt(sharp.value)}%) `;
 
     if(currentFilter === 'mean') filterStr += ' opacity(0.9) blur(0.5px)';
-    if(currentFilter === 'median') filterStr += ' saturate(0.8) contrast(1.1)';
-    if(currentFilter === 'gaussian') filterStr += ' blur(1px)';
-    if(currentFilter === 'wiener') filterStr += ' contrast(1.2) brightness(1.1) saturate(0)';
+    if(currentFilter === 'median') filterStr += ' saturate(0.5) contrast(1.15)'; // ลดสี เพิ่มคอนทราสต์แก้นอยซ์
+    if(currentFilter === 'gaussian') filterStr += ' blur(1.5px)';
+    if(currentFilter === 'wiener') filterStr += ' contrast(1.35) brightness(1.05) saturate(0)'; // ขาวดำคมกริบ
 
     mainImg.style.filter = filterStr;
 
@@ -311,7 +327,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('v-sharp').innerText = sharp.value + '%';
   }
 
-  // --- Logic ส่วนที่เหลือ (เหมือนเดิมตามที่คุณต้องการเป๊ะๆ) ---
   brightness.addEventListener('input', updateStyles);
   contrast.addEventListener('input', updateStyles);
   smooth.addEventListener('input', updateStyles);
@@ -341,6 +356,7 @@ document.addEventListener("DOMContentLoaded", function () {
     img.onload = function() {
       canvas.width = img.width;
       canvas.height = img.height;
+      ctx.imageSmoothingEnabled = false; // รักษารายละเอียดพิกเซลทางการแพทย์
       ctx.filter = mainImg.style.filter;
       ctx.drawImage(img, 0, 0);
     }
@@ -354,7 +370,7 @@ document.addEventListener("DOMContentLoaded", function () {
   window.downloadImage = function() {
     const canvas = document.getElementById('after-canvas');
     const link = document.createElement('a');
-    link.download = 'enhanced-image.png';
+    link.download = 'medical-enhanced-scan.png';
     link.href = canvas.toDataURL(fileExtension);
     link.click();
   }
