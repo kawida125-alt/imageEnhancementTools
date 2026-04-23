@@ -312,7 +312,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
 
-  // 🧠 วิเคราะห์พิกเซลภาพ
+  // 🧠 วิเคราะห์พิกเซลภาพ (อัปเดตตามหลัก Radiography: Underexposed = ขาว/สว่าง/Noise, Overexposed = ดำ/มืด)
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     
@@ -321,48 +321,75 @@ document.addEventListener("DOMContentLoaded", function () {
     img.onload = function() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = 100; canvas.height = 100;
-      ctx.drawImage(img, 0, 0, 100, 100);
       
-      const pixelData = ctx.getImageData(0, 0, 100, 100).data;
-      let totalGray = 0; let grayValues = [];
+      // สุ่มตัวอย่างภาพโดยรักษาสัดส่วน
+      const scale = Math.min(300 / img.width, 300 / img.height);
+      canvas.width = img.width * scale; 
+      canvas.height = img.height * scale;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      
+      let validPixels = 0; 
+      let totalGray = 0;
+      let overexposedPixels = 0;  // พิกเซลสว่างจ้า (รังสีไปไม่ถึง = Underexposed ทางการแพทย์)
+      let underexposedPixels = 0; // พิกเซลจมมืด (รังสีทะลุมาก = Overexposed ทางการแพทย์)
       let noiseCount = 0;
       
       for (let i = 0; i < pixelData.length; i += 4) {
         let grayValue = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
-        totalGray += grayValue; grayValues.push(grayValue);
         
+        // เช็คความต่างของพิกเซลติดกันเพื่อหา Noise
         if (i > 4) {
           let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
           if (Math.abs(grayValue - prevGray) > 40) noiseCount++;
         }
+
+        // ตัดฉากหลังทิ้ง (พิกเซลที่ดำเกินไป สมมติว่าค่าต่ำกว่า 15 คือฉากหลัง)
+        if (grayValue > 15) {
+            validPixels++;
+            totalGray += grayValue;
+
+            if (grayValue > 220) overexposedPixels++;
+            if (grayValue <= 60) underexposedPixels++;
+        }
       }
       
-      const meanBrightness = totalGray / grayValues.length;
-      let sumSquaredDiff = 0;
-      for (let i = 0; i < grayValues.length; i++) { sumSquaredDiff += Math.pow(grayValues[i] - meanBrightness, 2); }
-      const contrastSD = Math.sqrt(sumSquaredDiff / grayValues.length);
-      
+      if (validPixels === 0) validPixels = 1; 
+
+      const tissueBrightness = totalGray / validPixels;
+      const overRatio = (overexposedPixels / validPixels) * 100;
+      const underRatio = (underexposedPixels / validPixels) * 100;
+      const noiseRatio = (noiseCount / (canvas.width * canvas.height)) * 100;
+
       let advice = ""; let statusClass = ""; let statusText = ""; let focusBtn = "";
 
-      if (meanBrightness >= 80 && meanBrightness <= 170 && contrastSD > 40 && noiseCount < 800) {
-        statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure)"; statusClass = "text-success";
-        advice = "ค่าความสว่างและคอนทราสต์ของภาพอยู่ในเกณฑ์ที่ดีมากครับ ถือว่า<b>ปกติดี</b> แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย (ประมาณ 20%)</b> เพื่อเน้นขอบโครงสร้างให้คมชัดยิ่งขึ้น";
-      } else if (noiseCount >= 800) {
-        statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise / Speckle)"; statusClass = "text-danger";
-        advice = "ตรวจพบจุดรบกวนสูง (อาจเป็นภาพ Ultrasound หรือใช้รังสีต่ำ) แนะนำให้กดใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดเกรนออกโดยรักษาความคมของภาพไว้";
+      // เรียงลำดับเงื่อนไขตามหลัก Radiography
+      if (overRatio > 25 || (tissueBrightness > 160 && noiseRatio > 5)) {
+        // ภาพสว่างไป มีสัดส่วนพิกเซลขาวเยอะ + อาจมี Noise แทรก (แสดงว่ารังสีไม่พอไปเผาฟิล์ม/เซนเซอร์)
+        statusText = "⚠️ ภาพ Underexposed (ปริมาณรังสีน้อยไป)"; 
+        statusClass = "text-danger";
+        advice = "ภาพดูสว่างเกินไปและอาจเกิด Quantum Mottle (Noise) เนื่องจากรังสีไม่พอ แนะนำให้เพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Denoise (Median)</b> เพื่อลบเม็ดเกรนรบกวน";
         focusBtn = "btn-median";
-      } else if (contrastSD <= 40) {
-        statusText = "💡 ภาพแบน ขาดความเปรียบต่าง (Low Contrast)"; statusClass = "text-info";
-        advice = "ภาพมีฮิสโตแกรมที่แคบ (เทากลืนกัน) ทำให้แยกแยะเนื้อเยื่อยาก แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม Contrast เพื่อดึงมิติภาพออกมาครับ";
+      } else if (underRatio > 25 || tissueBrightness < 80) {
+        // ภาพมืดทึบ มีสัดส่วนพิกเซลดำเยอะ (แสดงว่ารังสีทะลุมากเกินไปจน Burn out)
+        statusText = "⚠️ ภาพ Overexposed (ปริมาณรังสีมากไป)"; 
+        statusClass = "text-danger";
+        advice = "ภาพมืดทึบเกินไป (Burn out) รายละเอียดเนื้อเยื่อหายไปกับสีดำ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อพยายามดึงขอบโครงสร้างกลับมา";
         focusBtn = "btn-wiener";
-      } else if (meanBrightness < 80) {
-        statusText = "⚠️ ภาพมืดเกินไป (Underexposed)"; statusClass = "text-danger";
-        advice = "รังสีอาจทะลุผ่านวัตถุน้อย ทำให้ภาพค่อนข้างมืด แนะนำให้เพิ่ม <b>Brightness</b> ขึ้น และใช้ <b>Tissue Smooth (Mean)</b> เพื่อเกลี่ยพิกเซลที่อาจหยาบจากการดึงแสง";
-        focusBtn = "btn-mean";
+      } else if (noiseRatio > 10) {
+        statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise / Quantum Mottle)"; 
+        statusClass = "text-info";
+        advice = "ฮิสโตแกรมความสว่างปกติ แต่พบจุดรบกวนสูง แนะนำให้ใช้ <b>Denoise (Median)</b> ครับ";
+        focusBtn = "btn-median";
+      } else if (overRatio <= 25 && underRatio <= 25 && tissueBrightness >= 80 && tissueBrightness <= 160) {
+        statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure)"; 
+        statusClass = "text-success";
+        advice = "ปริมาณรังสีและการกระจายตัวของแสงอยู่ในเกณฑ์ดี <b>สามารถใช้เพื่อการวินิจฉัยได้ทันที</b> หากต้องการความคมชัดเพิ่ม แนะนำให้ปรับ <b>Sharpness (ประมาณ 20%)</b>";
       } else {
-        statusText = "⚠️ ภาพสว่างจัด (Overexposed)"; statusClass = "text-danger";
-        advice = "ภาพสว่างจนรายละเอียดบางส่วนกลืนกัน ให้ลองลด <b>Brightness</b> ลง และใช้ <b>Edge Enhance</b> เพื่อพยายามกู้รายละเอียดขอบเขตเนื้อเยื่อกลับมา";
+        statusText = "💡 ภาพขาดความเปรียบต่าง (Low Contrast)"; 
+        statusClass = "text-info";
+        advice = "เฉดสีเทากลืนกันจนแยกแยะเนื้อเยื่อหรืออวัยวะได้ยาก แนะนำให้เพิ่ม <b>Contrast</b> หรือลองใช้ <b>Edge Enhance</b> เพื่อแยกขอบเขตของภาพให้ชัดขึ้นครับ";
         focusBtn = "btn-wiener";
       }
 
