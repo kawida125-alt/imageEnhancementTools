@@ -312,7 +312,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
 
-  // 🧠 วิเคราะห์พิกเซลภาพ (ใช้หลักการของรังสีวิทยาทางการแพทย์)
+  // 🧠 วิเคราะห์พิกเซลภาพ (ใช้หลักการของรังสีวิทยาทางการแพทย์ - แก้ไขสลับ Under/Over ตามหลักฟิสิกส์ X-ray)
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     
@@ -368,7 +368,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (brightRatio > 25 || (tissueBrightness > 160 && noiseRatio > 5)) {
         statusText = "⚠️ ภาพ Underexposed (ปริมาณรังสีน้อยไป)"; 
         statusClass = "text-danger";
-        advice = "ภาพดูสว่างเกินไปและอาจเกิด Quantum Mottle (Noise) เนื่องจากรังสีไม่พอ แนะนำให้เพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Denoise (Median)</b> เพื่อลบเม็ดเกรน";
+        // --- ส่วนที่แก้ไข: ปรับปรุงคำแนะนำให้ลด Brightness ลงควบคู่กับการเพิ่ม Contrast ---
+        advice = "ภาพดูสว่างเกินไปและอาจเกิด Quantum Mottle (Noise) เนื่องจากรังสีไม่พอ แนะนำให้ลด <b>Brightness</b> ลงควบคู่กับการเพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Denoise (Median)</b> เพื่อลบเม็ดเกรน";
         focusBtn = "btn-median";
       } else if (darkRatio > 25 || tissueBrightness < 80) {
         statusText = "⚠️ ภาพ Overexposed (ปริมาณรังสีมากไป)"; 
@@ -511,7 +512,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   window.resetAll = () => { brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; currentFilter = 'none'; filterDescBox.style.display = "none"; updateStyles(); }
   
-  // แก้ไขฟังก์ชันโชว์ภาพตอนประมวลผลเสร็จ ให้ดึงขนาดภาพดั้งเดิม
   window.showFinal = function() { 
     document.getElementById('editor-ui').classList.add('hidden'); 
     document.getElementById('result-ui').classList.remove('hidden'); 
