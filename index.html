@@ -20,6 +20,7 @@
       --white: #ffffff;
       --danger: #d9534f;
       --success: #5cb85c;
+      --warning: #f39c12;
     }
 
     * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -53,101 +54,36 @@
     }
     .btn-start:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 30px rgba(0,0,0,0.3); }
 
-    .features-badge {
-      display: flex;
-      gap: 15px;
-      margin-top: 40px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .badge {
-      background: rgba(255, 255, 255, 0.6);
-      color: var(--secondary);
-      padding: 8px 20px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: bold;
-      border: 1px solid rgba(118, 155, 155, 0.3);
-    }
+    .features-badge { display: flex; gap: 15px; margin-top: 40px; flex-wrap: wrap; justify-content: center; }
+    .badge { background: rgba(255, 255, 255, 0.6); color: var(--secondary); padding: 8px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(118, 155, 155, 0.3); }
 
     /* =========================================
        4. MAIN APP LAYOUT
        ========================================= */
-    #main-app {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      min-height: 100vh;
-      animation: fadeIn 0.5s ease;
-    }
-
-    .header-banner {
-      width: 100%;
-      background-color: transparent;
-      padding: 60px 20px 40px 20px;
-      text-align: center;
-    }
-
-    .header-banner h1 {
-      font-size: 3.5rem;
-      margin: 0 0 10px 0;
-      font-weight: 900;
-      color: var(--accent-dark);
-    }
-
-    .header-banner .wave-line {
-      font-size: 1.5rem;
-      color: var(--primary);
-      letter-spacing: -2px;
-      margin: 5px 0 15px 0;
-      display: block;
-    }
-
+    #main-app { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100vh; animation: fadeIn 0.5s ease; }
+    .header-banner { width: 100%; padding: 60px 20px 40px 20px; text-align: center; }
+    .header-banner h1 { font-size: 3.5rem; margin: 0 0 10px 0; font-weight: 900; color: var(--accent-dark); }
+    .header-banner .wave-line { font-size: 1.5rem; color: var(--primary); letter-spacing: -2px; margin: 5px 0 15px 0; display: block; }
     .header-banner p { color: #666; max-width: 550px; margin: 0 auto; line-height: 1.6; font-size: 1rem; }
-
     .container { max-width: 1000px; width: 90%; margin-bottom: 60px; flex: 1; }
 
     /* =========================================
        5. UPLOAD & RECOMMENDATION
        ========================================= */
-    .upload-zone {
-      background-color: var(--input-bg);
-      padding: 40px;
-      border-radius: 20px;
-      margin-bottom: 40px;
-      text-align: center;
-      border: 2px dashed rgba(74, 99, 99, 0.3);
-      transition: 0.3s;
-    }
-
+    .upload-zone { background-color: var(--input-bg); padding: 40px; border-radius: 20px; margin-bottom: 40px; text-align: center; border: 2px dashed rgba(74, 99, 99, 0.3); transition: 0.3s; }
     .upload-zone:hover { border-color: var(--primary); }
-
     .upload-zone p { color: var(--secondary); font-weight: 700; margin-top: 0; margin-bottom: 20px; }
+    .upload-zone input[type="file"] { background: var(--white); padding: 12px 20px; border-radius: 30px; color: var(--secondary); font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: none; }
 
-    .upload-zone input[type="file"] {
-      background: var(--white); padding: 12px 20px; border-radius: 30px;
-      color: var(--secondary); font-weight: bold; cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: none;
-    }
-
-    #recommendation-box {
-      background-color: var(--primary); color: white; padding: 35px;
-      border-radius: 20px; margin-bottom: 40px; display: none;
-      animation: fadeIn 0.5s ease; box-shadow: 0 10px 20px rgba(118, 155, 155, 0.3);
-    }
-
+    #recommendation-box { background-color: var(--primary); color: white; padding: 35px; border-radius: 20px; margin-bottom: 40px; display: none; animation: fadeIn 0.5s ease; box-shadow: 0 10px 20px rgba(118, 155, 155, 0.3); }
     #recommendation-box h3 { margin: 0 0 15px 0; font-size: 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 10px; }
 
-    /* --- สีป้ายสถานะ (ชัดเจนขึ้น) --- */
-    .status-tag { 
-      display: inline-block; padding: 8px 20px; border-radius: 30px; 
-      font-weight: 900; font-size: 1rem; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
+    /* --- สีป้ายสถานะ --- */
+    .status-tag { display: inline-block; padding: 8px 20px; border-radius: 30px; font-weight: 900; font-size: 1rem; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     .text-danger { background: #fffafa; color: #c0392b; border: 2px solid #e74c3c; }
     .text-success { background: #f2fcf5; color: #145a32; border: 2px solid #27ae60; }
     .text-info { background: #f4f9fd; color: #154360; border: 2px solid #2980b9; }
+    .text-warning { background: #fffdf0; color: #b9770e; border: 2px solid #f1c40f; }
 
     /* =========================================
        6. PREVIEW & EDITOR CARDS
@@ -156,17 +92,7 @@
     .image-card { background: var(--card-bg); border-radius: 20px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
     .image-card label { display: block; padding: 15px; background: var(--white); color: var(--secondary); font-weight: 800; font-size: 0.9rem; text-align: center; border-bottom: 1px solid #f0f0f0; }
     
-    /* แก้ไข CSS ให้ภาพไม่ถูกยืด และคงสัดส่วนเดิม */
-    img, canvas { 
-      max-width: 100%; 
-      width: auto; 
-      height: auto; 
-      max-height: 70vh; 
-      display: block; 
-      margin: 0 auto; 
-      background: #111;
-      object-fit: contain; 
-    }
+    img, canvas { max-width: 100%; width: auto; height: auto; max-height: 70vh; display: block; margin: 0 auto; background: #111; object-fit: contain; }
 
     .editor-section { background: var(--card-bg); padding: 35px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
     .slider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
@@ -185,14 +111,12 @@
     .btn-main:hover { background: #111; transform: translateY(-2px); }
     .btn-reset { background: transparent; color: var(--danger); border: 2px solid var(--danger); }
     .btn-reset:hover { background: var(--danger); color: white; }
-
     #filter-description { background: #fdfdfd; padding: 20px; border-radius: 12px; margin-top: 25px; display: none; text-align: left; border: 1px solid #eee; }
 
     /* =========================================
        8. FOOTER
        ========================================= */
     .footer { width: 100%; background: #4a6363; padding: 40px 20px; text-align: center; color: white; margin-top: auto; }
-
     @media (max-width: 768px) { .preview-grid, .slider-grid { grid-template-columns: 1fr; } .intro-title { font-size: 3rem; } }
   </style>
 </head>
@@ -209,7 +133,7 @@
   
   <div class="features-badge">
     <span class="badge">🩻 รองรับ DICOM (.dcm)</span>
-    <span class="badge">🤖 Pixel Analysis AI</span>
+    <span class="badge">🤖 Noise Classification</span>
     <span class="badge">🔬 Clinical Filters</span>
   </div>
 </div>
@@ -219,7 +143,7 @@
   <div class="header-banner">
     <h1>Image Diagnostics</h1>
     <span class="wave-line">〰〰〰</span>
-    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มต้นการวิเคราะห์โครงสร้างพิกเซล</p>
+    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มต้นการวิเคราะห์พิกเซลและชนิดของ Noise</p>
   </div>
 
   <div class="container">
@@ -231,9 +155,7 @@
 
     <div id="recommendation-box">
       <h3>🩺 Clinical Advice & Diagnostic Plan</h3>
-      <div id="recommendation-content" style="font-size: 1rem; line-height: 1.6;">
-        กำลังวิเคราะห์พิกเซลภาพ...
-      </div>
+      <div id="recommendation-content" style="font-size: 1rem; line-height: 1.6;">กำลังวิเคราะห์พิกเซลภาพ...</div>
     </div>
 
     <div class="preview-grid">
@@ -297,7 +219,6 @@
 </div>
 
 <script>
-// ฟังก์ชันสลับหน้าจอ (Intro -> Main App)
 function startApp() {
   document.getElementById('intro-screen').classList.add('hidden');
   document.getElementById('main-app').classList.remove('hidden');
@@ -312,17 +233,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
 
-  // 🧠 วิเคราะห์พิกเซลภาพ (ใช้หลักการของรังสีวิทยาทางการแพทย์ - แก้ไขสลับ Under/Over ตามหลักฟิสิกส์ X-ray)
+  // 🧠 อัลกอริทึมวิเคราะห์ Noise แบบ 4 Categories
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
-    
     const img = new Image();
     img.src = mainImg.src;
     img.onload = function() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      
-      // สุ่มตัวอย่างภาพที่ขนาดพอเหมาะ เพื่อความแม่นยำโดยรักษาสัดส่วนภาพ
       const scale = Math.min(300 / img.width, 300 / img.height);
       canvas.width = img.width * scale; 
       canvas.height = img.height * scale;
@@ -330,26 +248,29 @@ document.addEventListener("DOMContentLoaded", function () {
       
       const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       
-      let validPixels = 0; // จำนวนพิกเซลที่ไม่ใช่พื้นหลังสีดำ
-      let totalGray = 0;
-      let brightPixels = 0;  // จำนวนพิกเซลที่สว่างจ้า (บ่งบอกถึง Underexposed ใน X-ray)
-      let darkPixels = 0; // จำนวนพิกเซลที่จมมืด (บ่งบอกถึง Overexposed ใน X-ray)
-      let noiseCount = 0;
+      let validPixels = 0, totalGray = 0;
+      let brightPixels = 0, darkPixels = 0; 
+      let generalNoiseCount = 0;
+      let saltPepperCount = 0; // ตัวแปรสำหรับจับ Impulse Noise (S&P)
       
       for (let i = 0; i < pixelData.length; i += 4) {
         let grayValue = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
         
-        // กรองหา Noise จากพิกเซลติดกัน
         if (i > 4) {
           let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
-          if (Math.abs(grayValue - prevGray) > 40) noiseCount++;
+          let diff = Math.abs(grayValue - prevGray);
+          
+          if (diff > 35) generalNoiseCount++;
+
+          // 🔬 ตรวจจับ Salt and Pepper Noise: เจอพิกเซลขาวจ้า/ดำสนิทที่โดดขึ้นมาทันที
+          if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) {
+            saltPepperCount++;
+          }
         }
 
-        // ตัดฉากหลังทิ้ง (พิกเซลที่ดำเกินไป สมมติว่าค่าต่ำกว่า 15 คือฉากหลัง)
-        if (grayValue > 15) {
+        if (grayValue > 15) { // หั่นเอาเฉพาะเนื้อเยื่อ ไม่เอาขอบดำ
             validPixels++;
             totalGray += grayValue;
-
             if (grayValue > 220) brightPixels++;
             if (grayValue <= 60) darkPixels++;
         }
@@ -358,75 +279,79 @@ document.addEventListener("DOMContentLoaded", function () {
       if (validPixels === 0) validPixels = 1; 
 
       const tissueBrightness = totalGray / validPixels;
-      const brightRatio = (brightPixels / validPixels) * 100; // % สว่าง
-      const darkRatio = (darkPixels / validPixels) * 100; // % มืด
-      const noiseRatio = (noiseCount / (canvas.width * canvas.height)) * 100;
+      const brightRatio = (brightPixels / validPixels) * 100;
+      const darkRatio = (darkPixels / validPixels) * 100;
+      const totalArea = canvas.width * canvas.height;
+      const noiseRatio = (generalNoiseCount / totalArea) * 100;
+      const spRatio = (saltPepperCount / totalArea) * 100; // สัดส่วนพิกเซล Salt/Pepper
 
-      let advice = ""; let statusClass = ""; let statusText = ""; let focusBtn = "";
+      let advice = "", statusClass = "", statusText = "", focusBtn = "";
 
-      // เช็คตามหลักการทางการแพทย์ (X-Ray)
-      if (brightRatio > 25 || (tissueBrightness > 160 && noiseRatio > 5)) {
-        statusText = "⚠️ ภาพ Underexposed (ปริมาณรังสีน้อยไป)"; 
+      // 🩺 ลอจิกจำแนก Noise 4 ชนิด
+      if (spRatio > 1.0) {
+        // 1. Salt and Pepper Noise (Impulse Noise)
+        statusText = "⚠️ ตรวจพบ Salt and Pepper Noise (Impulse Noise)"; 
         statusClass = "text-danger";
-        // --- ส่วนที่แก้ไข: ปรับปรุงคำแนะนำให้ลด Brightness ลงควบคู่กับการเพิ่ม Contrast ---
-        advice = "ภาพดูสว่างเกินไปและอาจเกิด Quantum Mottle (Noise) เนื่องจากรังสีไม่พอ แนะนำให้ลด <b>Brightness</b> ลงควบคู่กับการเพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Denoise (Median)</b> เพื่อลบเม็ดเกรน";
+        advice = "พบจุดสีขาวจ้าและดำสนิทกระจัดกระจายแบบสุ่ม (มักเกิดจากจุดบอดของเซ็นเซอร์หรือ Error ในระบบแปลงสัญญาณ) แนะนำให้ใช้ <b>Denoise (Median Filter)</b> อย่างยิ่ง เพราะสามารถตัดพิกเซลที่ค่าโดดผิดปกติออกได้เด็ดขาดโดยไม่ทำลายความคมชัดของขอบกระดูก";
         focusBtn = "btn-median";
+      } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
+        // 2. Quantum Mottle (สัมพันธ์กับภาพที่สว่างไปใน X-ray)
+        statusText = "⚠️ ภาพ Underexposed & ตรวจพบ Quantum Mottle"; 
+        statusClass = "text-danger";
+        advice = "ปริมาณรังสี X-ray ที่ตกกระทบน้อยเกินไป (Photon Starvation) ทำให้ภาพสว่างจ้าและเกิดสัญญานรบกวนแบบเม็ดทราย <b>(Quantum Mottle)</b> แนะนำให้ลด <b>Brightness</b> ลงควบคู่กับการเพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Tissue Smooth (Mean)</b> หรือ <b>Median</b> เพื่อช่วยเกลี่ยให้เกรนดูเนียนตาขึ้น";
+        focusBtn = "btn-mean";
+      } else if (noiseRatio > 12 && tissueBrightness >= 80 && tissueBrightness <= 150) {
+        // 3. Speckle Noise (เกรนสูง แต่สภาพแสงฮิสโตแกรมตรงกลางปกติ มักพบใน Ultrasound)
+        statusText = "⚠️ ตรวจพบ Speckle Noise (Multiplicative Noise)"; 
+        statusClass = "text-warning";
+        advice = "พบรูปแบบเม็ดเกรนที่หนาแน่นและแปรผันตามเนื้อเยื่อ (มักเกิดจากการแทรกสอดของคลื่นในภาพ Ultrasound หรือ OCT) แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> เพื่อลดเกรนเฉพาะจุดพร้อมกับการรักษาความคมชัดของขอบเขตเนื้อเยื่ออ่อนเอาไว้";
+        focusBtn = "btn-wiener";
+      } else if (noiseRatio > 6) {
+        // 4. Gaussian Noise (Noise กระจายตัวทั่วไป แบบสุ่ม)
+        statusText = "⚠️ ตรวจพบ Gaussian Noise (Electronic Noise)"; 
+        statusClass = "text-warning";
+        advice = "พบสัญญาณรบกวนพื้นฐานที่กระจายตัวอิสระทั่วภาพแบบสุ่ม (มักเกิดจากความร้อนสะสมหรือกระแสไฟรบกวนในวงจรอิเล็กทรอนิกส์ของตัวรับภาพ) แนะนำให้ใช้ <b>Tissue Smooth (Mean Filter)</b> เพื่อเกลี่ยค่าเฉลี่ยของพิกเซลรอบข้างให้ภาพมีความสม่ำเสมอมากขึ้น";
+        focusBtn = "btn-mean";
       } else if (darkRatio > 25 || tissueBrightness < 80) {
         statusText = "⚠️ ภาพ Overexposed (ปริมาณรังสีมากไป)"; 
         statusClass = "text-danger";
-        advice = "ภาพมืดทึบเกินไป (Burn out) รายละเอียดเนื้อเยื่อหายไปกับสีดำ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อพยายามดึงขอบโครงสร้างกลับมา";
+        advice = "รังสีทะลุผ่านมากเกินไปจนภาพมืดทึบ (Burn out) รายละเอียดถูกกลืนไปกับพื้นหลังสีดำ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงเส้นขอบกลับมา";
         focusBtn = "btn-wiener";
-      } else if (noiseRatio > 10) {
-        statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise / Speckle)"; 
-        statusClass = "text-danger";
-        advice = "ตรวจพบจุดรบกวนสูง (อาจเป็นภาพ Ultrasound หรือใช้รังสีต่ำ) แนะนำให้กดใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดเกรนออกโดยรักษาความคมของภาพไว้";
-        focusBtn = "btn-median";
       } else if (brightRatio < 5 && darkRatio < 5 && tissueBrightness >= 80 && tissueBrightness <= 160) {
-        statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure)"; statusClass = "text-success";
-        advice = "ค่าความสว่างและคอนทราสต์ของภาพอยู่ในเกณฑ์ที่ดีมากครับ ถือว่า<b>ปกติดี</b> แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย (ประมาณ 20%)</b> เพื่อเน้นขอบโครงสร้างให้คมชัดยิ่งขึ้น";
+        statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure / Low Noise)"; statusClass = "text-success";
+        advice = "การกระจายตัวของรังสีและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน ไม่มี Noise รบกวนอย่างมีนัยสำคัญ แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> เพื่อเน้นรายละเอียดเชิงลึกครับ";
       } else {
         statusText = "💡 ภาพแบน ขาดความเปรียบต่าง (Low Contrast)"; statusClass = "text-info";
-        advice = "ภาพมีฮิสโตแกรมที่แคบ (เทากลืนกัน) ทำให้แยกแยะเนื้อเยื่อยาก แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม Contrast เพื่อดึงมิติภาพออกมาครับ";
+        advice = "ช่วงความกว้างของเฉดสีเทาแคบเกินไป (Washed-out) แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม <b>Contrast (Window Width)</b> เพื่อขยายระยะห่างของเฉดสีและดึงมิติภาพออกมา";
         focusBtn = "btn-wiener";
       }
 
-      recContent.innerHTML = `
-        <div class="status-tag ${statusClass}">${statusText}</div>
-        <p style="margin-bottom:0; color: white;">${advice}</p>
-      `;
-
+      recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
       document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-      if(focusBtn) {
-        const targetBtn = document.getElementById(focusBtn);
-        if(targetBtn) targetBtn.style.border = "2px solid #222";
-      }
+      if(focusBtn) { const targetBtn = document.getElementById(focusBtn); if(targetBtn) targetBtn.style.border = "2px solid #222"; }
     };
   }
 
-  // จัดการอัปโหลดไฟล์รองรับ DICOM
+  // File Handling
   upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
 
     if (file.name.toLowerCase().endsWith('.dcm') || file.type === 'application/dicom') {
       fileExtension = 'image/png';
-      
       const reader = new FileReader();
       reader.onload = function(event) {
         try {
           const arrayBuffer = event.target.result;
           const data = new DataView(arrayBuffer);
           const image = daikon.Series.parseImage(data);
-          
           if (image === null) { alert("ไม่สามารถอ่านข้อมูลภาพจากไฟล์ DICOM นี้ได้"); return; }
-
           const cols = image.getCols();
           const rows = image.getRows();
           const pixels = image.getInterpretedData();
           
           let wc = image.getWindowCenter();
           let ww = image.getWindowWidth();
-          
           if (Array.isArray(wc)) wc = wc[0];
           if (Array.isArray(ww)) ww = ww[0];
           
@@ -436,16 +361,12 @@ document.addEventListener("DOMContentLoaded", function () {
               if (pixels[i] < minP) minP = pixels[i];
               if (pixels[i] > maxP) maxP = pixels[i];
             }
-            ww = maxP - minP;
-            wc = minP + (ww / 2);
+            ww = maxP - minP; wc = minP + (ww / 2);
           }
           
-          let min = wc - (ww / 2);
-          let max = wc + (ww / 2);
-
+          let min = wc - (ww / 2), max = wc + (ww / 2);
           const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = cols;
-          tempCanvas.height = rows;
+          tempCanvas.width = cols; tempCanvas.height = rows;
           const ctx = tempCanvas.getContext('2d');
           const imgData = ctx.createImageData(cols, rows);
           
@@ -455,16 +376,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const idx = i * 4;
             imgData.data[idx] = val; imgData.data[idx+1] = val; imgData.data[idx+2] = val; imgData.data[idx+3] = 255;
           }
-          
           ctx.putImageData(imgData, 0, 0);
           originalSrc = tempCanvas.toDataURL('image/png');
           mainImg.src = originalSrc;
           document.getElementById('before-img').src = originalSrc;
-          mainImg.classList.remove('hidden');
-          document.getElementById('editor-ui').classList.remove('hidden');
-          
-          analyzeDiagnosticImage();
-          resetAll();
+          mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
+          analyzeDiagnosticImage(); resetAll();
         } catch (err) { console.error(err); alert("เกิดข้อผิดพลาดในการประมวลผลไฟล์ DICOM"); }
       };
       reader.readAsArrayBuffer(file);
@@ -475,10 +392,8 @@ document.addEventListener("DOMContentLoaded", function () {
         originalSrc = event.target.result;
         mainImg.src = originalSrc;
         document.getElementById('before-img').src = originalSrc;
-        mainImg.classList.remove('hidden');
-        document.getElementById('editor-ui').classList.remove('hidden');
-        analyzeDiagnosticImage();
-        resetAll();
+        mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
+        analyzeDiagnosticImage(); resetAll();
       }
       reader.readAsDataURL(file);
     }
@@ -488,9 +403,9 @@ document.addEventListener("DOMContentLoaded", function () {
     currentFilter = f; filterDescBox.style.display = "block";
     let text = "";
     switch(f) {
-      case 'median': text = "<b>Median Filter:</b> แทนที่พิกเซลด้วยค่ากลาง ลด 'Impulse Noise' ได้ดีที่สุดโดยไม่ทำให้ขอบภาพเบลอ เหมาะกับภาพ Ultrasound ที่มีเกรนหยาบ"; break;
-      case 'wiener': text = "<b>Wiener Style:</b> เน้นการกู้คืนรายละเอียดขอบภาพที่เสียไป (Deblurring) และเพิ่ม Micro-contrast เหมาะกับการหารอยร้าวเล็กๆ"; break;
-      case 'mean': text = "<b>Mean Filter:</b> เกลี่ยค่าเฉลี่ยของพิกเซลรอบข้าง ลดความกระด้างของแสง เหมาะสำหรับดูขอบเขตภาพรวมของเนื้อเยื่ออ่อน"; break;
+      case 'median': text = "<b>Median Filter:</b> เหมาะกับการกำจัด Salt & Pepper Noise ที่สุด โดยการหาค่ากลางเพื่อลบพิกเซลที่กระโดดผิดปกติ โดยไม่ทำให้ขอบอวัยวะเบลอ"; break;
+      case 'wiener': text = "<b>Wiener Filter (Edge Enhance):</b> เหมาะกับ Speckle Noise (เช่น ภาพอัลตราซาวด์) ช่วยลดเกรนแบบเน้นการกู้คืนรายละเอียดขอบภาพที่เสียไป"; break;
+      case 'mean': text = "<b>Mean Filter:</b> เหมาะกับ Gaussian Noise ช่วยลดความกระด้างโดยการเกลี่ยค่าเฉลี่ยของพิกเซลรอบข้าง เหมาะสำหรับดูภาพรวมของเนื้อเยื่ออ่อน"; break;
     }
     filterDescText.innerHTML = text; updateStyles();
   }
@@ -498,11 +413,9 @@ document.addEventListener("DOMContentLoaded", function () {
   function updateStyles() {
     const sVal = parseInt(sharp.value); const smVal = parseInt(smooth.value);
     let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%) `;
-    
     if(currentFilter === 'median') filterStr += ' contrast(1.1)';
     else if(currentFilter === 'wiener') filterStr += ' contrast(1.35) brightness(1.05)';
     else if(currentFilter === 'mean') filterStr += ' opacity(0.95)';
-    
     mainImg.style.filter = filterStr;
     document.getElementById('v-bright').innerText = brightness.value + '%';
     document.getElementById('v-contrast').innerText = contrast.value + '%';
@@ -522,24 +435,15 @@ document.addEventListener("DOMContentLoaded", function () {
     img.onload = function() { 
       canvas.width = img.naturalWidth || img.width; 
       canvas.height = img.naturalHeight || img.height; 
-      
       ctx.imageSmoothingEnabled = true; 
       ctx.imageSmoothingQuality = 'high';
-      
       ctx.filter = mainImg.style.filter; 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
     } 
   }
   
   window.goBack = () => { document.getElementById('editor-ui').classList.remove('hidden'); document.getElementById('result-ui').classList.add('hidden'); }
-  
-  window.downloadImage = () => { 
-    const canvas = document.getElementById('after-canvas');
-    const link = document.createElement('a'); 
-    link.download = 'medical_report_image.png'; 
-    link.href = canvas.toDataURL(fileExtension, 1.0); 
-    link.click(); 
-  }
+  window.downloadImage = () => { const canvas = document.getElementById('after-canvas'); const link = document.createElement('a'); link.download = 'medical_report_image.png'; link.href = canvas.toDataURL(fileExtension, 1.0); link.click(); }
   
   brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
 });
