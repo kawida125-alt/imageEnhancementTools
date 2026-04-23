@@ -133,7 +133,7 @@
   
   <div class="features-badge">
     <span class="badge">🩻 รองรับ DICOM (.dcm)</span>
-    <span class="badge">🤖 Noise Classification</span>
+    <span class="badge">🤖 Image Analysis AI</span>
     <span class="badge">🔬 Clinical Filters</span>
   </div>
 </div>
@@ -143,7 +143,7 @@
   <div class="header-banner">
     <h1>Image Diagnostics</h1>
     <span class="wave-line">〰〰〰</span>
-    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มต้นการวิเคราะห์พิกเซลและชนิดของ Noise</p>
+    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มต้นการวิเคราะห์พิกเซล</p>
   </div>
 
   <div class="container">
@@ -233,7 +233,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
 
-  // 🧠 อัลกอริทึมวิเคราะห์ Noise แบบ 4 Categories
+  // 🧠 อัลกอริทึมวิเคราะห์ภาพ
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     const img = new Image();
@@ -242,76 +242,83 @@ document.addEventListener("DOMContentLoaded", function () {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const scale = Math.min(300 / img.width, 300 / img.height);
-      canvas.width = img.width * scale; 
-      canvas.height = img.height * scale;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const w = Math.floor(img.width * scale);
+      const h = Math.floor(img.height * scale);
+      canvas.width = w; 
+      canvas.height = h;
+      ctx.drawImage(img, 0, 0, w, h);
       
-      const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const pixelData = imageData.data;
       
       let validPixels = 0, totalGray = 0;
       let brightPixels = 0, darkPixels = 0; 
       let generalNoiseCount = 0;
-      let saltPepperCount = 0; // ตัวแปรสำหรับจับ Impulse Noise (S&P)
+      let saltPepperCount = 0;
       
-      for (let i = 0; i < pixelData.length; i += 4) {
-        let grayValue = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
-        
-        if (i > 4) {
+      let lapSum = 0, lapSumSq = 0, lapCount = 0;
+
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = (y * w + x) * 4;
+          let grayValue = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
+          
           let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
           let diff = Math.abs(grayValue - prevGray);
-          
           if (diff > 35) generalNoiseCount++;
 
-          // 🔬 ตรวจจับ Salt and Pepper Noise: เจอพิกเซลขาวจ้า/ดำสนิทที่โดดขึ้นมาทันที
           if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) {
             saltPepperCount++;
           }
-        }
 
-        if (grayValue > 15) { // หั่นเอาเฉพาะเนื้อเยื่อ ไม่เอาขอบดำ
-            validPixels++;
-            totalGray += grayValue;
-            if (grayValue > 220) brightPixels++;
-            if (grayValue <= 60) darkPixels++;
+          if (grayValue > 15) { 
+              validPixels++;
+              totalGray += grayValue;
+              if (grayValue > 220) brightPixels++;
+              if (grayValue <= 60) darkPixels++;
+              
+              const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
+              const b = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
+              const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
+              const r = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
+              const lap = 4 * grayValue - t - b - l - r;
+              
+              lapSum += lap;
+              lapSumSq += lap * lap;
+              lapCount++;
+          }
         }
       }
       
       if (validPixels === 0) validPixels = 1; 
 
+      const blurScore = lapCount > 0 ? (lapSumSq / lapCount) - Math.pow(lapSum / lapCount, 2) : 100;
       const tissueBrightness = totalGray / validPixels;
       const brightRatio = (brightPixels / validPixels) * 100;
       const darkRatio = (darkPixels / validPixels) * 100;
-      const totalArea = canvas.width * canvas.height;
+      const totalArea = w * h;
       const noiseRatio = (generalNoiseCount / totalArea) * 100;
-      const spRatio = (saltPepperCount / totalArea) * 100; // สัดส่วนพิกเซล Salt/Pepper
+      const spRatio = (saltPepperCount / totalArea) * 100;
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
 
-      // 🩺 ลอจิกจำแนก Noise 4 ชนิด
-      if (spRatio > 1.0) {
-        // 1. Salt and Pepper Noise (Impulse Noise)
-        statusText = "⚠️ ตรวจพบ Salt and Pepper Noise (Impulse Noise)"; 
+      // 🩺 ลอจิกจำแนกปัญหาภาพ (รวบเงื่อนไข Noise ตามรีเควสต์)
+      if (blurScore < 30 && noiseRatio < 8) {
+        statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอจากการเคลื่อนไหว)"; 
         statusClass = "text-danger";
-        advice = "พบจุดสีขาวจ้าและดำสนิทกระจัดกระจายแบบสุ่ม (มักเกิดจากจุดบอดของเซ็นเซอร์หรือ Error ในระบบแปลงสัญญาณ) แนะนำให้ใช้ <b>Denoise (Median Filter)</b> อย่างยิ่ง เพราะสามารถตัดพิกเซลที่ค่าโดดผิดปกติออกได้เด็ดขาดโดยไม่ทำลายความคมชัดของขอบกระดูก";
-        focusBtn = "btn-median";
-      } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
-        // 2. Quantum Mottle (สัมพันธ์กับภาพที่สว่างไปใน X-ray)
-        statusText = "⚠️ ภาพ Underexposed & ตรวจพบ Quantum Mottle"; 
-        statusClass = "text-danger";
-        advice = "ปริมาณรังสี X-ray ที่ตกกระทบน้อยเกินไป (Photon Starvation) ทำให้ภาพสว่างจ้าและเกิดสัญญานรบกวนแบบเม็ดทราย <b>(Quantum Mottle)</b> แนะนำให้ลด <b>Brightness</b> ลงควบคู่กับการเพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Tissue Smooth (Mean)</b> หรือ <b>Median</b> เพื่อช่วยเกลี่ยให้เกรนดูเนียนตาขึ้น";
-        focusBtn = "btn-mean";
-      } else if (noiseRatio > 12 && tissueBrightness >= 80 && tissueBrightness <= 150) {
-        // 3. Speckle Noise (เกรนสูง แต่สภาพแสงฮิสโตแกรมตรงกลางปกติ มักพบใน Ultrasound)
-        statusText = "⚠️ ตรวจพบ Speckle Noise (Multiplicative Noise)"; 
-        statusClass = "text-warning";
-        advice = "พบรูปแบบเม็ดเกรนที่หนาแน่นและแปรผันตามเนื้อเยื่อ (มักเกิดจากการแทรกสอดของคลื่นในภาพ Ultrasound หรือ OCT) แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> เพื่อลดเกรนเฉพาะจุดพร้อมกับการรักษาความคมชัดของขอบเขตเนื้อเยื่ออ่อนเอาไว้";
+        advice = "ความคมชัดของเส้นขอบต่ำมาก (Blur) มักเกิดจากการขยับตัวของผู้ป่วยหรือการหายใจระหว่างสแกน การใช้ Filter อาจไม่สามารถกู้รายละเอียดเชิงลึกที่แท้จริงได้ แนะนำให้พิจารณา <b>สแกนผู้ป่วยใหม่ (Re-scan)</b> หากเป็นไปได้ หรือลองใช้ <b>Edge Enhance (Wiener)</b> เพื่อพยายามเน้นโครงสร้างชั่วคราว";
         focusBtn = "btn-wiener";
-      } else if (noiseRatio > 6) {
-        // 4. Gaussian Noise (Noise กระจายตัวทั่วไป แบบสุ่ม)
-        statusText = "⚠️ ตรวจพบ Gaussian Noise (Electronic Noise)"; 
-        statusClass = "text-warning";
-        advice = "พบสัญญาณรบกวนพื้นฐานที่กระจายตัวอิสระทั่วภาพแบบสุ่ม (มักเกิดจากความร้อนสะสมหรือกระแสไฟรบกวนในวงจรอิเล็กทรอนิกส์ของตัวรับภาพ) แนะนำให้ใช้ <b>Tissue Smooth (Mean Filter)</b> เพื่อเกลี่ยค่าเฉลี่ยของพิกเซลรอบข้างให้ภาพมีความสม่ำเสมอมากขึ้น";
+      } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
+        statusText = "⚠️ ภาพ Underexposed (ปริมาณรังสีน้อยไป)"; 
+        statusClass = "text-danger";
+        advice = "ปริมาณรังสี X-ray ตกกระทบน้อยเกินไป ทำให้ภาพสว่างจ้าและเกิดสัญญาณรบกวน (Noise) แนะนำให้ลด <b>Brightness</b> ลงควบคู่กับการเพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Denoise (Median)</b> หรือ <b>Tissue Smooth (Mean)</b> เพื่อช่วยเกลี่ยภาพให้เนียนขึ้น";
         focusBtn = "btn-mean";
+      } else if (noiseRatio > 6 || spRatio > 0.5) {
+        // เงื่อนไขสัญญานรบกวนทั่วไป (รวมทุกชนิดไว้ที่นี่)
+        statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise)"; 
+        statusClass = "text-warning";
+        advice = "ภาพมีจุดรบกวน (Noise) กระจัดกระจายอยู่ค่อนข้างมาก แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดสีที่ผิดปกติออกโดยไม่ทำลายขอบกระดูก หรือใช้ <b>Tissue Smooth (Mean)</b> เพื่อเกลี่ยเนื้อเยื่อโดยรวมให้เนียนขึ้น";
+        focusBtn = "btn-median";
       } else if (darkRatio > 25 || tissueBrightness < 80) {
         statusText = "⚠️ ภาพ Overexposed (ปริมาณรังสีมากไป)"; 
         statusClass = "text-danger";
@@ -319,14 +326,20 @@ document.addEventListener("DOMContentLoaded", function () {
         focusBtn = "btn-wiener";
       } else if (brightRatio < 5 && darkRatio < 5 && tissueBrightness >= 80 && tissueBrightness <= 160) {
         statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure / Low Noise)"; statusClass = "text-success";
-        advice = "การกระจายตัวของรังสีและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน ไม่มี Noise รบกวนอย่างมีนัยสำคัญ แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> เพื่อเน้นรายละเอียดเชิงลึกครับ";
+        advice = "การกระจายตัวของรังสีและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน ถือว่ามีความคมชัดสูง (Blur Score: "+Math.round(blurScore)+") แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> เพื่อเน้นรายละเอียดเชิงลึกครับ";
       } else {
         statusText = "💡 ภาพแบน ขาดความเปรียบต่าง (Low Contrast)"; statusClass = "text-info";
         advice = "ช่วงความกว้างของเฉดสีเทาแคบเกินไป (Washed-out) แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม <b>Contrast (Window Width)</b> เพื่อขยายระยะห่างของเฉดสีและดึงมิติภาพออกมา";
         focusBtn = "btn-wiener";
       }
 
-      recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
+      recContent.innerHTML = `
+        <div class="status-tag ${statusClass}">${statusText}</div>
+        <p style="margin-bottom:0; color: white;">${advice}</p>
+        <div style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px;">
+          *Debug Data: Blur Score = ${Math.round(blurScore)} | Noise Ratio = ${noiseRatio.toFixed(1)}%
+        </div>
+      `;
       document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
       if(focusBtn) { const targetBtn = document.getElementById(focusBtn); if(targetBtn) targetBtn.style.border = "2px solid #222"; }
     };
@@ -402,10 +415,11 @@ document.addEventListener("DOMContentLoaded", function () {
   window.setFilter = function(f) {
     currentFilter = f; filterDescBox.style.display = "block";
     let text = "";
+    // ปรับคำอธิบายปุ่มให้กลางๆ ไม่ระบุชื่อ Noise
     switch(f) {
-      case 'median': text = "<b>Median Filter:</b> เหมาะกับการกำจัด Salt & Pepper Noise ที่สุด โดยการหาค่ากลางเพื่อลบพิกเซลที่กระโดดผิดปกติ โดยไม่ทำให้ขอบอวัยวะเบลอ"; break;
-      case 'wiener': text = "<b>Wiener Filter (Edge Enhance):</b> เหมาะกับ Speckle Noise (เช่น ภาพอัลตราซาวด์) ช่วยลดเกรนแบบเน้นการกู้คืนรายละเอียดขอบภาพที่เสียไป"; break;
-      case 'mean': text = "<b>Mean Filter:</b> เหมาะกับ Gaussian Noise ช่วยลดความกระด้างโดยการเกลี่ยค่าเฉลี่ยของพิกเซลรอบข้าง เหมาะสำหรับดูภาพรวมของเนื้อเยื่ออ่อน"; break;
+      case 'median': text = "<b>Median Filter:</b> เหมาะกับการกำจัดสัญญาณรบกวน (Noise) ที่เป็นจุดกระโดดผิดปกติ โดยการหาค่ากลางเพื่อลบพิกเซลเหล่านั้นออกโดยไม่ทำให้ขอบอวัยวะเบลอ"; break;
+      case 'wiener': text = "<b>Wiener Filter (Edge Enhance):</b> ช่วยลด Noise พร้อมกับเน้นการกู้คืนรายละเอียดขอบภาพที่เสียไป เหมาะสำหรับดึงมิติภาพ"; break;
+      case 'mean': text = "<b>Mean Filter:</b> ช่วยลดความกระด้างของ Noise โดยการเกลี่ยค่าเฉลี่ยของพิกเซลรอบข้าง เหมาะสำหรับทำให้ภาพรวมของเนื้อเยื่ออ่อนดูเนียนตาขึ้น"; break;
     }
     filterDescText.innerHTML = text; updateStyles();
   }
