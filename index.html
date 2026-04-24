@@ -186,8 +186,8 @@
 
         <div class="button-group">
           <button class="btn-filter" id="btn-median" onclick="setFilter('median')">Denoise (Median)</button>
-          <button class="btn-filter" id="btn-wiener" onclick="setFilter('wiener')">Edge Enhance (Wiener)</button>
-          <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Tissue Smooth (Mean)</button>
+          <button class="btn-filter" id="btn-wiener" onclick="setFilter('wiener')">Edge Enhance (High-boost)</button>
+          <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Tissue Smooth (Gaussian)</button>
           <button class="btn-reset" onclick="resetAll()">Reset</button>
         </div>
         
@@ -196,7 +196,7 @@
         </div>
 
         <div id="filter-description">
-          <strong style="color: var(--primary-dark);">🔍 หลักการประมวลผล:</strong>
+          <strong style="color: var(--primary-dark);">🔍 หลักการประมวลผลทางคลินิก:</strong>
           <p id="filter-description-text" style="margin-top: 8px; color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;"></p>
         </div>
       </div>
@@ -231,9 +231,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const recBox = document.getElementById('recommendation-box'), recContent = document.getElementById('recommendation-content');
   const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
 
-  let currentFilter = 'none', originalSrc = '', fileExtension = 'image/png';
+  let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
-  // 🧠 อัลกอริทึมวิเคราะห์ภาพ
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     const img = new Image();
@@ -244,8 +243,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const scale = Math.min(300 / img.width, 300 / img.height);
       const w = Math.floor(img.width * scale);
       const h = Math.floor(img.height * scale);
-      canvas.width = w; 
-      canvas.height = h;
+      canvas.width = w; canvas.height = h;
       ctx.drawImage(img, 0, 0, w, h);
       
       const imageData = ctx.getImageData(0, 0, w, h);
@@ -253,23 +251,18 @@ document.addEventListener("DOMContentLoaded", function () {
       
       let validPixels = 0, totalGray = 0;
       let brightPixels = 0, darkPixels = 0; 
-      let generalNoiseCount = 0;
-      let saltPepperCount = 0;
-      
+      let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
 
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
           let grayValue = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
-          
           let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
           let diff = Math.abs(grayValue - prevGray);
+          
           if (diff > 35) generalNoiseCount++;
-
-          if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) {
-            saltPepperCount++;
-          }
+          if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
 
           if (grayValue > 15) { 
               validPixels++;
@@ -282,14 +275,10 @@ document.addEventListener("DOMContentLoaded", function () {
               const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
               const r = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
               const lap = 4 * grayValue - t - b - l - r;
-              
-              lapSum += lap;
-              lapSumSq += lap * lap;
-              lapCount++;
+              lapSum += lap; lapSumSq += lap * lap; lapCount++;
           }
         }
       }
-      
       if (validPixels === 0) validPixels = 1; 
 
       const blurScore = lapCount > 0 ? (lapSumSq / lapCount) - Math.pow(lapSum / lapCount, 2) : 100;
@@ -302,34 +291,34 @@ document.addEventListener("DOMContentLoaded", function () {
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
 
-      // 🩺 ลอจิกจำแนกปัญหาภาพ (ปรับให้ครอบคลุม X-ray, CT, Ultrasound)
+      // 🩺 ลอจิกจำแนกปัญหาภาพที่ปรับปรุงใหม่ (ตัดปัญหาเตือน Low Contrast พร่ำเพรื่อ)
       if (blurScore < 30 && noiseRatio < 8) {
         statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอจากการเคลื่อนไหว)"; 
         statusClass = "text-danger";
-        advice = "ความคมชัดของเส้นขอบต่ำมาก (Blur) มักเกิดจากการขยับตัวของผู้ป่วยหรือเซนเซอร์รับภาพระหว่างสแกน การใช้ Filter อาจไม่สามารถกู้รายละเอียดเชิงลึกที่แท้จริงได้ แนะนำให้พิจารณา <b>สแกนผู้ป่วยใหม่ (Re-scan)</b> หากเป็นไปได้ หรือลองใช้ <b>Edge Enhance (Wiener)</b> เพื่อพยายามเน้นโครงสร้างชั่วคราว";
+        advice = "ความคมชัดของเส้นขอบต่ำมาก มักเกิดจากการขยับตัว แนะนำให้พิจารณาสแกนใหม่ หรือลองใช้ <b>Edge Enhance</b> เพื่อพยายามเน้นโครงสร้างชั่วคราว";
         focusBtn = "btn-wiener";
       } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
         statusText = "⚠️ ภาพ Underexposed (ความสว่างของภาพไม่สมดุล)"; 
         statusClass = "text-danger";
-        advice = "ความเข้มของสัญญาณรับภาพไม่เพียงพอ ทำให้ภาพสว่างจ้าและเกิดสัญญาณรบกวน (Noise) แนะนำให้ลด <b>Brightness</b> ลงควบคู่กับการเพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Denoise (Median)</b> หรือ <b>Tissue Smooth (Mean)</b> เพื่อช่วยเกลี่ยภาพให้เนียนขึ้น";
+        advice = "ความเข้มของสัญญาณรับภาพไม่เพียงพอ แนะนำให้ลด <b>Brightness</b> ควบคู่กับการเพิ่ม <b>Contrast</b> และใช้ <b>Tissue Smooth</b> เพื่อช่วยเกลี่ยภาพให้เนียนขึ้น";
         focusBtn = "btn-mean";
       } else if (noiseRatio > 6 || spRatio > 0.5) {
         statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise)"; 
         statusClass = "text-warning";
-        advice = "ภาพมีจุดรบกวน (Noise) กระจัดกระจายอยู่ค่อนข้างมาก แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดสีที่ผิดปกติออกโดยไม่ทำลายขอบกระดูกและเนื้อเยื่อ หรือใช้ <b>Tissue Smooth (Mean)</b> เพื่อเกลี่ยภาพรวมให้เนียนขึ้น";
+        advice = "ภาพมีจุดรบกวน (Noise) กระจัดกระจาย แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดสีที่ผิดปกติออกโดยไม่ทำลายขอบกระดูก";
         focusBtn = "btn-median";
       } else if (darkRatio > 25 || tissueBrightness < 80) {
         statusText = "⚠️ ภาพ Overexposed (ภาพมืดทึบเกินไป)"; 
         statusClass = "text-danger";
-        advice = "ระดับความเข้มของสัญญาณภาพสูงเกินไปจนภาพมืดทึบ (Burn out) รายละเอียดถูกกลืนไปกับพื้นหลังสีดำ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงเส้นขอบกลับมา";
+        advice = "ระดับความเข้มของสัญญาณภาพสูงเกินไปจนภาพมืดทึบ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance</b> เพื่อดึงเส้นขอบกลับมา";
         focusBtn = "btn-wiener";
-      } else if (brightRatio < 5 && darkRatio < 5 && tissueBrightness >= 80 && tissueBrightness <= 160) {
-        statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure / Low Noise)"; statusClass = "text-success";
-        advice = "การกระจายตัวของระดับสีเทาและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน ถือว่ามีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> เพื่อเน้นรายละเอียดเชิงลึกครับ";
-      } else {
+      } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
         statusText = "💡 ภาพแบน ขาดความเปรียบต่าง (Low Contrast)"; statusClass = "text-info";
-        advice = "ช่วงความกว้างของเฉดสีเทาแคบเกินไป (Washed-out) แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม <b>Contrast (Window Width)</b> เพื่อขยายระยะห่างของเฉดสีและดึงมิติภาพออกมา";
+        advice = "ช่วงความกว้างของเฉดสีเทาแคบเกินไป แนะนำให้ใช้ <b>Edge Enhance</b> และเพิ่ม <b>Contrast (Window Width)</b> เพื่อขยายระยะห่างของเฉดสีและดึงมิติภาพออกมา";
         focusBtn = "btn-wiener";
+      } else {
+        statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure / Low Noise)"; statusClass = "text-success";
+        advice = "ฮิสโตแกรมและระดับสัญญาณภาพอยู่ในเกณฑ์มาตรฐาน ถือว่ามีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> เพื่อเน้นรายละเอียดเชิงลึกครับ";
       }
 
       recContent.innerHTML = `
@@ -344,7 +333,120 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // File Handling
+  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Medical-Grade Processing)
+  function applyPixelFilter(type) {
+    if (type === 'none') {
+      processedBaseSrc = originalSrc;
+      mainImg.src = processedBaseSrc;
+      updateStyles();
+      filterDescText.innerHTML = "คืนค่าภาพต้นฉบับสำเร็จ";
+      return;
+    }
+
+    const img = new Image();
+    img.src = originalSrc;
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const w = img.width; const h = img.height;
+      canvas.width = w; canvas.height = h;
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const data = imageData.data;
+      const tempData = new Uint8ClampedArray(data);
+
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = (y * w + x) * 4;
+
+          if (type === 'median') {
+            let intensities = [];
+            for (let dy = -1; dy <= 1; dy++) {
+              for (let dx = -1; dx <= 1; dx++) {
+                const idx = ((y + dy) * w + (x + dx)) * 4;
+                intensities.push(tempData[idx]);
+              }
+            }
+            intensities.sort((a,b)=>a-b);
+            const med = intensities[4];
+            data[i] = data[i+1] = data[i+2] = med;
+
+          } else if (type === 'mean') {
+            const gaussianKernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
+            let val = 0, kIdx = 0;
+            for (let dy = -1; dy <= 1; dy++) {
+              for (let dx = -1; dx <= 1; dx++) {
+                const idx = ((y + dy) * w + (x + dx)) * 4;
+                val += tempData[idx] * gaussianKernel[kIdx++];
+              }
+            }
+            const gVal = val / 16;
+            data[i] = data[i+1] = data[i+2] = gVal;
+
+          } else if (type === 'wiener') {
+            const unsharpKernel = [-1, -1, -1, -1, 9, -1, -1, -1, -1];
+            let val = 0, kIdx = 0;
+            for (let dy = -1; dy <= 1; dy++) {
+              for (let dx = -1; dx <= 1; dx++) {
+                const idx = ((y + dy) * w + (x + dx)) * 4;
+                val += tempData[idx] * unsharpKernel[kIdx++];
+              }
+            }
+            const eVal = Math.min(255, Math.max(0, val));
+            data[i] = data[i+1] = data[i+2] = eVal;
+          }
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      processedBaseSrc = canvas.toDataURL('image/png');
+      mainImg.src = processedBaseSrc; 
+      
+      let textDesc = filterDescText.innerHTML;
+      filterDescText.innerHTML = textDesc.replace("กำลังประมวลผล...", "<span style='color:green;'>✅ ประมวลผลเสร็จสิ้น:</span> ");
+      updateStyles();
+    };
+  }
+
+  window.setFilter = function(f) {
+    currentFilter = f; filterDescBox.style.display = "block";
+    let text = "";
+    
+    switch(f) {
+      case 'median': text = "<b>Denoise (Grayscale Median):</b> กำลังประมวลผล... คัดกรองค่ามัธยฐานในระดับพิกเซลเพื่อลบ Speckle Noise โดยไม่ทำให้ขอบอวัยวะเบลอ"; break;
+      case 'wiener': text = "<b>Edge Enhance (High-boost Filter):</b> กำลังประมวลผล... คำนวณความต่างของ Gradient เพื่อดึงมิติและความคมชัดของกระดูก/เนื้อเยื่อ"; break;
+      case 'mean': text = "<b>Tissue Smooth (Gaussian Filter):</b> กำลังประมวลผล... กระจายน้ำหนักพิกเซลแบบระฆังคว่ำ เพื่อเกลี่ย Soft Tissue ให้เนียนตาโดยยังคงรักษาเส้นขอบอนาโตมีไว้"; break;
+    }
+    filterDescText.innerHTML = text; 
+
+    document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
+    const activeBtn = document.getElementById('btn-' + f);
+    if(activeBtn) activeBtn.style.border = "2px solid #222";
+
+    setTimeout(() => { applyPixelFilter(f); }, 50);
+  }
+
+  function updateStyles() {
+    const sVal = parseInt(sharp.value); 
+    const smVal = parseInt(smooth.value);
+    
+    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%)`;
+    mainImg.style.filter = filterStr;
+    
+    document.getElementById('v-bright').innerText = brightness.value + '%';
+    document.getElementById('v-contrast').innerText = contrast.value + '%';
+    document.getElementById('v-smooth').innerText = smVal + 'px';
+    document.getElementById('v-sharp').innerText = sVal + '%';
+  }
+
+  window.resetAll = () => { 
+    brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; 
+    currentFilter = 'none'; filterDescBox.style.display = "none"; 
+    document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
+    applyPixelFilter('none'); 
+  }
+
   upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -390,6 +492,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }
           ctx.putImageData(imgData, 0, 0);
           originalSrc = tempCanvas.toDataURL('image/png');
+          processedBaseSrc = originalSrc;
           mainImg.src = originalSrc;
           document.getElementById('before-img').src = originalSrc;
           mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
@@ -402,6 +505,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const reader = new FileReader();
       reader.onload = (event) => {
         originalSrc = event.target.result;
+        processedBaseSrc = originalSrc; 
         mainImg.src = originalSrc;
         document.getElementById('before-img').src = originalSrc;
         mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
@@ -410,33 +514,6 @@ document.addEventListener("DOMContentLoaded", function () {
       reader.readAsDataURL(file);
     }
   });
-
-  window.setFilter = function(f) {
-    currentFilter = f; filterDescBox.style.display = "block";
-    let text = "";
-    // ปรับคำอธิบายปุ่มให้กลางๆ ไม่ระบุชื่อ Noise
-    switch(f) {
-      case 'median': text = "<b>Median Filter:</b> เหมาะกับการกำจัดสัญญาณรบกวน (Noise) ที่เป็นจุดกระโดดผิดปกติ โดยการหาค่ากลางเพื่อลบพิกเซลเหล่านั้นออกโดยไม่ทำให้ขอบอวัยวะเบลอ"; break;
-      case 'wiener': text = "<b>Wiener Filter (Edge Enhance):</b> ช่วยลด Noise พร้อมกับเน้นการกู้คืนรายละเอียดขอบภาพที่เสียไป เหมาะสำหรับดึงมิติภาพ"; break;
-      case 'mean': text = "<b>Mean Filter:</b> ช่วยลดความกระด้างของ Noise โดยการเกลี่ยค่าเฉลี่ยของพิกเซลรอบข้าง เหมาะสำหรับทำให้ภาพรวมของเนื้อเยื่ออ่อนดูเนียนตาขึ้น"; break;
-    }
-    filterDescText.innerHTML = text; updateStyles();
-  }
-
-  function updateStyles() {
-    const sVal = parseInt(sharp.value); const smVal = parseInt(smooth.value);
-    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%) `;
-    if(currentFilter === 'median') filterStr += ' contrast(1.1)';
-    else if(currentFilter === 'wiener') filterStr += ' contrast(1.35) brightness(1.05)';
-    else if(currentFilter === 'mean') filterStr += ' opacity(0.95)';
-    mainImg.style.filter = filterStr;
-    document.getElementById('v-bright').innerText = brightness.value + '%';
-    document.getElementById('v-contrast').innerText = contrast.value + '%';
-    document.getElementById('v-smooth').innerText = smVal + 'px';
-    document.getElementById('v-sharp').innerText = sVal + '%';
-  }
-
-  window.resetAll = () => { brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; currentFilter = 'none'; filterDescBox.style.display = "none"; updateStyles(); }
   
   window.showFinal = function() { 
     document.getElementById('editor-ui').classList.add('hidden'); 
