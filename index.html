@@ -302,31 +302,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
 
-      // 🩺 ลอจิกจำแนกปัญหาภาพ (รวบเงื่อนไข Noise ตามรีเควสต์)
+      // 🩺 ลอจิกจำแนกปัญหาภาพ (ปรับให้ครอบคลุม X-ray, CT, Ultrasound)
       if (blurScore < 30 && noiseRatio < 8) {
         statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอจากการเคลื่อนไหว)"; 
         statusClass = "text-danger";
-        advice = "ความคมชัดของเส้นขอบต่ำมาก (Blur) มักเกิดจากการขยับตัวของผู้ป่วยหรือการหายใจระหว่างสแกน การใช้ Filter อาจไม่สามารถกู้รายละเอียดเชิงลึกที่แท้จริงได้ แนะนำให้พิจารณา <b>สแกนผู้ป่วยใหม่ (Re-scan)</b> หากเป็นไปได้ หรือลองใช้ <b>Edge Enhance (Wiener)</b> เพื่อพยายามเน้นโครงสร้างชั่วคราว";
+        advice = "ความคมชัดของเส้นขอบต่ำมาก (Blur) มักเกิดจากการขยับตัวของผู้ป่วยหรือเซนเซอร์รับภาพระหว่างสแกน การใช้ Filter อาจไม่สามารถกู้รายละเอียดเชิงลึกที่แท้จริงได้ แนะนำให้พิจารณา <b>สแกนผู้ป่วยใหม่ (Re-scan)</b> หากเป็นไปได้ หรือลองใช้ <b>Edge Enhance (Wiener)</b> เพื่อพยายามเน้นโครงสร้างชั่วคราว";
         focusBtn = "btn-wiener";
       } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
-        statusText = "⚠️ ภาพ Underexposed (ปริมาณรังสีน้อยไป)"; 
+        statusText = "⚠️ ภาพ Underexposed (ความสว่างของภาพไม่สมดุล)"; 
         statusClass = "text-danger";
-        advice = "ปริมาณรังสี X-ray ตกกระทบน้อยเกินไป ทำให้ภาพสว่างจ้าและเกิดสัญญาณรบกวน (Noise) แนะนำให้ลด <b>Brightness</b> ลงควบคู่กับการเพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Denoise (Median)</b> หรือ <b>Tissue Smooth (Mean)</b> เพื่อช่วยเกลี่ยภาพให้เนียนขึ้น";
+        advice = "ความเข้มของสัญญาณรับภาพไม่เพียงพอ ทำให้ภาพสว่างจ้าและเกิดสัญญาณรบกวน (Noise) แนะนำให้ลด <b>Brightness</b> ลงควบคู่กับการเพิ่ม <b>Contrast</b> เล็กน้อย และใช้ <b>Denoise (Median)</b> หรือ <b>Tissue Smooth (Mean)</b> เพื่อช่วยเกลี่ยภาพให้เนียนขึ้น";
         focusBtn = "btn-mean";
       } else if (noiseRatio > 6 || spRatio > 0.5) {
-        // เงื่อนไขสัญญานรบกวนทั่วไป (รวมทุกชนิดไว้ที่นี่)
         statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise)"; 
         statusClass = "text-warning";
-        advice = "ภาพมีจุดรบกวน (Noise) กระจัดกระจายอยู่ค่อนข้างมาก แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดสีที่ผิดปกติออกโดยไม่ทำลายขอบกระดูก หรือใช้ <b>Tissue Smooth (Mean)</b> เพื่อเกลี่ยเนื้อเยื่อโดยรวมให้เนียนขึ้น";
+        advice = "ภาพมีจุดรบกวน (Noise) กระจัดกระจายอยู่ค่อนข้างมาก แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดสีที่ผิดปกติออกโดยไม่ทำลายขอบกระดูกและเนื้อเยื่อ หรือใช้ <b>Tissue Smooth (Mean)</b> เพื่อเกลี่ยภาพรวมให้เนียนขึ้น";
         focusBtn = "btn-median";
       } else if (darkRatio > 25 || tissueBrightness < 80) {
-        statusText = "⚠️ ภาพ Overexposed (ปริมาณรังสีมากไป)"; 
+        statusText = "⚠️ ภาพ Overexposed (ภาพมืดทึบเกินไป)"; 
         statusClass = "text-danger";
-        advice = "รังสีทะลุผ่านมากเกินไปจนภาพมืดทึบ (Burn out) รายละเอียดถูกกลืนไปกับพื้นหลังสีดำ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงเส้นขอบกลับมา";
+        advice = "ระดับความเข้มของสัญญาณภาพสูงเกินไปจนภาพมืดทึบ (Burn out) รายละเอียดถูกกลืนไปกับพื้นหลังสีดำ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงเส้นขอบกลับมา";
         focusBtn = "btn-wiener";
       } else if (brightRatio < 5 && darkRatio < 5 && tissueBrightness >= 80 && tissueBrightness <= 160) {
         statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure / Low Noise)"; statusClass = "text-success";
-        advice = "การกระจายตัวของรังสีและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน ถือว่ามีความคมชัดสูง (Blur Score: "+Math.round(blurScore)+") แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> เพื่อเน้นรายละเอียดเชิงลึกครับ";
+        advice = "การกระจายตัวของระดับสีเทาและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน ถือว่ามีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> เพื่อเน้นรายละเอียดเชิงลึกครับ";
       } else {
         statusText = "💡 ภาพแบน ขาดความเปรียบต่าง (Low Contrast)"; statusClass = "text-info";
         advice = "ช่วงความกว้างของเฉดสีเทาแคบเกินไป (Washed-out) แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม <b>Contrast (Window Width)</b> เพื่อขยายระยะห่างของเฉดสีและดึงมิติภาพออกมา";
@@ -337,7 +336,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <div class="status-tag ${statusClass}">${statusText}</div>
         <p style="margin-bottom:0; color: white;">${advice}</p>
         <div style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px;">
-          *Debug Data: Blur Score = ${Math.round(blurScore)} | Noise Ratio = ${noiseRatio.toFixed(1)}%
+          *หมายเหตุ: ข้อมูลนี้เป็นเพียงคำแนะนำเบื้องต้นจากการประมวลผลพิกเซลภาพเท่านั้น กรุณาวินิจฉัยผลลัพธ์ร่วมกับดุลยพินิจของแพทย์ผู้เชี่ยวชาญ
         </div>
       `;
       document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
