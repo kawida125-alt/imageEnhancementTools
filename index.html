@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Image Diagnostics</title>
-  <script src="https://cdn.jsdelivr.net/npm/daikon@1.2.43/release/current/daikon-min.js"></script>
   <style>
     /* =========================================
        1. VARIABLES & RESET
@@ -132,7 +131,6 @@
   <button class="btn-start" onclick="startApp()">เข้าสู่ระบบวิเคราะห์ภาพ</button>
   
   <div class="features-badge">
-    <span class="badge">🩻 รองรับ DICOM (.dcm)</span>
     <span class="badge">🤖 Image Analysis AI</span>
     <span class="badge">🔬 Clinical Filters</span>
   </div>
@@ -149,8 +147,8 @@
   <div class="container">
     
     <div class="upload-zone">
-      <p>เลือกไฟล์ภาพสแกน (DICOM .dcm, PNG, JPG)</p>
-      <input type="file" id="upload" accept="image/*,.dcm,application/dicom">
+      <p>เลือกไฟล์ภาพสแกน (PNG, JPG)</p>
+      <input type="file" id="upload" accept="image/png, image/jpeg">
     </div>
 
     <div id="recommendation-box">
@@ -253,14 +251,26 @@ document.addEventListener("DOMContentLoaded", function () {
       let brightPixels = 0, darkPixels = 0; 
       let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
+      let colorPixelCount = 0; // ตัวแปรสำหรับนับพิกเซลสี
 
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
-          let grayValue = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
+          const r = pixelData[i];
+          const g = pixelData[i + 1];
+          const b = pixelData[i + 2];
+          
+          let grayValue = (r + g + b) / 3;
           let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
           let diff = Math.abs(grayValue - prevGray);
           
+          // ตรวจสอบความอิ่มตัวของสี (Saturation) เพื่อกรองภาพถ่ายทั่วไป
+          let maxColor = Math.max(r, g, b);
+          let minColor = Math.min(r, g, b);
+          if (maxColor - minColor > 30) {
+            colorPixelCount++;
+          }
+
           if (diff > 35) generalNoiseCount++;
           if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
 
@@ -273,8 +283,8 @@ document.addEventListener("DOMContentLoaded", function () {
               const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
               const b = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
               const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
-              const r = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
-              const lap = 4 * grayValue - t - b - l - r;
+              const r_pixel = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
+              const lap = 4 * grayValue - t - b - l - r_pixel;
               lapSum += lap; lapSumSq += lap * lap; lapCount++;
           }
         }
@@ -288,37 +298,45 @@ document.addEventListener("DOMContentLoaded", function () {
       const totalArea = w * h;
       const noiseRatio = (generalNoiseCount / totalArea) * 100;
       const spRatio = (saltPepperCount / totalArea) * 100;
+      const colorRatio = (colorPixelCount / totalArea) * 100;
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
 
-      // 🩺 ลอจิกจำแนกปัญหาภาพที่ปรับปรุงใหม่ (ตัดปัญหาเตือน Low Contrast พร่ำเพรื่อ)
-      if (blurScore < 30 && noiseRatio < 8) {
-        statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอจากการเคลื่อนไหว)"; 
+      // 🩺 ลอจิกจำแนกปัญหาภาพทางการแพทย์ (ปรับให้ครอบคลุม Ultrasound Artifacts & X-ray)
+      if (colorRatio > 10) { 
+        statusText = "❌ ไม่สามารถประเมินได้";
         statusClass = "text-danger";
-        advice = "ความคมชัดของเส้นขอบต่ำมาก มักเกิดจากการขยับตัว แนะนำให้พิจารณาสแกนใหม่ หรือลองใช้ <b>Edge Enhance</b> เพื่อพยายามเน้นโครงสร้างชั่วคราว";
+        advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบความหลากหลายของสีที่อยู่นอกเหนือมาตรฐานภาพสแกน (Grayscale) ระบบจึงไม่สามารถวิเคราะห์ผลทางคลินิกได้ครับ";
+        focusBtn = "";
+      } else if (blurScore < 30 && noiseRatio < 8) {
+        statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอจากการเคลื่อนไหว)"; 
+        statusClass = "text-warning";
+        advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการหายใจของผู้ป่วยหรือการเคลื่อน Probe เร็วเกินไป แนะนำให้ใช้ <b>Edge Enhance</b> เพื่อพยายามดึงเส้นขอบโครงสร้างเนื้อเยื่อ (Fascia/Capsule) ให้ชัดขึ้น";
         focusBtn = "btn-wiener";
       } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
-        statusText = "⚠️ ภาพ Underexposed (ความสว่างของภาพไม่สมดุล)"; 
+        statusText = "⚠️ High Receiver Gain / Acoustic Enhancement"; 
         statusClass = "text-danger";
-        advice = "ความเข้มของสัญญาณรับภาพไม่เพียงพอ แนะนำให้ลด <b>Brightness</b> ควบคู่กับการเพิ่ม <b>Contrast</b> และใช้ <b>Tissue Smooth</b> เพื่อช่วยเกลี่ยภาพให้เนียนขึ้น";
+        advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง (Over-amplification) หรือเป็นเงาสว่างหลังถุงน้ำ (Posterior Enhancement) แนะนำให้ลด <b>Brightness</b> ควบคู่กับการเพิ่ม <b>Contrast</b> เพื่อให้แยกแยะเนื้อเยื่อได้ดีขึ้น";
         focusBtn = "btn-mean";
       } else if (noiseRatio > 6 || spRatio > 0.5) {
-        statusText = "⚠️ ตรวจพบสัญญาณรบกวน (High Noise)"; 
+        statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; 
         statusClass = "text-warning";
-        advice = "ภาพมีจุดรบกวน (Noise) กระจัดกระจาย แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อกำจัดเม็ดสีที่ผิดปกติออกโดยไม่ทำลายขอบกระดูก";
+        advice = "ภาพมีคลื่นแทรกสอดแบบเม็ดละเอียด (Speckle Noise) ซึ่งเป็นธรรมชาติของคลื่นเสียงสะท้อน แต่หากมีมากไปจะบดบังรอยโรค แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อเกลี่ยเม็ดสีรบกวนโดยไม่ทำลายขอบอวัยวะ";
         focusBtn = "btn-median";
       } else if (darkRatio > 25 || tissueBrightness < 80) {
-        statusText = "⚠️ ภาพ Overexposed (ภาพมืดทึบเกินไป)"; 
+        statusText = "⚠️ Low Gain / Acoustic Attenuation (สัญญาณเสียงลดทอน)"; 
         statusClass = "text-danger";
-        advice = "ระดับความเข้มของสัญญาณภาพสูงเกินไปจนภาพมืดทึบ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance</b> เพื่อดึงเส้นขอบกลับมา";
+        advice = "ภาพมีพื้นที่มืดทึบ (Hypoechoic/Anechoic) กว้างผิดปกติ อาจเกิดจากคลื่นเสียงเจาะไม่ถึงส่วนลึก (Attenuation) เกิดเงาดำ (Shadowing) หรือตั้งค่า Gain ต่ำเกินไป แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่";
         focusBtn = "btn-wiener";
       } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
-        statusText = "💡 ภาพแบน ขาดความเปรียบต่าง (Low Contrast)"; statusClass = "text-info";
-        advice = "ช่วงความกว้างของเฉดสีเทาแคบเกินไป แนะนำให้ใช้ <b>Edge Enhance</b> และเพิ่ม <b>Contrast (Window Width)</b> เพื่อขยายระยะห่างของเฉดสีและดึงมิติภาพออกมา";
+        statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; 
+        statusClass = "text-info";
+        advice = "ช่วงความกว้างของเฉดสีเทาแคบเกินไป ทำให้เนื้อเยื่อที่ต่างชนิดกันดูสีกลืนกันไปหมด แนะนำให้ใช้ <b>Edge Enhance</b> และเพิ่ม <b>Contrast</b> เพื่อขยายระยะห่างของ Echogenicity (ความสว่างของเนื้อเยื่อ) ให้เห็นมิติชัดเจนขึ้น";
         focusBtn = "btn-wiener";
       } else {
-        statusText = "✅ ภาพมีคุณภาพดี (Normal Exposure / Low Noise)"; statusClass = "text-success";
-        advice = "ฮิสโตแกรมและระดับสัญญาณภาพอยู่ในเกณฑ์มาตรฐาน ถือว่ามีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> เพื่อเน้นรายละเอียดเชิงลึกครับ";
+        statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Resolution)"; 
+        statusClass = "text-success";
+        advice = "ความเข้มของสัญญาณคลื่นเสียง (Echogenicity) และการกระจายตัวของฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน ถือว่ามีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> หากต้องการเน้นขอบเขตของอวัยวะเชิงลึกครับ";
       }
 
       recContent.innerHTML = `
@@ -451,68 +469,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.name.toLowerCase().endsWith('.dcm') || file.type === 'application/dicom') {
-      fileExtension = 'image/png';
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          const arrayBuffer = event.target.result;
-          const data = new DataView(arrayBuffer);
-          const image = daikon.Series.parseImage(data);
-          if (image === null) { alert("ไม่สามารถอ่านข้อมูลภาพจากไฟล์ DICOM นี้ได้"); return; }
-          const cols = image.getCols();
-          const rows = image.getRows();
-          const pixels = image.getInterpretedData();
-          
-          let wc = image.getWindowCenter();
-          let ww = image.getWindowWidth();
-          if (Array.isArray(wc)) wc = wc[0];
-          if (Array.isArray(ww)) ww = ww[0];
-          
-          if (wc === undefined || ww === undefined) {
-            let minP = Infinity, maxP = -Infinity;
-            for (let i = 0; i < pixels.length; i++) {
-              if (pixels[i] < minP) minP = pixels[i];
-              if (pixels[i] > maxP) maxP = pixels[i];
-            }
-            ww = maxP - minP; wc = minP + (ww / 2);
-          }
-          
-          let min = wc - (ww / 2), max = wc + (ww / 2);
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = cols; tempCanvas.height = rows;
-          const ctx = tempCanvas.getContext('2d');
-          const imgData = ctx.createImageData(cols, rows);
-          
-          for (let i = 0; i < pixels.length; i++) {
-            let val = ((pixels[i] - min) / (max - min)) * 255;
-            val = Math.max(0, Math.min(255, val));
-            const idx = i * 4;
-            imgData.data[idx] = val; imgData.data[idx+1] = val; imgData.data[idx+2] = val; imgData.data[idx+3] = 255;
-          }
-          ctx.putImageData(imgData, 0, 0);
-          originalSrc = tempCanvas.toDataURL('image/png');
-          processedBaseSrc = originalSrc;
-          mainImg.src = originalSrc;
-          document.getElementById('before-img').src = originalSrc;
-          mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
-          analyzeDiagnosticImage(); resetAll();
-        } catch (err) { console.error(err); alert("เกิดข้อผิดพลาดในการประมวลผลไฟล์ DICOM"); }
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      fileExtension = file.type;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        originalSrc = event.target.result;
-        processedBaseSrc = originalSrc; 
-        mainImg.src = originalSrc;
-        document.getElementById('before-img').src = originalSrc;
-        mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
-        analyzeDiagnosticImage(); resetAll();
-      }
-      reader.readAsDataURL(file);
+    fileExtension = file.type;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      originalSrc = event.target.result;
+      processedBaseSrc = originalSrc; 
+      mainImg.src = originalSrc;
+      document.getElementById('before-img').src = originalSrc;
+      mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
+      analyzeDiagnosticImage(); resetAll();
     }
+    reader.readAsDataURL(file);
   });
   
   window.showFinal = function() { 
