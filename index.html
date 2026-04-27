@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Image Diagnostics</title>
+  <script src="https://cdn.jsdelivr.net/npm/daikon@1.2.43/release/daikon-min.js"></script>
   <style>
     /* =========================================
        1. VARIABLES & RESET
@@ -147,8 +148,8 @@
   <div class="container">
     
     <div class="upload-zone">
-      <p>เลือกไฟล์ภาพสแกน (PNG, JPG)</p>
-      <input type="file" id="upload" accept="image/png, image/jpeg">
+      <p>เลือกไฟล์ภาพสแกน (DICOM .dcm, PNG, JPG)</p>
+      <input type="file" id="upload" accept="image/*,.dcm,application/dicom">
     </div>
 
     <div id="recommendation-box">
@@ -184,8 +185,8 @@
 
         <div class="button-group">
           <button class="btn-filter" id="btn-median" onclick="setFilter('median')">Denoise (Median)</button>
-          <button class="btn-filter" id="btn-wiener" onclick="setFilter('wiener')">Edge Enhance (High-boost)</button>
-          <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Tissue Smooth (Gaussian)</button>
+          <button class="btn-filter" id="btn-highboost" onclick="setFilter('highboost')">Edge Enhance (High-boost)</button>
+          <button class="btn-filter" id="btn-gaussian" onclick="setFilter('gaussian')">Tissue Smooth (Gaussian)</button>
           <button class="btn-reset" onclick="resetAll()">Reset</button>
         </div>
         
@@ -251,7 +252,7 @@ document.addEventListener("DOMContentLoaded", function () {
       let brightPixels = 0, darkPixels = 0; 
       let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
-      let colorPixelCount = 0; // ตัวแปรสำหรับนับพิกเซลสี
+      let colorPixelCount = 0;
 
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
@@ -264,13 +265,9 @@ document.addEventListener("DOMContentLoaded", function () {
           let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
           let diff = Math.abs(grayValue - prevGray);
           
-          // ตรวจสอบความอิ่มตัวของสี (Saturation) เพื่อกรองภาพถ่ายทั่วไป
           let maxColor = Math.max(r, g, b);
           let minColor = Math.min(r, g, b);
-          if (maxColor - minColor > 30) {
-            colorPixelCount++;
-          }
-
+          if (maxColor - minColor > 30) colorPixelCount++;
           if (diff > 35) generalNoiseCount++;
           if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
 
@@ -281,10 +278,10 @@ document.addEventListener("DOMContentLoaded", function () {
               if (grayValue <= 60) darkPixels++;
               
               const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
-              const b = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
+              const bot = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
               const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
               const r_pixel = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
-              const lap = 4 * grayValue - t - b - l - r_pixel;
+              const lap = 4 * grayValue - t - bot - l - r_pixel;
               lapSum += lap; lapSumSq += lap * lap; lapCount++;
           }
         }
@@ -302,56 +299,41 @@ document.addEventListener("DOMContentLoaded", function () {
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
 
-      // 🩺 ลอจิกจำแนกปัญหาภาพทางการแพทย์ (ปรับให้ครอบคลุม Ultrasound Artifacts & X-ray)
       if (colorRatio > 10) { 
-        statusText = "❌ ไม่สามารถประเมินได้";
-        statusClass = "text-danger";
-        advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบความหลากหลายของสีที่อยู่นอกเหนือมาตรฐานภาพสแกน (Grayscale) ระบบจึงไม่สามารถวิเคราะห์ผลทางคลินิกได้ครับ";
-        focusBtn = "";
+        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
+        advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบสีที่อยู่นอกเหนือมาตรฐานภาพสแกน (Grayscale) ระบบจึงไม่สามารถวิเคราะห์ผลทางคลินิกได้ครับ";
       } else if (blurScore < 30 && noiseRatio < 8) {
-        statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอจากการเคลื่อนไหว)"; 
-        statusClass = "text-warning";
-        advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการหายใจของผู้ป่วยหรือการเคลื่อน Probe เร็วเกินไป แนะนำให้ใช้ <b>Edge Enhance</b> เพื่อพยายามดึงเส้นขอบโครงสร้างเนื้อเยื่อ (Fascia/Capsule) ให้ชัดขึ้น";
-        focusBtn = "btn-wiener";
+        statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
+        advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของผู้ป่วย แนะนำให้ใช้ <b>Edge Enhance (High-boost)</b> เพื่อดึงเส้นขอบโครงสร้างเนื้อเยื่อให้ชัดขึ้น";
+        focusBtn = "btn-highboost";
       } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
-        statusText = "⚠️ High Receiver Gain / Acoustic Enhancement"; 
-        statusClass = "text-danger";
-        advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง (Over-amplification) หรือเป็นเงาสว่างหลังถุงน้ำ (Posterior Enhancement) แนะนำให้ลด <b>Brightness</b> ควบคู่กับการเพิ่ม <b>Contrast</b> เพื่อให้แยกแยะเนื้อเยื่อได้ดีขึ้น";
-        focusBtn = "btn-mean";
+        statusText = "⚠️ High Receiver Gain / Acoustic Enhancement"; statusClass = "text-danger";
+        advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง แนะนำให้ลด <b>Brightness</b> ควบคู่กับการเพิ่ม <b>Contrast</b> หรือเกลี่ยด้วย <b>Gaussian</b>";
+        focusBtn = "btn-gaussian";
       } else if (noiseRatio > 6 || spRatio > 0.5) {
-        statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; 
-        statusClass = "text-warning";
-        advice = "ภาพมีคลื่นแทรกสอดแบบเม็ดละเอียด (Speckle Noise) ซึ่งเป็นธรรมชาติของคลื่นเสียงสะท้อน แต่หากมีมากไปจะบดบังรอยโรค แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อเกลี่ยเม็ดสีรบกวนโดยไม่ทำลายขอบอวัยวะ";
+        statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
+        advice = "ภาพมีคลื่นแทรกสอดแบบเม็ดละเอียด (Speckle Noise) แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อเกลี่ยเม็ดสีรบกวนโดยไม่ทำลายขอบอวัยวะ";
         focusBtn = "btn-median";
       } else if (darkRatio > 25 || tissueBrightness < 80) {
-        statusText = "⚠️ Low Gain / Acoustic Attenuation (สัญญาณเสียงลดทอน)"; 
-        statusClass = "text-danger";
-        advice = "ภาพมีพื้นที่มืดทึบ (Hypoechoic/Anechoic) กว้างผิดปกติ อาจเกิดจากคลื่นเสียงเจาะไม่ถึงส่วนลึก (Attenuation) เกิดเงาดำ (Shadowing) หรือตั้งค่า Gain ต่ำเกินไป แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่";
-        focusBtn = "btn-wiener";
+        statusText = "⚠️ Low Gain / Acoustic Attenuation"; statusClass = "text-danger";
+        advice = "ภาพมีพื้นที่มืดทึบกว้างผิดปกติ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (High-boost)</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่";
+        focusBtn = "btn-highboost";
       } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
-        statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; 
-        statusClass = "text-info";
-        advice = "ช่วงความกว้างของเฉดสีเทาแคบเกินไป ทำให้เนื้อเยื่อที่ต่างชนิดกันดูสีกลืนกันไปหมด แนะนำให้ใช้ <b>Edge Enhance</b> และเพิ่ม <b>Contrast</b> เพื่อขยายระยะห่างของ Echogenicity (ความสว่างของเนื้อเยื่อ) ให้เห็นมิติชัดเจนขึ้น";
-        focusBtn = "btn-wiener";
+        statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
+        advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ใช้ <b>Edge Enhance (High-boost)</b> และเพิ่ม <b>Contrast</b> เพื่อขยายระยะห่างของ Echogenicity ให้เห็นมิติชัดเจนขึ้น";
+        focusBtn = "btn-highboost";
       } else {
-        statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Resolution)"; 
-        statusClass = "text-success";
-        advice = "ความเข้มของสัญญาณคลื่นเสียง (Echogenicity) และการกระจายตัวของฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน ถือว่ามีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> หากต้องการเน้นขอบเขตของอวัยวะเชิงลึกครับ";
+        statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Resolution)"; statusClass = "text-success";
+        advice = "ความเข้มของสัญญาณและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน มีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> หากต้องการเน้นขอบเขตอวัยวะ";
       }
 
-      recContent.innerHTML = `
-        <div class="status-tag ${statusClass}">${statusText}</div>
-        <p style="margin-bottom:0; color: white;">${advice}</p>
-        <div style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px;">
-          *หมายเหตุ: ข้อมูลนี้เป็นเพียงคำแนะนำเบื้องต้นจากการประมวลผลพิกเซลภาพเท่านั้น กรุณาวินิจฉัยผลลัพธ์ร่วมกับดุลยพินิจของแพทย์ผู้เชี่ยวชาญ
-        </div>
-      `;
+      recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
       document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
       if(focusBtn) { const targetBtn = document.getElementById(focusBtn); if(targetBtn) targetBtn.style.border = "2px solid #222"; }
     };
   }
 
-  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Medical-Grade Processing)
+  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Medical-Grade Processing แบบละเอียด)
   function applyPixelFilter(type) {
     if (type === 'none') {
       processedBaseSrc = originalSrc;
@@ -372,43 +354,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const imageData = ctx.getImageData(0, 0, w, h);
       const data = imageData.data;
-      const tempData = new Uint8ClampedArray(data);
+      const tempData = new Uint8ClampedArray(data); // Source pixels
 
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
 
           if (type === 'median') {
+            // Median Filter: เรียงลำดับ 9 พิกเซลแล้วเลือกค่ากลาง
             let intensities = [];
             for (let dy = -1; dy <= 1; dy++) {
               for (let dx = -1; dx <= 1; dx++) {
                 const idx = ((y + dy) * w + (x + dx)) * 4;
-                intensities.push(tempData[idx]);
+                intensities.push(tempData[idx]); // วิเคราะห์บน Grayscale จึงดึงแค่ Red channel
               }
             }
             intensities.sort((a,b)=>a-b);
             const med = intensities[4];
             data[i] = data[i+1] = data[i+2] = med;
 
-          } else if (type === 'mean') {
-            const gaussianKernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
+          } else if (type === 'gaussian') {
+            // Gaussian Filter 3x3: น้ำหนักระฆังคว่ำ ลด Noise ความถี่สูง
+            const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
             let val = 0, kIdx = 0;
             for (let dy = -1; dy <= 1; dy++) {
               for (let dx = -1; dx <= 1; dx++) {
                 const idx = ((y + dy) * w + (x + dx)) * 4;
-                val += tempData[idx] * gaussianKernel[kIdx++];
+                val += tempData[idx] * kernel[kIdx++];
               }
             }
             const gVal = val / 16;
             data[i] = data[i+1] = data[i+2] = gVal;
 
-          } else if (type === 'wiener') {
-            const unsharpKernel = [-1, -1, -1, -1, 9, -1, -1, -1, -1];
+          } else if (type === 'highboost') {
+            // High-boost Filter (Sharpening): A=1 -> Center=9, รอบๆ=-1 ดึงขอบรอยต่อ
+            const kernel = [-1, -1, -1, -1, 9, -1, -1, -1, -1];
             let val = 0, kIdx = 0;
             for (let dy = -1; dy <= 1; dy++) {
               for (let dx = -1; dx <= 1; dx++) {
                 const idx = ((y + dy) * w + (x + dx)) * 4;
-                val += tempData[idx] * unsharpKernel[kIdx++];
+                val += tempData[idx] * kernel[kIdx++];
               }
             }
             const eVal = Math.min(255, Math.max(0, val));
@@ -422,26 +407,27 @@ document.addEventListener("DOMContentLoaded", function () {
       mainImg.src = processedBaseSrc; 
       
       let textDesc = filterDescText.innerHTML;
-      filterDescText.innerHTML = textDesc.replace("กำลังประมวลผล...", "<span style='color:green;'>✅ ประมวลผลเสร็จสิ้น:</span> ");
+      filterDescText.innerHTML = textDesc.replace("<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>", "<span style='color:#27ae60;'>✅ ประมวลผลคณิตศาสตร์ระดับพิกเซลสำเร็จ:</span><br>");
       updateStyles();
     };
   }
 
+  // อัปเดตข้อมูล UI ตามปุ่มที่กด (ให้สอดคล้องกับภาพที่ 2)
   window.setFilter = function(f) {
     currentFilter = f; filterDescBox.style.display = "block";
     let text = "";
     
     switch(f) {
-      case 'median': text = "<b>Denoise (Grayscale Median):</b> กำลังประมวลผล... คัดกรองค่ามัธยฐานในระดับพิกเซลเพื่อลบ Speckle Noise โดยไม่ทำให้ขอบอวัยวะเบลอ"; break;
-      case 'wiener': text = "<b>Edge Enhance (High-boost Filter):</b> กำลังประมวลผล... คำนวณความต่างของ Gradient เพื่อดึงมิติและความคมชัดของกระดูก/เนื้อเยื่อ"; break;
-      case 'mean': text = "<b>Tissue Smooth (Gaussian Filter):</b> กำลังประมวลผล... กระจายน้ำหนักพิกเซลแบบระฆังคว่ำ เพื่อเกลี่ย Soft Tissue ให้เนียนตาโดยยังคงรักษาเส้นขอบอนาโตมีไว้"; break;
+      case 'median': text = "<b>Denoise (Median Filter):</b> เรียงลำดับความสว่างในกรอบ 3x3 พิกเซล แล้วเลือกค่ามัธยฐาน วิธีนี้ตัดค่าสัญญาณรบกวนที่กระโดดผิดปกติ (Speckle Noise) ออกไปได้อย่างแม่นยำ โดยไม่ทำลายขอบเขตอวัยวะ"; break;
+      case 'highboost': text = "<b>Edge Enhance (High-boost Filter):</b> ใช้คณิตศาสตร์เมทริกซ์ทวีคูณค่าพิกเซลศูนย์กลาง หักล้างพิกเซลรอบข้าง เพื่อดึงความเปรียบต่างเฉพาะจุด (Micro-contrast) ทำให้ขอบกระดูกและเนื้อเยื่อชัดเจนขึ้น"; break;
+      case 'gaussian': text = "<b>Tissue Smooth (Gaussian Filter):</b> ใช้ Gaussian Kernel เกลี่ยน้ำหนักพิกเซลแบบระฆังคว่ำ ช่วยกระจายสัญญาณรบกวน ลดเกรนภาพให้ดูเป็นธรรมชาติ และอ่านผลเนื้อเยื่ออ่อน (Soft Tissue) ได้ลื่นตาขึ้น"; break;
     }
-    filterDescText.innerHTML = text; 
-
+    
     document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
     const activeBtn = document.getElementById('btn-' + f);
     if(activeBtn) activeBtn.style.border = "2px solid #222";
 
+    filterDescText.innerHTML = "<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>" + text;
     setTimeout(() => { applyPixelFilter(f); }, 50);
   }
 
@@ -449,6 +435,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const sVal = parseInt(sharp.value); 
     const smVal = parseInt(smooth.value);
     
+    // หลังจากภาพถูก Convolution แล้ว นำ CSS ควบคุม Brightness/Contrast/Blur/Sharpness พื้นฐาน
     let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%)`;
     mainImg.style.filter = filterStr;
     
@@ -465,21 +452,73 @@ document.addEventListener("DOMContentLoaded", function () {
     applyPixelFilter('none'); 
   }
 
+  // ประมวลผลการอ่านไฟล์
   upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    fileExtension = file.type;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      originalSrc = event.target.result;
-      processedBaseSrc = originalSrc; 
-      mainImg.src = originalSrc;
-      document.getElementById('before-img').src = originalSrc;
-      mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
-      analyzeDiagnosticImage(); resetAll();
+    if (file.name.toLowerCase().endsWith('.dcm') || file.type === 'application/dicom') {
+      fileExtension = 'image/png';
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const arrayBuffer = event.target.result;
+          const data = new DataView(arrayBuffer);
+          const image = daikon.Series.parseImage(data);
+          
+          if (image === null) { alert("ไม่สามารถอ่านข้อมูลภาพจากไฟล์ DICOM นี้ได้"); return; }
+
+          const cols = image.getCols(); const rows = image.getRows();
+          const pixels = image.getInterpretedData();
+          let wc = image.getWindowCenter(), ww = image.getWindowWidth();
+          
+          if (Array.isArray(wc)) wc = wc[0]; if (Array.isArray(ww)) ww = ww[0];
+          
+          if (wc === undefined || ww === undefined) {
+            let minP = Infinity, maxP = -Infinity;
+            for (let i = 0; i < pixels.length; i++) {
+              if (pixels[i] < minP) minP = pixels[i];
+              if (pixels[i] > maxP) maxP = pixels[i];
+            }
+            ww = maxP - minP; wc = minP + (ww / 2);
+          }
+          
+          let min = wc - (ww / 2), max = wc + (ww / 2);
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = cols; tempCanvas.height = rows;
+          const ctx = tempCanvas.getContext('2d');
+          const imgData = ctx.createImageData(cols, rows);
+          
+          for (let i = 0; i < pixels.length; i++) {
+            let val = ((pixels[i] - min) / (max - min)) * 255;
+            val = Math.max(0, Math.min(255, val));
+            const idx = i * 4;
+            imgData.data[idx] = val; imgData.data[idx+1] = val; imgData.data[idx+2] = val; imgData.data[idx+3] = 255;
+          }
+          
+          ctx.putImageData(imgData, 0, 0);
+          originalSrc = tempCanvas.toDataURL('image/png');
+          processedBaseSrc = originalSrc; 
+          mainImg.src = originalSrc;
+          document.getElementById('before-img').src = originalSrc;
+          mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
+          analyzeDiagnosticImage(); resetAll();
+        } catch (err) { console.error(err); alert("เกิดข้อผิดพลาดในการประมวลผลไฟล์ DICOM"); }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      fileExtension = file.type;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        originalSrc = event.target.result;
+        processedBaseSrc = originalSrc; 
+        mainImg.src = originalSrc;
+        document.getElementById('before-img').src = originalSrc;
+        mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
+        analyzeDiagnosticImage(); resetAll();
+      }
+      reader.readAsDataURL(file);
     }
-    reader.readAsDataURL(file);
   });
   
   window.showFinal = function() { 
