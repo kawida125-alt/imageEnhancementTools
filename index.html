@@ -224,9 +224,6 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   
-  // ==========================================
-  // 💡 ระบบสลับหน้าจอ (Intro -> Main App)
-  // ==========================================
   const btnStart = document.getElementById('btn-start');
   if(btnStart) {
     btnStart.addEventListener('click', function() {
@@ -241,15 +238,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // ==========================================
-  // 🧠 Logic แอปพลิเคชันหลัก
-  // ==========================================
   const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
   const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
   const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
   const recBox = document.getElementById('recommendation-box'), recContent = document.getElementById('recommendation-content');
   const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
-  const editorUI = document.getElementById('editor-ui'); // อ้างอิงถึงตัวเครื่องมือ
+  const editorUI = document.getElementById('editor-ui'); 
 
   let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
@@ -270,7 +264,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const pixelData = imageData.data;
       
       let validPixels = 0, totalGray = 0;
-      let brightPixels = 0, darkPixels = 0; 
+      let brightPixels = 0, darkPixels = 0, pureBlackCount = 0; // เพิ่มตัวนับพื้นหลังสีดำสนิท
       let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
       let colorPixelCount = 0;
@@ -288,7 +282,9 @@ document.addEventListener("DOMContentLoaded", function () {
           
           let maxColor = Math.max(r, g, b);
           let minColor = Math.min(r, g, b);
+          
           if (maxColor - minColor > 30) colorPixelCount++;
+          if (grayValue < 15) pureBlackCount++; // เช็กว่าพิกเซลนี้ดำสนิทไหม (เอกซเรย์มักมีพื้นที่แบบนี้เยอะ)
           if (diff > 35) generalNoiseCount++;
           if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
 
@@ -317,13 +313,15 @@ document.addEventListener("DOMContentLoaded", function () {
       const noiseRatio = (generalNoiseCount / totalArea) * 100;
       const spRatio = (saltPepperCount / totalArea) * 100;
       const colorRatio = (colorPixelCount / totalArea) * 100;
+      const pureBlackRatio = (pureBlackCount / totalArea) * 100; // สัดส่วนพื้นที่สีดำสนิท
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
-      if (colorRatio > 10) { 
+      // เพิ่มเงื่อนไข: ถ้าเป็นภาพสี (colorRatio) หรือ ถ้าไม่มีพื้นหลังสีดำทึบเลยเหมือนเอกซเรย์ (pureBlackRatio < 5%) ให้ปัดตก
+      if (colorRatio > 10 || pureBlackRatio < 5) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบสีที่อยู่นอกเหนือมาตรฐานภาพสแกน (Grayscale)";
+        advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากไม่พบพื้นที่พื้นหลังสีดำสนิท (Pure Black) ที่เป็นลักษณะเฉพาะของภาพสแกนรังสี หรือตรวจพบว่าภาพมีเฉดสี";
         isMedicalImage = false;
       } else if (blurScore < 30 && noiseRatio < 8) {
         statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
@@ -352,7 +350,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
       recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
       
-      // ✅ เพิ่มเงื่อนไข: ปิดการใช้งาน Editor หากไม่ใช่ภาพทางการแพทย์
       if (!isMedicalImage) {
         editorUI.style.display = "none";
         mainImg.style.filter = "none";
@@ -365,7 +362,6 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Advanced Medical Algorithms)
   function applyPixelFilter(type) {
     if (type === 'none') {
       processedBaseSrc = originalSrc;
@@ -393,7 +389,6 @@ document.addEventListener("DOMContentLoaded", function () {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
 
-          // --- 1. MEDIAN FILTER (Rank-Order Statistics) ---
           if (type === 'median') {
             let neighbors = [];
             for (let wy = -1; wy <= 1; wy++) {
@@ -406,7 +401,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const medianValue = neighbors[4];
             data[i] = data[i+1] = data[i+2] = medianValue;
 
-          // --- 2. ADAPTIVE WIENER FILTER (Statistical Noise Reduction) ---
           } else if (type === 'wiener') {
             let sum = 0, sumSq = 0;
             const N = 9; 
@@ -430,7 +424,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const finalVal = localMean + weight * (tempData[i] - localMean);
             data[i] = data[i+1] = data[i+2] = finalVal;
 
-          // --- 3. MEAN FILTER (Low-pass Smoothing) ---
           } else if (type === 'mean') {
             let total = 0;
             for (let wy = -1; wy <= 1; wy++) {
@@ -508,7 +501,6 @@ document.addEventListener("DOMContentLoaded", function () {
       mainImg.src = originalSrc;
       document.getElementById('before-img').src = originalSrc;
       
-      // ซ่อน Editor ไว้ก่อนจนกว่าจะวิเคราะห์เสร็จ
       editorUI.style.display = "none"; 
       mainImg.classList.remove('hidden'); 
       
