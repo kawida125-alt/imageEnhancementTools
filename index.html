@@ -2,8 +2,10 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>Image Diagnostics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnostic Image Enhancer - Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/daikon@1.2.43/release/daikon-min.js"></script>
+  
   <style>
     /* =========================================
        1. VARIABLES & RESET
@@ -32,35 +34,37 @@
        ========================================= */
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+    @keyframes slideOutUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
 
     /* =========================================
        3. INTRO SCREEN
        ========================================= */
     #intro-screen {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      position: absolute; top: 0; left: 0; width: 100%; min-height: 100vh;
+      background: linear-gradient(135deg, var(--bg-light) 0%, #dce5e5 100%);
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      z-index: 1000; color: white; text-align: center; padding: 20px;
+      z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
+      transition: all 0.5s ease;
     }
 
-    .intro-title { font-size: 4.5rem; font-weight: 900; margin-bottom: 10px; letter-spacing: -1px; text-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    .intro-subtitle { font-size: 1.2rem; max-width: 600px; line-height: 1.6; opacity: 0.9; margin-bottom: 40px; }
-    .intro-wave { font-size: 2rem; color: var(--accent); margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+    .intro-title { font-size: 4.5rem; font-weight: 900; color: var(--accent-dark); margin: 0 0 10px 0; letter-spacing: -1.5px; animation: fadeIn 0.8s ease; }
+    .intro-wave { font-size: 2rem; color: var(--primary); letter-spacing: -2px; margin-bottom: 20px; font-weight: bold; animation: fadeIn 1s ease; }
+    .intro-subtitle { font-size: 1.2rem; color: var(--secondary); max-width: 600px; line-height: 1.6; margin-bottom: 40px; animation: fadeIn 1.2s ease; }
 
     .btn-start {
-      background: white; color: var(--primary-dark); padding: 18px 45px;
-      font-size: 1.1rem; font-weight: 800; border-radius: 50px; border: none;
-      cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s;
+      background-color: var(--accent-dark); color: white; padding: 18px 45px;
+      font-size: 1.1rem; font-weight: 800; border-radius: 40px; border: none;
+      cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; animation: fadeIn 1.4s ease;
     }
-    .btn-start:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 30px rgba(0,0,0,0.3); }
+    .btn-start:hover { background-color: var(--primary); transform: translateY(-3px); box-shadow: 0 15px 25px rgba(118, 155, 155, 0.4); }
 
-    .features-badge { display: flex; gap: 15px; margin-top: 40px; flex-wrap: wrap; justify-content: center; }
+    .features-badge { display: flex; gap: 15px; margin-top: 40px; flex-wrap: wrap; justify-content: center; animation: fadeIn 1.6s ease; }
     .badge { background: rgba(255, 255, 255, 0.6); color: var(--secondary); padding: 8px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(118, 155, 155, 0.3); }
 
     /* =========================================
        4. MAIN APP LAYOUT
        ========================================= */
-    #main-app { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100vh; animation: fadeIn 0.5s ease; }
+    #main-app { display: none; flex-direction: column; align-items: center; width: 100%; min-height: 100vh; animation: fadeIn 0.5s ease; }
     .header-banner { width: 100%; padding: 60px 20px 40px 20px; text-align: center; }
     .header-banner h1 { font-size: 3.5rem; margin: 0 0 10px 0; font-weight: 900; color: var(--accent-dark); }
     .header-banner .wave-line { font-size: 1.5rem; color: var(--primary); letter-spacing: -2px; margin: 5px 0 15px 0; display: block; }
@@ -132,12 +136,13 @@
   <button id="btn-start" class="btn-start">เข้าสู่ระบบวิเคราะห์ภาพ</button>
   
   <div class="features-badge">
-    <span class="badge">🤖 Image Analysis AI</span>
+    <span class="badge">🩻 รองรับ DICOM (.dcm)</span>
+    <span class="badge">🤖 Pixel Analysis AI</span>
     <span class="badge">🔬 Clinical Filters</span>
   </div>
 </div>
 
-<div id="main-app" class="hidden">
+<div id="main-app">
   
   <div class="header-banner">
     <h1>Image Diagnostics</h1>
@@ -154,396 +159,4 @@
 
     <div id="recommendation-box">
       <h3>🩺 Clinical Advice & Diagnostic Plan</h3>
-      <div id="recommendation-content" style="font-size: 1rem; line-height: 1.6;">กำลังวิเคราะห์พิกเซลภาพ...</div>
-    </div>
-
-    <div class="preview-grid">
-      <div class="image-card"><label>ORIGINAL SCAN</label><img id="before-img" alt="Original Image"></div>
-      <div class="image-card"><label>DIAGNOSTIC VIEW</label><img id="main-img" class="hidden" alt="Processed Image"></div>
-    </div>
-
-    <div id="editor-ui" class="hidden">
-      <div class="editor-section">
-        <div class="slider-grid">
-          <div class="slider-group">
-            <label>Brightness (Level) <span id="v-bright">100%</span></label>
-            <input type="range" id="bright" min="0" max="250" value="100">
-          </div>
-          <div class="slider-group">
-            <label>Contrast (Width) <span id="v-contrast">100%</span></label>
-            <input type="range" id="contrast" min="0" max="250" value="100">
-          </div>
-          <div class="slider-group">
-            <label>Smoothing (Tissue Blend) <span id="v-smooth">0px</span></label>
-            <input type="range" id="smooth" min="0" max="10" value="0">
-          </div>
-          <div class="slider-group">
-            <label>Sharpness (Edge Definition) <span id="v-sharp">0%</span></label>
-            <input type="range" id="sharp" min="0" max="100" value="0">
-          </div>
-        </div>
-
-        <div class="button-group">
-          <button class="btn-filter" id="btn-median" onclick="setFilter('median')">Denoise (Median)</button>
-          <button class="btn-filter" id="btn-wiener" onclick="setFilter('wiener')">Edge Enhance (Wiener)</button>
-          <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Tissue Smooth (Mean)</button>
-          <button class="btn-reset" onclick="resetAll()">Reset</button>
-        </div>
-        
-        <div class="button-group" style="border-top: none; padding-top: 0; margin-top: 15px;">
-          <button class="btn-main" onclick="showFinal()">GENERATE FINAL IMAGE</button>
-        </div>
-
-        <div id="filter-description">
-          <strong style="color: var(--primary-dark);">🔍 หลักการประมวลผลทางคลินิก:</strong>
-          <p id="filter-description-text" style="margin-top: 8px; color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;"></p>
-        </div>
-      </div>
-    </div>
-
-    <div id="result-ui" class="hidden">
-      <canvas id="after-canvas" style="border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px;"></canvas>
-      <div class="button-group" style="border: none;">
-        <button class="btn-main" onclick="downloadImage()">💾 SAVE DIAGNOSTIC IMAGE</button>
-        <button class="btn-filter" onclick="goBack()">RETURN TO EDITOR</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">
-    <h3 style="margin: 0 0 10px 0;">Influenca Medical System</h3>
-    <p style="font-size: 0.85rem; opacity: 0.8; margin: 0;">© 2024 Developed for Clinical Image Enhancement.</p>
-  </div>
-
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  
-  // สลับหน้าจอ
-  document.getElementById('btn-start').addEventListener('click', function() {
-    document.getElementById('intro-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'flex';
-  });
-
-  const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
-  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
-  const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
-  const recBox = document.getElementById('recommendation-box'), recContent = document.getElementById('recommendation-content');
-  const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
-
-  let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
-
-  function analyzeDiagnosticImage() {
-    recBox.style.display = "block";
-    const img = new Image();
-    img.src = mainImg.src;
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const scale = Math.min(300 / img.width, 300 / img.height);
-      const w = Math.floor(img.width * scale);
-      const h = Math.floor(img.height * scale);
-      canvas.width = w; canvas.height = h;
-      ctx.drawImage(img, 0, 0, w, h);
-      
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const pixelData = imageData.data;
-      
-      let validPixels = 0, totalGray = 0;
-      let brightPixels = 0, darkPixels = 0; 
-      let generalNoiseCount = 0, saltPepperCount = 0;
-      let lapSum = 0, lapSumSq = 0, lapCount = 0;
-      let colorPixelCount = 0;
-
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          const i = (y * w + x) * 4;
-          const r = pixelData[i];
-          const g = pixelData[i + 1];
-          const b = pixelData[i + 2];
-          
-          let grayValue = (r + g + b) / 3;
-          let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
-          let diff = Math.abs(grayValue - prevGray);
-          
-          let maxColor = Math.max(r, g, b);
-          let minColor = Math.min(r, g, b);
-          if (maxColor - minColor > 30) colorPixelCount++;
-          if (diff > 35) generalNoiseCount++;
-          if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
-
-          if (grayValue > 15) { 
-              validPixels++;
-              totalGray += grayValue;
-              if (grayValue > 220) brightPixels++;
-              if (grayValue <= 60) darkPixels++;
-              
-              const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
-              const bot = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
-              const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
-              const r_pixel = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
-              const lap = 4 * grayValue - t - bot - l - r_pixel;
-              lapSum += lap; lapSumSq += lap * lap; lapCount++;
-          }
-        }
-      }
-      if (validPixels === 0) validPixels = 1; 
-
-      const blurScore = lapCount > 0 ? (lapSumSq / lapCount) - Math.pow(lapSum / lapCount, 2) : 100;
-      const tissueBrightness = totalGray / validPixels;
-      const brightRatio = (brightPixels / validPixels) * 100;
-      const darkRatio = (darkPixels / validPixels) * 100;
-      const totalArea = w * h;
-      const noiseRatio = (generalNoiseCount / totalArea) * 100;
-      const spRatio = (saltPepperCount / totalArea) * 100;
-      const colorRatio = (colorPixelCount / totalArea) * 100;
-
-      let advice = "", statusClass = "", statusText = "", focusBtn = "";
-
-      if (colorRatio > 10) { 
-        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบสีที่อยู่นอกเหนือมาตรฐานภาพสแกน (Grayscale) ระบบจึงไม่สามารถวิเคราะห์ผลทางคลินิกได้ครับ";
-      } else if (blurScore < 30 && noiseRatio < 8) {
-        statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
-        advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของผู้ป่วย แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงเส้นขอบโครงสร้างเนื้อเยื่อให้ชัดขึ้น";
-        focusBtn = "btn-wiener";
-      } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
-        statusText = "⚠️ High Receiver Gain / Acoustic Enhancement"; statusClass = "text-danger";
-        advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง แนะนำให้ลด <b>Brightness</b> ควบคู่กับการเพิ่ม <b>Contrast</b> หรือเกลี่ยด้วย <b>Mean</b>";
-        focusBtn = "btn-mean";
-      } else if (noiseRatio > 6 || spRatio > 0.5) {
-        statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
-        advice = "ภาพมีคลื่นแทรกสอดแบบเม็ดละเอียด (Speckle Noise) แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อเกลี่ยเม็ดสีรบกวนโดยไม่ทำลายขอบอวัยวะ";
-        focusBtn = "btn-median";
-      } else if (darkRatio > 25 || tissueBrightness < 80) {
-        statusText = "⚠️ Low Gain / Acoustic Attenuation"; statusClass = "text-danger";
-        advice = "ภาพมีพื้นที่มืดทึบกว้างผิดปกติ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่";
-        focusBtn = "btn-wiener";
-      } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
-        statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
-        advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม <b>Contrast</b> เพื่อขยายระยะห่างของ Echogenicity ให้เห็นมิติชัดเจนขึ้น";
-        focusBtn = "btn-wiener";
-      } else {
-        statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Resolution)"; statusClass = "text-success";
-        advice = "ความเข้มของสัญญาณและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน มีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> หากต้องการเน้นขอบเขตอวัยวะ";
-      }
-
-      recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
-      document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-      if(focusBtn) { const targetBtn = document.getElementById(focusBtn); if(targetBtn) targetBtn.style.border = "2px solid #222"; }
-    };
-  }
-
-  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Medical-Grade Processing)
-  function applyPixelFilter(type) {
-    if (type === 'none') {
-      processedBaseSrc = originalSrc;
-      mainImg.src = processedBaseSrc;
-      updateStyles();
-      filterDescText.innerHTML = "คืนค่าภาพต้นฉบับสำเร็จ";
-      return;
-    }
-
-    const img = new Image();
-    img.src = originalSrc;
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const w = img.width; const h = img.height;
-      canvas.width = w; canvas.height = h;
-      ctx.drawImage(img, 0, 0);
-
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const data = imageData.data;
-      const tempData = new Uint8ClampedArray(data);
-
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          const i = (y * w + x) * 4;
-
-          if (type === 'median') {
-            let intensities = [];
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
-                const idx = ((y + dy) * w + (x + dx)) * 4;
-                intensities.push(tempData[idx]);
-              }
-            }
-            intensities.sort((a,b)=>a-b);
-            const med = intensities[4];
-            data[i] = data[i+1] = data[i+2] = med;
-
-          } else if (type === 'mean') {
-             // ใช้ Gaussian ในการเกลี่ย
-            const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
-            let val = 0, kIdx = 0;
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
-                const idx = ((y + dy) * w + (x + dx)) * 4;
-                val += tempData[idx] * kernel[kIdx++];
-              }
-            }
-            const gVal = val / 16;
-            data[i] = data[i+1] = data[i+2] = gVal;
-
-          } else if (type === 'wiener') {
-            // ใช้ High-boost ในการดึงความเปรียบต่าง
-            const kernel = [-1, -1, -1, -1, 9, -1, -1, -1, -1];
-            let val = 0, kIdx = 0;
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
-                const idx = ((y + dy) * w + (x + dx)) * 4;
-                val += tempData[idx] * kernel[kIdx++];
-              }
-            }
-            const eVal = Math.min(255, Math.max(0, val));
-            data[i] = data[i+1] = data[i+2] = eVal;
-          }
-        }
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-      processedBaseSrc = canvas.toDataURL('image/png');
-      mainImg.src = processedBaseSrc; 
-      
-      let textDesc = filterDescText.innerHTML;
-      filterDescText.innerHTML = textDesc.replace("<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>", "<span style='color:#27ae60;'>✅ ประมวลผลคณิตศาสตร์ระดับพิกเซลสำเร็จ:</span><br>");
-      updateStyles();
-    };
-  }
-
-  // อัปเดตข้อมูล UI ตามปุ่มที่กด (กลับไปเป็น Median, Wiener, Mean)
-  window.setFilter = function(f) {
-    currentFilter = f; filterDescBox.style.display = "block";
-    let text = "";
-    
-    switch(f) {
-      case 'median': text = "<b>Denoise (Median Filter):</b> เรียงลำดับความสว่างในกรอบ 3x3 พิกเซล แล้วเลือกค่ามัธยฐาน วิธีนี้ตัดค่าสัญญาณรบกวนที่กระโดดผิดปกติ (Speckle Noise) ออกไปได้อย่างแม่นยำ โดยไม่ทำลายขอบเขตอวัยวะ"; break;
-      case 'wiener': text = "<b>Edge Enhance (Wiener Style Filter):</b> ใช้คณิตศาสตร์เมทริกซ์ทวีคูณค่าพิกเซลศูนย์กลาง หักล้างพิกเซลรอบข้าง เพื่อดึงความเปรียบต่างเฉพาะจุด (Micro-contrast) ทำให้ขอบกระดูกและเนื้อเยื่อชัดเจนขึ้น"; break;
-      case 'mean': text = "<b>Tissue Smooth (Mean Style Filter):</b> ใช้ Kernel เกลี่ยน้ำหนักพิกเซลแบบระฆังคว่ำ ช่วยกระจายสัญญาณรบกวน ลดเกรนภาพให้ดูเป็นธรรมชาติ และอ่านผลเนื้อเยื่ออ่อน (Soft Tissue) ได้ลื่นตาขึ้น"; break;
-    }
-    
-    document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-    const activeBtn = document.getElementById('btn-' + f);
-    if(activeBtn) activeBtn.style.border = "2px solid #222";
-
-    filterDescText.innerHTML = "<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>" + text;
-    setTimeout(() => { applyPixelFilter(f); }, 50);
-  }
-
-  function updateStyles() {
-    const sVal = parseInt(sharp.value); 
-    const smVal = parseInt(smooth.value);
-    
-    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%)`;
-    mainImg.style.filter = filterStr;
-    
-    document.getElementById('v-bright').innerText = brightness.value + '%';
-    document.getElementById('v-contrast').innerText = contrast.value + '%';
-    document.getElementById('v-smooth').innerText = smVal + 'px';
-    document.getElementById('v-sharp').innerText = sVal + '%';
-  }
-
-  window.resetAll = () => { 
-    brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; 
-    currentFilter = 'none'; filterDescBox.style.display = "none"; 
-    document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-    applyPixelFilter('none'); 
-  }
-
-  // ประมวลผลการอ่านไฟล์
-  upload.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.name.toLowerCase().endsWith('.dcm') || file.type === 'application/dicom') {
-      fileExtension = 'image/png';
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          const arrayBuffer = event.target.result;
-          const data = new DataView(arrayBuffer);
-          const image = daikon.Series.parseImage(data);
-          
-          if (image === null) { alert("ไม่สามารถอ่านข้อมูลภาพจากไฟล์ DICOM นี้ได้"); return; }
-
-          const cols = image.getCols(); const rows = image.getRows();
-          const pixels = image.getInterpretedData();
-          let wc = image.getWindowCenter(), ww = image.getWindowWidth();
-          
-          if (Array.isArray(wc)) wc = wc[0]; if (Array.isArray(ww)) ww = ww[0];
-          
-          if (wc === undefined || ww === undefined) {
-            let minP = Infinity, maxP = -Infinity;
-            for (let i = 0; i < pixels.length; i++) {
-              if (pixels[i] < minP) minP = pixels[i];
-              if (pixels[i] > maxP) maxP = pixels[i];
-            }
-            ww = maxP - minP; wc = minP + (ww / 2);
-          }
-          
-          let min = wc - (ww / 2), max = wc + (ww / 2);
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = cols; tempCanvas.height = rows;
-          const ctx = tempCanvas.getContext('2d');
-          const imgData = ctx.createImageData(cols, rows);
-          
-          for (let i = 0; i < pixels.length; i++) {
-            let val = ((pixels[i] - min) / (max - min)) * 255;
-            val = Math.max(0, Math.min(255, val));
-            const idx = i * 4;
-            imgData.data[idx] = val; imgData.data[idx+1] = val; imgData.data[idx+2] = val; imgData.data[idx+3] = 255;
-          }
-          
-          ctx.putImageData(imgData, 0, 0);
-          originalSrc = tempCanvas.toDataURL('image/png');
-          processedBaseSrc = originalSrc; 
-          mainImg.src = originalSrc;
-          document.getElementById('before-img').src = originalSrc;
-          mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
-          analyzeDiagnosticImage(); resetAll();
-        } catch (err) { console.error(err); alert("เกิดข้อผิดพลาดในการประมวลผลไฟล์ DICOM"); }
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      fileExtension = file.type;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        originalSrc = event.target.result;
-        processedBaseSrc = originalSrc; 
-        mainImg.src = originalSrc;
-        document.getElementById('before-img').src = originalSrc;
-        mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
-        analyzeDiagnosticImage(); resetAll();
-      }
-      reader.readAsDataURL(file);
-    }
-  });
-  
-  window.showFinal = function() { 
-    document.getElementById('editor-ui').classList.add('hidden'); 
-    document.getElementById('result-ui').classList.remove('hidden'); 
-    const canvas = document.getElementById('after-canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image(); 
-    img.src = mainImg.src; 
-    img.onload = function() { 
-      canvas.width = img.naturalWidth || img.width; 
-      canvas.height = img.naturalHeight || img.height; 
-      ctx.imageSmoothingEnabled = true; 
-      ctx.imageSmoothingQuality = 'high';
-      ctx.filter = mainImg.style.filter; 
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-    } 
-  }
-  
-  window.goBack = () => { document.getElementById('editor-ui').classList.remove('hidden'); document.getElementById('result-ui').classList.add('hidden'); }
-  window.downloadImage = () => { const canvas = document.getElementById('after-canvas'); const link = document.createElement('a'); link.download = 'medical_report_image.png'; link.href = canvas.toDataURL(fileExtension, 1.0); link.click(); }
-  
-  brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
-});
-</script>
-</body>
-</html>
-
+      <div id="recommendation-content" style="font-size: 1rem; line-height: 1.
