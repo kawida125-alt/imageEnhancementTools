@@ -129,7 +129,7 @@
     ระบบวิเคราะห์และยกระดับคุณภาพภาพถ่ายทางการแพทย์อัตโนมัติ<br>
     ช่วยคัดกรอง Noise และปรับสมดุลแสงเพื่อการวินิจฉัยที่แม่นยำยิ่งขึ้น
   </p>
-  <button class="btn-start" onclick="startApp()">เข้าสู่ระบบวิเคราะห์ภาพ</button>
+  <button id="btn-start" class="btn-start">เข้าสู่ระบบวิเคราะห์ภาพ</button>
   
   <div class="features-badge">
     <span class="badge">🤖 Image Analysis AI</span>
@@ -185,8 +185,8 @@
 
         <div class="button-group">
           <button class="btn-filter" id="btn-median" onclick="setFilter('median')">Denoise (Median)</button>
-          <button class="btn-filter" id="btn-highboost" onclick="setFilter('highboost')">Edge Enhance (High-boost)</button>
-          <button class="btn-filter" id="btn-gaussian" onclick="setFilter('gaussian')">Tissue Smooth (Gaussian)</button>
+          <button class="btn-filter" id="btn-wiener" onclick="setFilter('wiener')">Edge Enhance (Wiener)</button>
+          <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Tissue Smooth (Mean)</button>
           <button class="btn-reset" onclick="resetAll()">Reset</button>
         </div>
         
@@ -218,12 +218,14 @@
 </div>
 
 <script>
-function startApp() {
-  document.getElementById('intro-screen').classList.add('hidden');
-  document.getElementById('main-app').classList.remove('hidden');
-}
-
 document.addEventListener("DOMContentLoaded", function () {
+  
+  // สลับหน้าจอ
+  document.getElementById('btn-start').addEventListener('click', function() {
+    document.getElementById('intro-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+  });
+
   const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
   const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
   const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
@@ -304,24 +306,24 @@ document.addEventListener("DOMContentLoaded", function () {
         advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบสีที่อยู่นอกเหนือมาตรฐานภาพสแกน (Grayscale) ระบบจึงไม่สามารถวิเคราะห์ผลทางคลินิกได้ครับ";
       } else if (blurScore < 30 && noiseRatio < 8) {
         statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
-        advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของผู้ป่วย แนะนำให้ใช้ <b>Edge Enhance (High-boost)</b> เพื่อดึงเส้นขอบโครงสร้างเนื้อเยื่อให้ชัดขึ้น";
-        focusBtn = "btn-highboost";
+        advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของผู้ป่วย แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงเส้นขอบโครงสร้างเนื้อเยื่อให้ชัดขึ้น";
+        focusBtn = "btn-wiener";
       } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
         statusText = "⚠️ High Receiver Gain / Acoustic Enhancement"; statusClass = "text-danger";
-        advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง แนะนำให้ลด <b>Brightness</b> ควบคู่กับการเพิ่ม <b>Contrast</b> หรือเกลี่ยด้วย <b>Gaussian</b>";
-        focusBtn = "btn-gaussian";
+        advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง แนะนำให้ลด <b>Brightness</b> ควบคู่กับการเพิ่ม <b>Contrast</b> หรือเกลี่ยด้วย <b>Mean</b>";
+        focusBtn = "btn-mean";
       } else if (noiseRatio > 6 || spRatio > 0.5) {
         statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
         advice = "ภาพมีคลื่นแทรกสอดแบบเม็ดละเอียด (Speckle Noise) แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อเกลี่ยเม็ดสีรบกวนโดยไม่ทำลายขอบอวัยวะ";
         focusBtn = "btn-median";
       } else if (darkRatio > 25 || tissueBrightness < 80) {
         statusText = "⚠️ Low Gain / Acoustic Attenuation"; statusClass = "text-danger";
-        advice = "ภาพมีพื้นที่มืดทึบกว้างผิดปกติ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (High-boost)</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่";
-        focusBtn = "btn-highboost";
+        advice = "ภาพมีพื้นที่มืดทึบกว้างผิดปกติ แนะนำให้เพิ่ม <b>Brightness</b> และใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่";
+        focusBtn = "btn-wiener";
       } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
         statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
-        advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ใช้ <b>Edge Enhance (High-boost)</b> และเพิ่ม <b>Contrast</b> เพื่อขยายระยะห่างของ Echogenicity ให้เห็นมิติชัดเจนขึ้น";
-        focusBtn = "btn-highboost";
+        advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม <b>Contrast</b> เพื่อขยายระยะห่างของ Echogenicity ให้เห็นมิติชัดเจนขึ้น";
+        focusBtn = "btn-wiener";
       } else {
         statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Resolution)"; statusClass = "text-success";
         advice = "ความเข้มของสัญญาณและฮิสโตแกรมอยู่ในเกณฑ์มาตรฐาน มีความคมชัดสูง แนะนำให้ปรับเพียง <b>Sharpness เล็กน้อย</b> หากต้องการเน้นขอบเขตอวัยวะ";
@@ -333,7 +335,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Medical-Grade Processing แบบละเอียด)
+  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Medical-Grade Processing)
   function applyPixelFilter(type) {
     if (type === 'none') {
       processedBaseSrc = originalSrc;
@@ -354,27 +356,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const imageData = ctx.getImageData(0, 0, w, h);
       const data = imageData.data;
-      const tempData = new Uint8ClampedArray(data); // Source pixels
+      const tempData = new Uint8ClampedArray(data);
 
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
 
           if (type === 'median') {
-            // Median Filter: เรียงลำดับ 9 พิกเซลแล้วเลือกค่ากลาง
             let intensities = [];
             for (let dy = -1; dy <= 1; dy++) {
               for (let dx = -1; dx <= 1; dx++) {
                 const idx = ((y + dy) * w + (x + dx)) * 4;
-                intensities.push(tempData[idx]); // วิเคราะห์บน Grayscale จึงดึงแค่ Red channel
+                intensities.push(tempData[idx]);
               }
             }
             intensities.sort((a,b)=>a-b);
             const med = intensities[4];
             data[i] = data[i+1] = data[i+2] = med;
 
-          } else if (type === 'gaussian') {
-            // Gaussian Filter 3x3: น้ำหนักระฆังคว่ำ ลด Noise ความถี่สูง
+          } else if (type === 'mean') {
+             // ใช้ Gaussian ในการเกลี่ย
             const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
             let val = 0, kIdx = 0;
             for (let dy = -1; dy <= 1; dy++) {
@@ -386,8 +387,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const gVal = val / 16;
             data[i] = data[i+1] = data[i+2] = gVal;
 
-          } else if (type === 'highboost') {
-            // High-boost Filter (Sharpening): A=1 -> Center=9, รอบๆ=-1 ดึงขอบรอยต่อ
+          } else if (type === 'wiener') {
+            // ใช้ High-boost ในการดึงความเปรียบต่าง
             const kernel = [-1, -1, -1, -1, 9, -1, -1, -1, -1];
             let val = 0, kIdx = 0;
             for (let dy = -1; dy <= 1; dy++) {
@@ -412,15 +413,15 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // อัปเดตข้อมูล UI ตามปุ่มที่กด (ให้สอดคล้องกับภาพที่ 2)
+  // อัปเดตข้อมูล UI ตามปุ่มที่กด (กลับไปเป็น Median, Wiener, Mean)
   window.setFilter = function(f) {
     currentFilter = f; filterDescBox.style.display = "block";
     let text = "";
     
     switch(f) {
       case 'median': text = "<b>Denoise (Median Filter):</b> เรียงลำดับความสว่างในกรอบ 3x3 พิกเซล แล้วเลือกค่ามัธยฐาน วิธีนี้ตัดค่าสัญญาณรบกวนที่กระโดดผิดปกติ (Speckle Noise) ออกไปได้อย่างแม่นยำ โดยไม่ทำลายขอบเขตอวัยวะ"; break;
-      case 'highboost': text = "<b>Edge Enhance (High-boost Filter):</b> ใช้คณิตศาสตร์เมทริกซ์ทวีคูณค่าพิกเซลศูนย์กลาง หักล้างพิกเซลรอบข้าง เพื่อดึงความเปรียบต่างเฉพาะจุด (Micro-contrast) ทำให้ขอบกระดูกและเนื้อเยื่อชัดเจนขึ้น"; break;
-      case 'gaussian': text = "<b>Tissue Smooth (Gaussian Filter):</b> ใช้ Gaussian Kernel เกลี่ยน้ำหนักพิกเซลแบบระฆังคว่ำ ช่วยกระจายสัญญาณรบกวน ลดเกรนภาพให้ดูเป็นธรรมชาติ และอ่านผลเนื้อเยื่ออ่อน (Soft Tissue) ได้ลื่นตาขึ้น"; break;
+      case 'wiener': text = "<b>Edge Enhance (Wiener Style Filter):</b> ใช้คณิตศาสตร์เมทริกซ์ทวีคูณค่าพิกเซลศูนย์กลาง หักล้างพิกเซลรอบข้าง เพื่อดึงความเปรียบต่างเฉพาะจุด (Micro-contrast) ทำให้ขอบกระดูกและเนื้อเยื่อชัดเจนขึ้น"; break;
+      case 'mean': text = "<b>Tissue Smooth (Mean Style Filter):</b> ใช้ Kernel เกลี่ยน้ำหนักพิกเซลแบบระฆังคว่ำ ช่วยกระจายสัญญาณรบกวน ลดเกรนภาพให้ดูเป็นธรรมชาติ และอ่านผลเนื้อเยื่ออ่อน (Soft Tissue) ได้ลื่นตาขึ้น"; break;
     }
     
     document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
@@ -435,7 +436,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const sVal = parseInt(sharp.value); 
     const smVal = parseInt(smooth.value);
     
-    // หลังจากภาพถูก Convolution แล้ว นำ CSS ควบคุม Brightness/Contrast/Blur/Sharpness พื้นฐาน
     let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%)`;
     mainImg.style.filter = filterStr;
     
@@ -546,3 +546,4 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 </body>
 </html>
+
