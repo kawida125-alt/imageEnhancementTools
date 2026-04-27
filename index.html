@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diagnostic Image Enhancer - Pro</title>
-  <script src="https://cdn.jsdelivr.net/npm/daikon@1.2.43/release/daikon-min.js"></script>
   
   <style>
     /* =========================================
@@ -136,7 +135,6 @@
   <button id="btn-start" class="btn-start">เข้าสู่ระบบวิเคราะห์ภาพ</button>
   
   <div class="features-badge">
-    <span class="badge">🩻 รองรับ DICOM (.dcm)</span>
     <span class="badge">🤖 Pixel Analysis AI</span>
     <span class="badge">🔬 Clinical Filters</span>
   </div>
@@ -153,13 +151,16 @@
   <div class="container">
     
     <div class="upload-zone">
-      <p>เลือกไฟล์ภาพสแกน (DICOM .dcm, PNG, JPG)</p>
-      <input type="file" id="upload" accept="image/*,.dcm,application/dicom">
+      <p>เลือกไฟล์ภาพสแกน (PNG, JPG)</p>
+      <input type="file" id="upload" accept="image/*">
     </div>
 
     <div id="recommendation-box">
       <h3>🩺 Clinical Advice & Diagnostic Plan</h3>
       <div id="recommendation-content" style="font-size: 1rem; line-height: 1.6;">กำลังวิเคราะห์พิกเซลภาพ...</div>
+      <p style="font-size: 0.85rem; color: #ffd1d1; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.4);">
+        * คำเตือน: คำแนะนำข้างต้นเป็นเพียงผลการประมวลผลเบื้องต้นจากระบบเท่านั้น ไม่สามารถใช้ทดแทนการวินิจฉัยจากแพทย์ผู้เชี่ยวชาญได้
+      </p>
     </div>
 
     <div class="preview-grid">
@@ -489,68 +490,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.name.toLowerCase().endsWith('.dcm') || file.type === 'application/dicom') {
-      fileExtension = 'image/png';
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          const arrayBuffer = event.target.result;
-          const data = new DataView(arrayBuffer);
-          const image = daikon.Series.parseImage(data);
-          
-          if (image === null) { alert("ไม่สามารถอ่านข้อมูลภาพจากไฟล์ DICOM นี้ได้"); return; }
-
-          const cols = image.getCols(); const rows = image.getRows();
-          const pixels = image.getInterpretedData();
-          let wc = image.getWindowCenter(), ww = image.getWindowWidth();
-          
-          if (Array.isArray(wc)) wc = wc[0]; if (Array.isArray(ww)) ww = ww[0];
-          
-          if (wc === undefined || ww === undefined) {
-            let minP = Infinity, maxP = -Infinity;
-            for (let i = 0; i < pixels.length; i++) {
-              if (pixels[i] < minP) minP = pixels[i];
-              if (pixels[i] > maxP) maxP = pixels[i];
-            }
-            ww = maxP - minP; wc = minP + (ww / 2);
-          }
-          
-          let min = wc - (ww / 2), max = wc + (ww / 2);
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = cols; tempCanvas.height = rows;
-          const ctx = tempCanvas.getContext('2d');
-          const imgData = ctx.createImageData(cols, rows);
-          
-          for (let i = 0; i < pixels.length; i++) {
-            let val = ((pixels[i] - min) / (max - min)) * 255;
-            val = Math.max(0, Math.min(255, val));
-            const idx = i * 4;
-            imgData.data[idx] = val; imgData.data[idx+1] = val; imgData.data[idx+2] = val; imgData.data[idx+3] = 255;
-          }
-          
-          ctx.putImageData(imgData, 0, 0);
-          originalSrc = tempCanvas.toDataURL('image/png');
-          processedBaseSrc = originalSrc; 
-          mainImg.src = originalSrc;
-          document.getElementById('before-img').src = originalSrc;
-          mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
-          analyzeDiagnosticImage(); resetAll();
-        } catch (err) { console.error(err); alert("เกิดข้อผิดพลาดในการประมวลผลไฟล์ DICOM"); }
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      fileExtension = file.type;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        originalSrc = event.target.result;
-        processedBaseSrc = originalSrc; 
-        mainImg.src = originalSrc;
-        document.getElementById('before-img').src = originalSrc;
-        mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
-        analyzeDiagnosticImage(); resetAll();
-      }
-      reader.readAsDataURL(file);
+    fileExtension = file.type;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      originalSrc = event.target.result;
+      processedBaseSrc = originalSrc; 
+      mainImg.src = originalSrc;
+      document.getElementById('before-img').src = originalSrc;
+      mainImg.classList.remove('hidden'); document.getElementById('editor-ui').classList.remove('hidden');
+      analyzeDiagnosticImage(); resetAll();
     }
+    reader.readAsDataURL(file);
   });
   
   window.showFinal = function() { 
