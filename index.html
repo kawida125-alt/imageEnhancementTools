@@ -258,7 +258,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const img = new Image();
     img.src = mainImg.src;
     img.onload = function() {
-      // สำหรับการวิเคราะห์แบบคร่าวๆ ใช้การลดขนาด (ไม่กระทบไฟล์จริง)
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const scale = Math.min(300 / img.width, 300 / img.height);
@@ -355,8 +354,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Medical Algorithms ระดับพิกเซล)
-  // แก้ไขให้ใช้ความละเอียดดั้งเดิม (naturalWidth) 100% ไม่ย่อขยาย
+  // 🚀 ฟังก์ชันประมวลผลพิกเซล (Advanced Medical Algorithms)
   function applyPixelFilter(type) {
     if (type === 'none') {
       processedBaseSrc = originalSrc;
@@ -371,7 +369,6 @@ document.addEventListener("DOMContentLoaded", function () {
     img.onload = function() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      // ใช้ความละเอียดจริงจากไฟล์ต้นฉบับเพื่อความคมชัดสูงสุด
       const w = img.naturalWidth || img.width; 
       const h = img.naturalHeight || img.height;
       canvas.width = w; canvas.height = h;
@@ -379,58 +376,60 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const imageData = ctx.getImageData(0, 0, w, h);
       const data = imageData.data;
-      const tempData = new Uint8ClampedArray(data); // เก็บพิกเซลต้นฉบับไว้คำนวณ
+      const tempData = new Uint8ClampedArray(data); 
 
-      // ทำการ Convolution
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
 
+          // --- 1. MEDIAN FILTER (Rank-Order Statistics) ---
           if (type === 'median') {
-            // 1. Median Filter (กำจัด Noise)
-            let intensities = [];
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
-                const idx = ((y + dy) * w + (x + dx)) * 4;
-                intensities.push(tempData[idx]);
+            let neighbors = [];
+            for (let wy = -1; wy <= 1; wy++) {
+              for (let wx = -1; wx <= 1; wx++) {
+                const idx = ((y + wy) * w + (x + wx)) * 4;
+                neighbors.push(tempData[idx]);
               }
             }
-            intensities.sort((a,b)=>a-b);
-            data[i] = data[i+1] = data[i+2] = intensities[4]; // เลือกค่ามัธยฐานลำดับที่ 5
+            neighbors.sort((a, b) => a - b);
+            const medianValue = neighbors[4];
+            data[i] = data[i+1] = data[i+2] = medianValue;
 
-          } else if (type === 'mean') {
-             // 2. Mean Filter (เกลี่ย Tissue) - Uniform Kernel 1/9
-            let sum = 0;
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
-                const idx = ((y + dy) * w + (x + dx)) * 4;
-                sum += tempData[idx];
-              }
-            }
-            let meanVal = sum / 9;
-            data[i] = data[i+1] = data[i+2] = meanVal;
-
+          // --- 2. ADAPTIVE WIENER FILTER (Statistical Noise Reduction) ---
           } else if (type === 'wiener') {
-            // 3. Adaptive Wiener Filter (ดึงขอบและ Edge preserving)
-            // ประเมิน Local Variance เพื่อรักษาขอบภาพ
             let sum = 0, sumSq = 0;
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
-                const idx = ((y + dy) * w + (x + dx)) * 4;
-                let val = tempData[idx];
+            const N = 9; 
+            
+            for (let wy = -1; wy <= 1; wy++) {
+              for (let wx = -1; wx <= 1; wx++) {
+                const idx = ((y + wy) * w + (x + wx)) * 4;
+                const val = tempData[idx];
                 sum += val;
                 sumSq += val * val;
               }
             }
-            let localMean = sum / 9;
-            let localVar = (sumSq / 9) - (localMean * localMean);
-            let noiseVar = 400; // ค่าความแปรปรวนอ้างอิงสำหรับเครื่อง Medical Scanners
             
-            let outVal = localMean;
-            if (localVar > noiseVar) { // ถ้าย่านความแปรปรวนสูง (เป็นขอบภาพ) ให้ดึงรายละเอียดเดิม
-              outVal = localMean + ((localVar - noiseVar) / localVar) * (tempData[i] - localMean);
+            const localMean = sum / N;
+            const localVar = Math.max(0, (sumSq / N) - (localMean * localMean));
+            const noiseVar = 200; 
+            
+            let weight = (localVar - noiseVar) / localVar;
+            weight = Math.max(0, Math.min(1, weight)); 
+            
+            const finalVal = localMean + weight * (tempData[i] - localMean);
+            data[i] = data[i+1] = data[i+2] = finalVal;
+
+          // --- 3. MEAN FILTER (Low-pass Smoothing) ---
+          } else if (type === 'mean') {
+            let total = 0;
+            for (let wy = -1; wy <= 1; wy++) {
+              for (let wx = -1; wx <= 1; wx++) {
+                const idx = ((y + wy) * w + (x + wx)) * 4;
+                total += tempData[idx];
+              }
             }
-            data[i] = data[i+1] = data[i+2] = outVal;
+            const averageVal = total / 9;
+            data[i] = data[i+1] = data[i+2] = averageVal;
           }
         }
       }
@@ -440,7 +439,10 @@ document.addEventListener("DOMContentLoaded", function () {
       mainImg.src = processedBaseSrc; 
       
       let textDesc = filterDescText.innerHTML;
-      filterDescText.innerHTML = textDesc.replace("<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>", "<span style='color:#27ae60;'>✅ ประมวลผลคณิตศาสตร์ระดับพิกเซลสำเร็จ:</span><br>");
+      filterDescText.innerHTML = textDesc.replace(
+        "<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>", 
+        "<span style='color:#27ae60;'>✅ ประมวลผลคณิตศาสตร์ระดับพิกเซลสำเร็จ:</span><br>"
+      );
       updateStyles();
     };
   }
@@ -460,7 +462,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if(activeBtn) activeBtn.style.border = "2px solid #222";
 
     filterDescText.innerHTML = "<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>" + text;
-    setTimeout(() => { applyPixelFilter(f); }, 50); // ดีเลย์ให้ข้อความ Loading โชว์ก่อน
+    setTimeout(() => { applyPixelFilter(f); }, 50); 
   }
 
   function updateStyles() {
@@ -483,7 +485,6 @@ document.addEventListener("DOMContentLoaded", function () {
     applyPixelFilter('none'); 
   }
 
-  // ประมวลผลการอ่านไฟล์
   upload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -552,7 +553,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
   
-  // 💡 แสดงภาพผลลัพธ์ โดยคงขนาด Resolution 100% จากต้นฉบับ
   window.showFinal = function() { 
     document.getElementById('editor-ui').classList.add('hidden'); 
     document.getElementById('result-ui').classList.remove('hidden'); 
@@ -561,10 +561,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const img = new Image(); 
     img.src = mainImg.src; 
     img.onload = function() { 
-      // ใช้ความละเอียดธรรมชาติของภาพในการ Export ไม่ย่อขยาย
       canvas.width = img.naturalWidth; 
       canvas.height = img.naturalHeight; 
-      ctx.imageSmoothingEnabled = false; // ป้องกันการเบลอขอบ
+      ctx.imageSmoothingEnabled = false; 
       ctx.filter = mainImg.style.filter; 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
     } 
