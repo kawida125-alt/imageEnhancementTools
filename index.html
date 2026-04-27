@@ -264,7 +264,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const pixelData = imageData.data;
       
       let validPixels = 0, totalGray = 0;
-      let brightPixels = 0, darkPixels = 0, pureBlackCount = 0; // เพิ่มตัวนับพื้นหลังสีดำสนิท
+      let brightPixels = 0, darkPixels = 0, pureBlackCount = 0;
       let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
       let colorPixelCount = 0;
@@ -284,7 +284,7 @@ document.addEventListener("DOMContentLoaded", function () {
           let minColor = Math.min(r, g, b);
           
           if (maxColor - minColor > 30) colorPixelCount++;
-          if (grayValue < 15) pureBlackCount++; // เช็กว่าพิกเซลนี้ดำสนิทไหม (เอกซเรย์มักมีพื้นที่แบบนี้เยอะ)
+          if (grayValue < 15) pureBlackCount++; 
           if (diff > 35) generalNoiseCount++;
           if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
 
@@ -313,12 +313,11 @@ document.addEventListener("DOMContentLoaded", function () {
       const noiseRatio = (generalNoiseCount / totalArea) * 100;
       const spRatio = (saltPepperCount / totalArea) * 100;
       const colorRatio = (colorPixelCount / totalArea) * 100;
-      const pureBlackRatio = (pureBlackCount / totalArea) * 100; // สัดส่วนพื้นที่สีดำสนิท
+      const pureBlackRatio = (pureBlackCount / totalArea) * 100; 
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
-      // เพิ่มเงื่อนไข: ถ้าเป็นภาพสี (colorRatio) หรือ ถ้าไม่มีพื้นหลังสีดำทึบเลยเหมือนเอกซเรย์ (pureBlackRatio < 5%) ให้ปัดตก
       if (colorRatio > 10 || pureBlackRatio < 5) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากไม่พบพื้นที่พื้นหลังสีดำสนิท (Pure Black) ที่เป็นลักษณะเฉพาะของภาพสแกนรังสี หรือตรวจพบว่าภาพมีเฉดสี";
@@ -510,6 +509,9 @@ document.addEventListener("DOMContentLoaded", function () {
     reader.readAsDataURL(file);
   });
   
+  // ----------------------------------------------------
+  // นำระบบย่อขนาดออก ใช้ resolution เดิม 100%
+  // ----------------------------------------------------
   window.showFinal = function() { 
     editorUI.style.display = "none";
     document.getElementById('result-ui').classList.remove('hidden'); 
@@ -517,7 +519,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const ctx = canvas.getContext('2d');
     const img = new Image(); 
     img.src = mainImg.src; 
+    
     img.onload = function() { 
+      // ใช้ความกว้างและความสูงตามภาพต้นฉบับ 100%
       canvas.width = img.naturalWidth; 
       canvas.height = img.naturalHeight; 
       ctx.imageSmoothingEnabled = false; 
@@ -525,6 +529,7 @@ document.addEventListener("DOMContentLoaded", function () {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
     } 
   }
+  // ----------------------------------------------------
   
   window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
   window.downloadImage = () => { const canvas = document.getElementById('after-canvas'); const link = document.createElement('a'); link.download = 'medical_report_image.png'; link.href = canvas.toDataURL(fileExtension, 1.0); link.click(); }
