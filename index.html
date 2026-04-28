@@ -247,6 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
+  // --- ฟังก์ชันที่ถูกอัปเดตระบบวิเคราะห์โครงสร้างร่างกาย ---
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     const img = new Image();
@@ -268,6 +269,8 @@ document.addEventListener("DOMContentLoaded", function () {
       let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
       let colorPixelCount = 0;
+      
+      let structuralEdgeCount = 0; 
 
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
@@ -287,6 +290,10 @@ document.addEventListener("DOMContentLoaded", function () {
           if (grayValue < 15) pureBlackCount++; 
           if (diff > 35) generalNoiseCount++;
           if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
+
+          if (grayValue > 120 && diff > 40 && diff < 150) {
+              structuralEdgeCount++;
+          }
 
           if (grayValue > 15) { 
               validPixels++;
@@ -314,37 +321,51 @@ document.addEventListener("DOMContentLoaded", function () {
       const spRatio = (saltPepperCount / totalArea) * 100;
       const colorRatio = (colorPixelCount / totalArea) * 100;
       const pureBlackRatio = (pureBlackCount / totalArea) * 100; 
+      
+      const structuralRatio = (structuralEdgeCount / totalArea) * 100;
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
-      if (colorRatio > 10 || pureBlackRatio < 5) { 
+      const isAnatomicalShapeDetected = (structuralRatio > 3.5 && structuralRatio < 15) && (colorRatio < 5);
+
+      if (colorRatio > 10) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ระบบประเมินว่านี่อาจไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากไม่พบพื้นที่พื้นหลังสีดำสนิท (Pure Black) ที่เป็นลักษณะเฉพาะของภาพสแกนรังสี หรือตรวจพบว่าภาพมีเฉดสี";
+        advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบว่าภาพมีเฉดสี (Color Image)";
         isMedicalImage = false;
-      } else if (blurScore < 30 && noiseRatio < 8) {
-        statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
-        advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัว แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงเส้นขอบโครงสร้างให้ชัดขึ้น";
-        focusBtn = "btn-wiener";
-      } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
-        statusText = "⚠️ High Receiver Gain / Acoustic Enhancement"; statusClass = "text-danger";
-        advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง แนะนำให้ลด Brightness ควบคู่กับการเพิ่ม Contrast หรือใช้ <b>Tissue Smooth (Mean)</b> เพื่อเกลี่ยแสง";
-        focusBtn = "btn-mean";
-      } else if (noiseRatio > 6 || spRatio > 0.5) {
-        statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
-        advice = "ภาพมีคลื่นแทรกสอดแบบเม็ดละเอียด (Speckle Noise) แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อเกลี่ยเม็ดสีรบกวนโดยไม่ทำลายขอบอวัยวะ";
-        focusBtn = "btn-median";
-      } else if (darkRatio > 25 || tissueBrightness < 80) {
-        statusText = "⚠️ Low Gain / Acoustic Attenuation"; statusClass = "text-danger";
-        advice = "ภาพมีพื้นที่มืดทึบกว้างผิดปกติ แนะนำให้เพิ่ม Brightness และใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่";
-        focusBtn = "btn-wiener";
-      } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
-        statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
-        advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม Contrast เพื่อขยายระยะห่างของ Echogenicity ให้เห็นมิติชัดเจนขึ้น";
-        focusBtn = "btn-wiener";
+      } else if (pureBlackRatio < 5 && !isAnatomicalShapeDetected) {
+        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
+        advice = "ไม่พบพื้นหลังรังสี (Pure Black) และไม่พบโครงสร้างทางกายวิภาคที่ชัดเจน อาจเป็นภาพถ่ายขาวดำทั่วไป";
+        isMedicalImage = false;
       } else {
-        statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Resolution)"; statusClass = "text-success";
-        advice = "สัญญาณภาพอยู่ในเกณฑ์มาตรฐาน มีความคมชัดสูง แนะนำให้ปรับเพียง Sharpness เล็กน้อย หากต้องการเน้นขอบเขตอวัยวะ";
+        if (isAnatomicalShapeDetected && pureBlackRatio < 5) {
+            console.log("Anatomical Structure Detected: Bypassed background check.");
+        }
+
+        if (blurScore < 30 && noiseRatio < 8) {
+          statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
+          advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัว แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงเส้นขอบโครงสร้างให้ชัดขึ้น";
+          focusBtn = "btn-wiener";
+        } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
+          statusText = "⚠️ High Receiver Gain / Acoustic Enhancement"; statusClass = "text-danger";
+          advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง แนะนำให้ลด Brightness ควบคู่กับการเพิ่ม Contrast หรือใช้ <b>Tissue Smooth (Mean)</b> เพื่อเกลี่ยแสง";
+          focusBtn = "btn-mean";
+        } else if (noiseRatio > 6 || spRatio > 0.5) {
+          statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
+          advice = "ภาพมีคลื่นแทรกสอดแบบเม็ดละเอียด (Speckle Noise) แนะนำให้ใช้ <b>Denoise (Median Filter)</b> เพื่อเกลี่ยเม็ดสีรบกวนโดยไม่ทำลายขอบอวัยวะ";
+          focusBtn = "btn-median";
+        } else if (darkRatio > 25 || tissueBrightness < 80) {
+          statusText = "⚠️ Low Gain / Acoustic Attenuation"; statusClass = "text-danger";
+          advice = "ภาพมีพื้นที่มืดทึบกว้างผิดปกติ แนะนำให้เพิ่ม Brightness และใช้ <b>Edge Enhance (Wiener)</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่";
+          focusBtn = "btn-wiener";
+        } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
+          statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
+          advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ใช้ <b>Edge Enhance (Wiener)</b> และเพิ่ม Contrast เพื่อขยายระยะห่างของ Echogenicity ให้เห็นมิติชัดเจนขึ้น";
+          focusBtn = "btn-wiener";
+        } else {
+          statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Resolution)"; statusClass = "text-success";
+          advice = "สัญญาณภาพอยู่ในเกณฑ์มาตรฐาน มีความคมชัดสูง แนะนำให้ปรับเพียง Sharpness เล็กน้อย หากต้องการเน้นขอบเขตอวัยวะ";
+        }
       }
 
       recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
@@ -361,6 +382,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
+  // --- ส่วนฟังก์ชันเดิมคงไว้ไม่เปลี่ยนแปลง ---
   function applyPixelFilter(type) {
     if (type === 'none') {
       processedBaseSrc = originalSrc;
