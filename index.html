@@ -333,16 +333,17 @@ document.addEventListener("DOMContentLoaded", function () {
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
-      // 1. ปรับเงื่อนไขการแยกแยะประเภทภาพให้รัดกุมขึ้น
-      const isAnatomicalShapeDetected = (structuralRatio > 0.5 && structuralRatio < 15);
+      // ปรับปรุงเงื่อนไขให้ยืดหยุ่นขึ้น
+      const isAnatomicalShapeDetected = (structuralRatio > 0.5 && structuralRatio < 25); // เพิ่มเพดาน structuralRatio เพื่อรองรับ X-ray ที่มีรายละเอียดเยอะ
       
       // X-ray ที่สว่างจ้า ต้องมีความสว่างระดับนึง แต่ไม่ถึงขั้นขาวโพลนทั้งแผ่นแบบกระดาษ และต้องหลงเหลือขอบดำบ้าง
-      const isSeverelyWashedOut = (brightRatio > 15 && brightRatio < 60) && (colorRatio < 5) && (pureBlackRatio > 0.05);
+      const isSeverelyWashedOut = (brightRatio > 15 && brightRatio < 80) && (colorRatio < 5); // ปรับลดเงื่อนไข pureBlackRatio ออก เพราะบางภาพอาจจะสว่างจนไม่เหลือสีดำสนิทเลย
       
-      const isUltrasound = (pureBlackRatio > 8 && spRatio > 0.05 && colorRatio < 5);
+      const isUltrasound = (pureBlackRatio > 5 && spRatio > 0.05 && colorRatio < 5); // ลดเกณฑ์ pureBlackRatio ลงนิดหน่อย
       
-      // เงื่อนไขใหม่: ดักจับภาพถ่ายเอกสาร, กระดาษชีท, หรือรูปที่มีพื้นขาวสว่างจ้าเกินไป
-      const isDocumentOrWhitePaper = (brightRatio > 60 || tissueBrightness > 190) && pureBlackRatio < 2;
+      // เงื่อนไขใหม่: ดักจับภาพถ่ายเอกสาร, กระดาษชีท, หรือรูปที่มีพื้นขาวสว่างจ้าเกินไป (ปรับให้แม่นยำขึ้น โดยพิจารณาสีดำและโครงสร้างขอบ)
+      // เอกสารมักจะมี brightRatio สูงมาก (พื้นขาว), มี pureBlackRatio ต่ำมาก, และมีโครงสร้างขอบ (ตัวหนังสือ) ในระดับปานกลาง
+      const isDocumentOrWhitePaper = (brightRatio > 70 || tissueBrightness > 200) && pureBlackRatio < 1 && structuralRatio > 5;
 
       // 2. ด่านตรวจคัดกรองภาพ (Validation)
       if (colorRatio > 12) { 
@@ -353,7 +354,8 @@ document.addEventListener("DOMContentLoaded", function () {
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ตรวจพบพื้นหลังสีขาวสว่างจ้าผิดปกติ คาดว่าเป็นภาพถ่ายเอกสารหรือไม่ใช่ภาพถ่ายรังสี";
         isMedicalImage = false;
-      } else if (pureBlackRatio < 0.2 && !isAnatomicalShapeDetected && !isSeverelyWashedOut && !isUltrasound) {
+      // ปรับเงื่อนไขนี้ให้อ่อนลง เพื่อลดโอกาสเด้งภาพ X-ray ทิ้ง
+      } else if (pureBlackRatio < 0.1 && !isAnatomicalShapeDetected && !isSeverelyWashedOut && !isUltrasound) {
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ไม่พบความเปรียบต่างของพื้นหลังรังสี และไม่พบโครงสร้างเนื้อเยื่อที่ชัดเจน";
         isMedicalImage = false;
