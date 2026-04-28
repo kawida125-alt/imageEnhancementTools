@@ -256,9 +256,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // Diagnostic Knowledge Base (ฐานข้อมูลความจำลักษณะภาพทางคลินิก)
   // ======================================================================
   const diagnosticMemory = [
+    // --- [เพิ่มใหม่] โปรไฟล์: จดจำภาพลักษณะ Gaussian Noise ทั่วไป ---
     {
       id: "gaussian_noise_pattern",
       name: "Gaussian Noise Pattern",
+      // ตรวจจับภาพที่มี noise สูง แต่ไม่มีขอบดำแบบอัลตราซาวด์
       checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => noise > 5 && pureBlack < 5,
       statusClass: "text-warning",
       statusText: "🧠 ระบบจดจำได้: ภาพมีสัญญาณรบกวน (Gaussian Noise)",
@@ -268,8 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
     {
       id: "severe_speckle_pattern",
       name: "Severe Speckle Ultrasound Pattern",
-      // ปรับเกณฑ์ noise > 6.5 เพื่อหลีกเลี่ยงการจับอัลตราซาวด์ทารกปกติ
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (sp > 0.4 || (noise > 6.5 && pureBlack > 2)),
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (sp > 0.4 || (noise > 4 && pureBlack > 5)),
       statusClass: "text-memory",
       statusText: "🧠 ระบบจดจำได้: ภาพอัลตราซาวด์ (มีจุดรบกวน)",
       advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลลักษณะเม็ดทราย (Speckle) ตรงกับฐานข้อมูลภาพอัลตราซาวด์ <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้ และเพิ่ม <b>Contrast</b> เพื่อให้เห็นความแตกต่างของเนื้อเยื่อ (Echogenicity) ชัดเจนขึ้น",
@@ -314,8 +315,7 @@ document.addEventListener("DOMContentLoaded", function () {
     {
       id: "optimal_ultrasound_pattern",
       name: "Optimal Ultrasound Pattern",
-      // ขยายเพดาน noise เป็น 6.5 เพื่อรองรับเนื้อเกรนธรรมชาติของทารกในครรภ์
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 2 || sp > 0.001) && sp < 0.4 && noise < 6.5 && tissueBrightness > 15 && tissueBrightness < 170,
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 2 || sp > 0.001) && sp < 0.3 && noise < 4.5 && tissueBrightness > 15 && tissueBrightness < 170,
       statusClass: "text-success",
       statusText: "✅ ระบบจดจำได้: ภาพอัลตราซาวด์ปกติดี ไม่มี Noise",
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจน <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี สามารถนำไปใช้วินิจฉัยได้ทันที",
@@ -423,6 +423,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
+      // นำเงื่อนไข matchedMemory ขึ้นมาเช็คก่อน เพื่อให้จำภาพที่ไม่ใช่เอกซเรย์ได้ด้วย
       if (matchedMemory) {
         statusText = matchedMemory.statusText; statusClass = matchedMemory.statusClass;
         advice = matchedMemory.advice; focusBtn = matchedMemory.focusBtn;
