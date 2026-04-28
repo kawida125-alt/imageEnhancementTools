@@ -256,6 +256,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // Diagnostic Knowledge Base (ฐานข้อมูลความจำลักษณะภาพทางคลินิก)
   // ======================================================================
   const diagnosticMemory = [
+    // --- [เพิ่มใหม่] โปรไฟล์: จดจำภาพลักษณะ Gaussian Noise ทั่วไป ---
+    {
+      id: "gaussian_noise_pattern",
+      name: "Gaussian Noise Pattern",
+      // ตรวจจับภาพที่มี noise สูง แต่ไม่มีขอบดำแบบอัลตราซาวด์
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => noise > 5 && pureBlack < 5,
+      statusClass: "text-warning",
+      statusText: "🧠 ระบบจดจำได้: ภาพมีสัญญาณรบกวน (Gaussian Noise)",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบว่าภาพนี้มีลักษณะของสัญญาณรบกวน (Noise) กระจายอยู่หนาแน่นทั่วทั้งภาพ <br>✅ <b>ข้อแนะนำ:</b> แนะนำให้แก้ปัญหาภาพนี้ด้วยฟังก์ชัน <b>Gaussian Blur</b> เพื่อเกลี่ยจุดรบกวนให้เรียบเนียนขึ้น",
+      focusBtn: "btn-gaussian"
+    },
     {
       id: "severe_speckle_pattern",
       name: "Severe Speckle Ultrasound Pattern",
@@ -292,11 +303,9 @@ document.addEventListener("DOMContentLoaded", function () {
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลดำทึบมาก (Over ดำเยอะ) ตรงกับแพทเทิร์นภาพรังสีที่ได้รับปริมาณ Dose สูงเกินไป (Overexposure) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพรังสีมืดทึบจนไม่เห็นรายละเอียด (Burn-out) แนะนำให้ <b>เพิ่ม Brightness (Level)</b> อย่างมากเพื่อดึงรายละเอียดที่จมในเงามืดออกมา และเพิ่ม <b>Contrast</b> เล็กน้อย",
       focusBtn: ""
     },
-    // --- [อัปเดต] โปรไฟล์: จดจำภาพลักษณะ Low Contrast (สีเทากลืนกันหมด) ---
     {
       id: "low_contrast_pattern",
       name: "Low Contrast X-Ray Pattern",
-      // ปรับเกณฑ์ให้ครอบคลุมภาพปอด มือ และช่องท้องที่สีเทากลืนกัน (Low Contrast)
       checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => rms < 40 && pureBlack < 15 && bright < 20 && sp < 0.1,
       statusClass: "text-info",
       statusText: "🧠 ระบบจดจำได้: ภาพขาดความเปรียบต่าง (Low Contrast)",
@@ -406,7 +415,7 @@ document.addEventListener("DOMContentLoaded", function () {
           isUltrasound = true;
       }
 
-      // ตรวจสอบกับ Diagnostic Memory (ส่งตัวแปร brightRatio ตามเข้าไป)
+      // ตรวจสอบกับ Diagnostic Memory ลำดับความสำคัญ
       for (let memory of diagnosticMemory) {
         if (memory.checkCondition(spRatio, noiseRatio, rmsContrast, tissueBrightness, pureBlackRatio, darkRatio, brightRatio)) {
           matchedMemory = memory;
@@ -414,7 +423,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
-      if (colorRatio > 12) { 
+      // นำเงื่อนไข matchedMemory ขึ้นมาเช็คก่อน เพื่อให้จำภาพที่ไม่ใช่เอกซเรย์ได้ด้วย
+      if (matchedMemory) {
+        statusText = matchedMemory.statusText; statusClass = matchedMemory.statusClass;
+        advice = matchedMemory.advice; focusBtn = matchedMemory.focusBtn;
+      } else if (colorRatio > 12) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากมีเฉดสีมากเกินไป (Color Image)";
         isMedicalImage = false;
@@ -422,9 +435,6 @@ document.addEventListener("DOMContentLoaded", function () {
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
         isMedicalImage = false;
-      } else if (matchedMemory) {
-        statusText = matchedMemory.statusText; statusClass = matchedMemory.statusClass;
-        advice = matchedMemory.advice; focusBtn = matchedMemory.focusBtn;
       } else {
         // Fallback Logic กรณีไม่ตรงกับภาพที่สอนให้จำ
         if (brightRatio > 15 || tissueBrightness > 160) {
