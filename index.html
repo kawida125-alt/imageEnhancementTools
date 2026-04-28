@@ -259,7 +259,6 @@ document.addEventListener("DOMContentLoaded", function () {
     {
       id: "severe_speckle_pattern",
       name: "Severe Speckle Ultrasound Pattern",
-      // เพิ่ม bright เข้ามาใน parameter ให้ครบ
       checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (sp > 0.4 || (noise > 4 && pureBlack > 5)),
       statusClass: "text-memory",
       statusText: "🧠 ระบบจดจำได้: ภาพอัลตราซาวด์ (มีจุดรบกวน)",
@@ -269,18 +268,28 @@ document.addEventListener("DOMContentLoaded", function () {
     {
       id: "severe_underexposure_pattern",
       name: "Severe Underexposure Pattern (Under ขาว)",
-      // ตรวจจับภาพที่สว่างขาวโพลน (Under ในทางรังสี) และไม่ใช่ Ultrasound
       checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (bright > 15 || tissueBrightness > 160) && sp < 0.1,
       statusClass: "text-warning",
       statusText: "🧠 ระบบจดจำได้: ภาพสว่างขาวโพลน (Severe Underexposure)",
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลสว่างเกินไป (Under ขาว) มักเกิดจากการให้ปริมาณรังสีไม่เพียงพอ (Underexposure) ทำให้เซนเซอร์รับภาพได้น้อย <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>ลด Brightness (Level)</b> เพื่อดึงรายละเอียดเนื้อเยื่อหรือกระดูกที่ซ่อนอยู่ในพื้นที่สีขาวโพลนกลับมา และ <b>เพิ่ม Contrast</b> เพื่อสร้างมิติของขอบภาพ",
       focusBtn: "btn-mean"
     },
+    // --- [เพิ่มใหม่] โปรไฟล์: จดจำภาพเอกซเรย์ปอดที่ Overexpose พิเศษ (ความแตกต่างของแสงสูง) ---
+    {
+      id: "chest_overexposure_pattern",
+      name: "Chest Overexposure Pattern",
+      // ปอดดำสนิท (pureBlack สูง) แต่กระดูกสันหลังยังขาวอยู่ (bright มีบ้าง) ทำให้เนื้อปอดเสียรายละเอียด
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => pureBlack > 15 && bright > 2 && rms > 35 && sp < 0.1 && tissueBrightness < 120,
+      statusClass: "text-danger",
+      statusText: "🧠 ระบบจดจำได้: ภาพปอดดำทึบ (Chest Overexposure)",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับภาพเอกซเรย์ทรวงอกที่ได้รับรังสีมากเกินไป (Overpenetrated) ทำให้เนื้อปอดดำทึบจนเสียรายละเอียด (Burn-out) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Brightness (Level)</b> เพื่อกู้รายละเอียดหลอดเลือดในปอด (Lung markings) และอาจ <b>ลด Contrast</b> เล็กน้อยเพื่อเกลี่ยแสง",
+      focusBtn: ""
+    },
+    // --- [อัปเดต] โปรไฟล์: ภาพมืดทึบทั่วไป (เช่น Abdomen, Knee ที่ได้รับรังสีมากเกินไป) ---
     {
       id: "severe_overexposure_pattern",
       name: "Severe Overexposure Pattern (Over ดำเยอะ)",
-      // ตรวจจับภาพที่มืดดำทึบเป็นบริเวณกว้าง (Over ในทางรังสี)
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 25 || dark > 45) && sp < 0.1,
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 20 || dark > 40) && sp < 0.1 && tissueBrightness < 100,
       statusClass: "text-danger",
       statusText: "🧠 ระบบจดจำได้: ภาพมืดทึบเกินเกณฑ์ (Severe Overexposure)",
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลดำทึบมาก (Over ดำเยอะ) ตรงกับแพทเทิร์นภาพรังสีที่ได้รับปริมาณ Dose สูงเกินไป (Overexposure) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพรังสีมืดทึบจนไม่เห็นรายละเอียด (Burn-out) แนะนำให้ <b>เพิ่ม Brightness (Level)</b> อย่างมากเพื่อดึงรายละเอียดที่จมในเงามืดออกมา และเพิ่ม <b>Contrast</b> เล็กน้อย",
