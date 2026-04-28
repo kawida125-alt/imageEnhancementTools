@@ -336,6 +336,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const isAnatomicalShapeDetected = (structuralRatio > 0.5);
       const isSeverelyWashedOut = (brightRatio > 15 || tissueBrightness > 160) && (colorRatio < 5);
 
+      // เกณฑ์ตรวจจับภาพ Ultrasound
       let isUltrasound = false;
       if (pureBlackRatio > 5 || spRatio > 0.05 || (noiseRatio > 2.5 && pureBlackRatio > 2)) {
           isUltrasound = true;
@@ -360,7 +361,7 @@ document.addEventListener("DOMContentLoaded", function () {
           focusBtn = "";
         } else if (spRatio > 0.5) {
           statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
-          advice = "💡 <b>Educational Note:</b> ตรวจพบสัญญาณแทรกสอดแบบจุดขาวดำชัดเจน (Salt & Pepper) ซึ่งเป็นลักษณะเฉพาะของ Ultrasound แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้";
+          advice = "💡 <b>Educational Note:</b> ตรวจพบสัญญาณแทรกสอดแบบจุดขาวดำชัดเจน (Salt & Pepper) แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้";
           focusBtn = "btn-median";
         } else if (noiseRatio > 6) {
           statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Grainy)"; statusClass = "text-warning";
@@ -380,12 +381,32 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
+      // ระบบให้คำแนะนำแบบเจาะลึกเฉพาะภาพ Ultrasound (เพิ่มใหม่ให้ละเอียดขึ้น)
       if (isMedicalImage) {
         if (isUltrasound) {
-          advice += "<br><br>🩺 <b>ข้อแนะนำเพิ่มเติมสำหรับ Ultrasound:</b> ตรวจพบลักษณะภาพแบบ Sector/Linear หรือมี Acoustic Speckle แนะนำให้ปรับค่า <b>Contrast</b> ให้กว้างขึ้นเพื่อแยกระดับ Echogenicity (Hyperechoic/Hypoechoic) ให้ชัดเจนยิ่งขึ้น และอาจใช้ <b>Median Filter</b> เพื่อลดจุดรบกวนโดยไม่ทำให้ขอบเขตเนื้อเยื่อเบลอ";
+          advice += "<br><br>🩺 <b>คำแนะนำเพิ่มเติมเฉพาะภาพอัลตราซาวด์ (Ultrasound Tuning):</b>";
+          advice += "<ul style='margin-top: 8px; margin-bottom: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6;'>";
+          
+          if (brightRatio > 10 || tissueBrightness > 140) {
+              advice += "<li><b>Over-gained:</b> ภาพดูสว่างเกินไป (ตั้งค่า Overall Gain หรือ TGC สูงไป) แนะนำให้ <b>ลด Brightness</b> เพื่อลดสัญญาณแทรกซ้อน (Artifacts) ในส่วนที่เป็นของเหลว (Anechoic)</li>";
+          }
+          if (tissueBrightness < 60) {
+              advice += "<li><b>Under-gained:</b> สัญญาณ Echo ต่ำ ภาพดูมืด แนะนำให้ <b>เพิ่ม Brightness</b> หรือขยาย <b>Contrast</b> เพื่อให้เห็นรายละเอียดโครงสร้างเนื้อเยื่อที่อยู่ลึกชัดเจนขึ้น</li>";
+          }
+          if (rmsContrast < 35) {
+              advice += "<li><b>Low Contrast Resolution:</b> ระดับความทึบเสียง (Echogenicity) แยกออกได้ยาก แนะนำให้ <b>เพิ่ม Contrast</b> เพื่อดึงความแตกต่างระหว่างเนื้อเยื่อปกติและรอยโรค (Lesion)</li>";
+          }
+          if (spRatio > 0.1 || noiseRatio > 4) {
+              advice += "<li><b>Acoustic Speckle:</b> พบ Noise แบบจุดกระจัดกระจาย แนะนำให้ใช้ <b>Median Filter</b> ซึ่งเป็นวิธีที่ดีที่สุดในการเกลี่ยจุดรบกวนของภาพอัลตราซาวด์ โดยไม่ทำให้ขอบเขต (Border) เบลอ</li>";
+          }
+          if (!(brightRatio > 10 || tissueBrightness > 140) && !(tissueBrightness < 60) && !(rmsContrast < 35) && !(spRatio > 0.1 || noiseRatio > 4)) {
+              advice += "<li><b>Optimal Settings:</b> ภาพมีระดับคลื่นเสียงที่เหมาะสม แนะนำให้ปรับ <b>Smoothing เล็กน้อย (1-2px)</b> คู่กับ <b>Sharpness</b> เพื่อขับเน้นขอบเขตของอวัยวะให้ดูเป็นธรรมชาติ</li>";
+          }
+          advice += "</ul>";
         }
       }
 
+      // การแสดงผล (นำตัวแปร typeBadge ออกทั้งหมดตามที่ผู้ใช้รีเควส)
       recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
       
       if (!isMedicalImage) {
