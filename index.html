@@ -128,13 +128,13 @@
   <div class="intro-wave">〰〰〰〰</div>
   <p class="intro-subtitle">
     ระบบวิเคราะห์และยกระดับคุณภาพภาพถ่ายทางการแพทย์อัตโนมัติ<br>
-    ช่วยคัดกรอง Noise และปรับสมดุลแสงเพื่อการวินิจฉัยที่แม่นยำยิ่งขึ้น
+    เรียนรู้หลักการประมวลผลสัญญาณภาพรังสีดิจิทัล (Digital Radiography)
   </p>
   <button id="btn-start" class="btn-start">เข้าสู่ระบบวิเคราะห์ภาพ</button>
   
   <div class="features-badge">
     <span class="badge">🤖 Pixel Analysis AI</span>
-    <span class="badge">🔬 Clinical Filters</span>
+    <span class="badge">📚 Radiography Education</span>
   </div>
 </div>
 
@@ -143,7 +143,7 @@
   <div class="header-banner">
     <h1>Image Diagnostics</h1>
     <span class="wave-line">〰〰〰</span>
-    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มต้นการวิเคราะห์พิกเซล</p>
+    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อวิเคราะห์ทางสถิติของพิกเซล</p>
   </div>
 
   <div class="container">
@@ -154,10 +154,10 @@
     </div>
 
     <div id="recommendation-box">
-      <h3>🩺 Clinical Advice & Diagnostic Plan</h3>
+      <h3>🩺 Clinical Advice & Educational Note</h3>
       <div id="recommendation-content" style="font-size: 1rem; line-height: 1.6;">กำลังวิเคราะห์พิกเซลภาพ...</div>
       <p style="font-size: 0.85rem; color: #ffd1d1; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.4);">
-        * คำเตือน: คำแนะนำข้างต้นเป็นเพียงผลการประมวลผลเบื้องต้นจากระบบเท่านั้น ไม่สามารถใช้ทดแทนการวินิจฉัยจากแพทย์ผู้เชี่ยวชาญได้
+        * เครื่องมือนี้จัดทำขึ้นเพื่อการศึกษาหลักการประมวลผลภาพทางการแพทย์ ไม่สามารถใช้ทดแทนการวินิจฉัยจริงได้
       </p>
     </div>
 
@@ -347,28 +347,32 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Anatomical Structure Detected: Bypassed background check.");
         }
 
+        // ======================================================================
+        // อัปเดตส่วนนี้: แทรกความรู้เรื่อง Overexposure, Underexposure, Quantum Mottle
+        // ======================================================================
         if (blurScore < 30 && noiseRatio < 8) {
           statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
-          advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัว แนะนำให้ใช้ <b>Gaussian Blur</b> เพื่อเกลี่ยจุดก่อนปรับความคมชัด";
+          advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของคนไข้ แนะนำให้ใช้ <b>Gaussian Blur</b> เพื่อเกลี่ยจุดรบกวนก่อน แล้วจึงปรับความคมชัด (Sharpness)";
           focusBtn = "btn-gaussian";
         } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
-          statusText = "⚠️ High Receiver Gain / Acoustic Enhancement"; statusClass = "text-danger";
-          advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง แนะนำให้ใช้ <b>Averaging (Mean)</b> เพื่อเกลี่ยแสง";
+          statusText = "⚠️ ภาพสว่างและมีสัญญาณรบกวน (Possible Underexposure)"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ในระบบรังสีดิจิทัล ภาพที่สว่างและมีเกรน มักเกิดจาก <b>Underexposure (ได้รับรังสีน้อยเกินไป)</b> แล้วซอฟต์แวร์พยายามเร่งแสงชดเชย (Auto-rescaling) ทำให้เกิด Quantum Mottle แนะนำให้ใช้ <b>Averaging (Mean)</b> หรือ <b>Gaussian</b> เพื่อเกลี่ยแสง";
           focusBtn = "btn-mean";
         } else if (noiseRatio > 6 || spRatio > 0.5) {
-          // แก้ไขเฉพาะบรรทัดนี้ ให้ครอบคลุม Quantum Mottle / Gaussian Noise
           statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Speckle)"; statusClass = "text-warning";
-          advice = "ภาพมีสัญญาณรบกวนหนาแน่น: หากเป็นจุดดำ-ขาวชัดเจน แนะนำ <b>Median Filter</b> / หากเป็นเม็ดเกรนละเอียดทั่วภาพ แนะนำ <b>Gaussian Blur</b>";
+          advice = "💡 <b>Educational Note:</b> ภาพมีสัญญาณรบกวนหนาแน่น (มักเป็นผลจากภาวะ <b>Underexposure</b>) หากจุดรบกวนเป็นสีขาวดำกระโดดกันชัดเจน ให้ใช้ <b>Median Filter</b> / หากเป็นเกรนเม็ดทรายละเอียดทั่วภาพแบบ Gaussian Noise ให้ใช้ <b>Gaussian Blur</b>";
           focusBtn = "btn-gaussian";
         } else if (darkRatio > 25 || tissueBrightness < 80) {
-          statusText = "⚠️ Low Gain / Acoustic Attenuation"; statusClass = "text-danger";
-          advice = "ภาพมีพื้นที่มืดทึบกว้างผิดปกติ แนะนำให้เพิ่ม Brightness เพื่อดึงรายละเอียดที่ซ่อนอยู่";
+          statusText = "⚠️ ภาพมืดทึบเกินเกณฑ์ (Possible Overexposure)"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ตรงข้ามกับภาพถ่ายทั่วไป ภาพรังสีที่มืดทึบเกิดจาก <b>Overexposure (ได้รับรังสีมากเกินไป)</b> รังสีทะลุเนื้อเยื่อไปตกที่ฉากรับภาพมาก ระวังภาวะ <b>Dose Creep</b>! เบื้องต้นแนะนำให้เพิ่ม Brightness เพื่อดึงรายละเอียดที่ซ่อนอยู่ในเงามืด";
+          focusBtn = "btn-none";
         } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
           statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
-          advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้เพิ่ม Contrast เพื่อขยายระยะห่างของ Echogenicity ให้เห็นมิติชัดเจนขึ้น";
+          advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้เพิ่ม Contrast เพื่อขยาย Window Width ให้เห็นมิติความเปรียบต่างที่ชัดเจนขึ้น";
+          focusBtn = "btn-none";
         } else {
-          statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Resolution)"; statusClass = "text-success";
-          advice = "สัญญาณภาพอยู่ในเกณฑ์มาตรฐาน มีความคมชัดสูง แนะนำให้ปรับเพียง Sharpness เล็กน้อย หากต้องการเน้นขอบเขตอวัยวะ";
+          statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Exposure)"; statusClass = "text-success";
+          advice = "สัญญาณภาพอยู่ในเกณฑ์มาตรฐาน (Exposure Index น่าจะอยู่ในช่วงที่เหมาะสม) มีความคมชัดสูง แนะนำให้ปรับเพียง Sharpness เล็กน้อย หากต้องการเน้นขอบเขตอวัยวะ";
         }
       }
 
@@ -381,7 +385,10 @@ document.addEventListener("DOMContentLoaded", function () {
         editorUI.style.display = "block";
         editorUI.classList.remove('hidden');
         document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-        if(focusBtn) { const targetBtn = document.getElementById(focusBtn); if(targetBtn) targetBtn.style.border = "2px solid #222"; }
+        if(focusBtn && focusBtn !== "btn-none") { 
+            const targetBtn = document.getElementById(focusBtn); 
+            if(targetBtn) targetBtn.style.border = "2px solid #222"; 
+        }
       }
     };
   }
@@ -426,15 +433,9 @@ document.addEventListener("DOMContentLoaded", function () {
             data[i] = data[i+1] = data[i+2] = medianValue;
 
           } else if (type === 'gaussian') {
-            const kernel = [
-              1, 2, 1,
-              2, 4, 2,
-              1, 2, 1
-            ];
+            const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
             const kernelWeight = 16;
-            let sum = 0;
-            let kIndex = 0;
-            
+            let sum = 0; let kIndex = 0;
             for (let wy = -1; wy <= 1; wy++) {
               for (let wx = -1; wx <= 1; wx++) {
                 const idx = ((y + wy) * w + (x + wx)) * 4;
@@ -442,9 +443,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 kIndex++;
               }
             }
-            
-            const finalVal = sum / kernelWeight;
-            data[i] = data[i+1] = data[i+2] = finalVal;
+            data[i] = data[i+1] = data[i+2] = sum / kernelWeight;
 
           } else if (type === 'mean') {
             let total = 0;
@@ -454,8 +453,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 total += tempData[idx];
               }
             }
-            const averageVal = total / 9;
-            data[i] = data[i+1] = data[i+2] = averageVal;
+            data[i] = data[i+1] = data[i+2] = total / 9;
           }
         }
       }
@@ -478,9 +476,9 @@ document.addEventListener("DOMContentLoaded", function () {
     let text = "";
     
     switch(f) {
-      case 'mean': text = "<b>Averaging (Mean) Filter:</b> ทำงานเหมือน <code>cv2.blur()</code> คำนวณค่าเฉลี่ยของพิกเซลในกรอบ 3x3 ช่วยลด Noise แบบหยาบๆ แต่อาจทำให้ขอบภาพเบลอได้"; break;
-      case 'gaussian': text = "<b>Gaussian Filter:</b> ทำงานเหมือน <code>cv2.GaussianBlur()</code> ใช้ Gaussian Kernel ในการถ่วงน้ำหนักพิกเซลตรงกลางให้มากที่สุด ช่วยเกลี่ย Noise อย่างเป็นธรรมชาติโดยรักษารายละเอียดได้ดีกว่าแบบ Mean"; break;
-      case 'median': text = "<b>Median Filter:</b> ทำงานเหมือน <code>cv2.medianBlur()</code> เลือกค่าพิกเซลตรงกลางจากการเรียงลำดับ เป็นอัลกอริทึมที่ดีที่สุดในการกำจัด Salt & Pepper Noise บนภาพ X-ray"; break;
+      case 'mean': text = "<b>Averaging (Mean) Filter:</b> คำนวณค่าเฉลี่ยของพิกเซลในกรอบ 3x3 ช่วยลดเกรน (Quantum Mottle) ได้ แต่อาจทำให้ขอบภาพกระดูกเบลอได้"; break;
+      case 'gaussian': text = "<b>Gaussian Filter:</b> ใช้ Gaussian Kernel ในการถ่วงน้ำหนักพิกเซลตรงกลางให้มากที่สุด ช่วยเกลี่ย Gaussian Noise (Quantum Mottle) อย่างเป็นธรรมชาติโดยรักษารายละเอียดได้ดีกว่าแบบ Mean"; break;
+      case 'median': text = "<b>Median Filter:</b> เลือกค่าพิกเซลตรงกลางจากการเรียงลำดับ เป็นอัลกอริทึมที่ดีที่สุดในการกำจัด Noise ที่กระโดดข้ามค่าไปมาแบบ Salt & Pepper"; break;
     }
     
     document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
