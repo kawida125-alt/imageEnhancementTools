@@ -253,34 +253,53 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
   // ======================================================================
-  // Diagnostic Knowledge Base (ฐานข้อมูลจดจำลายพิมพ์ทางสถิติของภาพ)
+  // Diagnostic Knowledge Base (ฐานข้อมูลความจำลักษณะภาพทางคลินิก)
   // ======================================================================
   const diagnosticMemory = [
     {
       id: "severe_speckle_pattern",
       name: "Severe Speckle Ultrasound Pattern",
-      // เงื่อนไขสถิติที่สกัดจากภาพตัวอย่างของคุณ (Noise สูงมาก, ค่าความสว่างอยู่ระดับกลาง, RMS Contrast ต่ำ)
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => sp > 0.4 && noise > 5 && rms < 35 && tissueBrightness > 40 && tissueBrightness < 150,
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => (sp > 0.4 || (noise > 4 && pureBlack > 5)),
       statusClass: "text-memory",
-      statusText: "🧠 ระบบจดจำภาพนี้ได้: Severe Acoustic Speckle",
-      advice: "💡 <b>Pattern Recognized:</b> ภาพนี้มีโครงสร้างสถิติพิกเซลตรงกับ <b>'ฐานข้อมูลภาพที่มีเกรนรบกวนหนาแน่น (Severe Speckle)'</b> ที่ระบบได้เรียนรู้ไว้ <br>✅ <b>คำแนะนำที่บันทึกไว้:</b> ให้ข้ามการปรับสมดุลแสงไปก่อน และบังคับใช้ <b>Median Filter</b> ทันที เพื่อลบ Noise ที่เป็นจุดๆ ออกโดยที่เส้นขอบเนื้อเยื่อยังคงเดิม หลังจากนั้นค่อยดึง <b>Contrast</b> ขึ้นเพื่อแยกความแตกต่างของรอยโรค",
+      statusText: "🧠 ระบบจดจำได้: ภาพอัลตราซาวด์ (มีจุดรบกวน)",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลลักษณะเม็ดทราย (Speckle) ตรงกับฐานข้อมูลภาพอัลตราซาวด์ <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้ และเพิ่ม <b>Contrast</b> เพื่อให้เห็นความแตกต่างของเนื้อเยื่อ (Echogenicity) ชัดเจนขึ้น",
       focusBtn: "btn-median"
     },
     {
-      // [เพิ่มใหม่] โปรไฟล์สำหรับภาพ X-ray ที่ Overexposure มากๆ (มืดทึบ)
       id: "severe_overexposure_pattern",
-      name: "Severe Overexposure X-Ray Pattern",
-      // เงื่อนไขสถิติ: สีดำสนิทเกิน 30%, พิกเซลมืดเกิน 40%, Noise แบบอัลตราซาวด์ต่ำมาก
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => pureBlack > 30 && dark > 40 && sp < 0.1,
+      name: "Severe Overexposure Pattern",
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => (pureBlack > 35 && dark > 45 && sp < 0.1),
       statusClass: "text-danger",
-      statusText: "🧠 ระบบจดจำภาพนี้ได้: Severe Overexposure (ภาพมืดทึบจากรังสีล้น)",
-      advice: "💡 <b>Pattern Recognized:</b> ภาพนี้มีโครงสร้างสถิติพิกเซลตรงกับ <b>'ฐานข้อมูลภาพรังสี Overexposure (Dose Creep)'</b> ที่ระบบได้เรียนรู้ไว้ <br>✅ <b>คำแนะนำที่บันทึกไว้:</b> ภาพที่มืดทึบในระบบ Digital Radiography มักเกิดจากการใช้ปริมาณรังสี (mAs) สูงเกินไป แนะนำให้ <b>เพิ่ม Brightness (Level) ควบคู่ไปกับการเพิ่ม Contrast เล็กน้อย</b> เพื่อดึงรายละเอียดของกระดูกและเนื้อเยื่อที่จมอยู่ในเงามืด (Burn-out) ให้ปรากฏขึ้นมา",
+      statusText: "🧠 ระบบจดจำได้: ภาพมืดทึบเกินเกณฑ์ (Severe Overexposure)",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับแพทเทิร์นภาพรังสีที่ได้รับปริมาณ Dose สูงเกินไป (Overexposure) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพรังสีมืดทึบจนไม่เห็นรายละเอียด แนะนำให้ <b>เพิ่ม Brightness (Level)</b> เป็นลำดับแรกเพื่อดึงรายละเอียดเนื้อเยื่อที่ Burn-out ในเงามืดออกมา และเพิ่ม <b>Contrast</b> เล็กน้อยเพื่อขับเน้นขอบโครงสร้างกระดูก",
+      focusBtn: ""
+    },
+    // --- [อัปเดต] โปรไฟล์: จดจำภาพอัลตราซาวด์ที่ "ปกติดี ไม่มี Noise" ---
+    {
+      id: "optimal_ultrasound_pattern",
+      name: "Optimal Ultrasound Pattern",
+      // ปรับเกณฑ์ความทนทานต่อภาพทารกในครรภ์: มีความมืด (น้ำคร่ำ), Noise ต่ำ
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => (pureBlack > 3 || sp > 0.005) && sp < 0.2 && noise < 3.5 && tissueBrightness > 20 && tissueBrightness < 160,
+      statusClass: "text-success",
+      statusText: "✅ ระบบจดจำได้: ภาพอัลตราซาวด์ปกติดี ไม่มี Noise",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลตรงกับ <b>'ฐานข้อมูลภาพอัลตราซาวด์ที่ปกติดี'</b> <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี ไม่มี Noise มารบกวน ระดับคลื่นเสียง (Gain) อยู่ในเกณฑ์มาตรฐาน สามารถนำไปใช้วินิจฉัยรอยโรคได้ทันที",
+      focusBtn: ""
+    },
+    // --- [อัปเดต] โปรไฟล์: จดจำภาพเอกซเรย์ที่ "ปกติดี ไม่มี Noise" ---
+    {
+      id: "optimal_xray_pattern",
+      name: "Optimal X-Ray Pattern",
+      // ปรับเกณฑ์ความทนทานต่อภาพปอด/เอกซเรย์ทั่วไป: คอนทราสต์สูง, สีดำพอประมาณ, Noise ต่ำ
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => pureBlack <= 15 && sp < 0.1 && noise < 3.5 && rms >= 30 && tissueBrightness >= 40 && tissueBrightness <= 180,
+      statusClass: "text-success",
+      statusText: "✅ ระบบจดจำได้: ภาพเอกซเรย์ปกติดี ไม่มี Noise",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลตรงกับ <b>'ฐานข้อมูลภาพเอกซเรย์ที่ปกติดี'</b> <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี ไม่มี Noise มารบกวน ระดับแสง (Exposure) และความเปรียบต่าง (Contrast) เหมาะสม สามารถนำไปใช้วินิจฉัยได้ทันที",
       focusBtn: ""
     }
   ];
 
   // ======================================================================
-  // ระบบวิเคราะห์ภาพการแพทย์ขั้นสูง (Ultrasound & X-ray Professional Analysis)
+  // ระบบวิเคราะห์ภาพการแพทย์ขั้นสูง (Advanced Pixel Intelligence)
   // ======================================================================
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
@@ -308,14 +327,10 @@ document.addEventListener("DOMContentLoaded", function () {
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
-          const r = pixelData[i];
-          const g = pixelData[i + 1];
-          const b = pixelData[i + 2];
+          const r = pixelData[i], g = pixelData[i + 1], b = pixelData[i + 2];
           let grayValue = (r + g + b) / 3;
-          let maxColor = Math.max(r, g, b);
-          let minColor = Math.min(r, g, b);
           
-          if (maxColor - minColor > 30) colorPixelCount++;
+          if (Math.max(r, g, b) - Math.min(r, g, b) > 30) colorPixelCount++;
           if (grayValue < 15) pureBlackCount++; 
 
           const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
@@ -332,7 +347,6 @@ document.addEventListener("DOMContentLoaded", function () {
               validPixels++; 
               totalGray += grayValue;
               totalGraySq += (grayValue * grayValue); 
-              
               if (grayValue > 220) brightPixels++;
               if (grayValue <= 60) darkPixels++;
               const bot = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
@@ -347,7 +361,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const blurScore = lapCount > 0 ? (lapSumSq / lapCount) - Math.pow(lapSum / lapCount, 2) : 100;
       const tissueBrightness = totalGray / validPixels;
       const rmsContrast = Math.sqrt(Math.max(0, (totalGraySq / validPixels) - (tissueBrightness * tissueBrightness)));
-
       const brightRatio = (brightPixels / validPixels) * 100;
       const darkRatio = (darkPixels / validPixels) * 100;
       const totalArea = w * h;
@@ -369,7 +382,7 @@ document.addEventListener("DOMContentLoaded", function () {
           isUltrasound = true;
       }
 
-      // เช็คว่าภาพที่อัปโหลดตรงกับ "โปรไฟล์ที่ระบบจำได้" หรือไม่ (ส่งพารามิเตอร์ pureBlack และ dark เข้าไปเพิ่ม)
+      // ตรวจสอบกับ Diagnostic Memory ลำดับความสำคัญจากบนลงล่าง
       for (let memory of diagnosticMemory) {
         if (memory.checkCondition(spRatio, noiseRatio, rmsContrast, tissueBrightness, pureBlackRatio, darkRatio)) {
           matchedMemory = memory;
@@ -386,73 +399,31 @@ document.addEventListener("DOMContentLoaded", function () {
         advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
         isMedicalImage = false;
       } else if (matchedMemory) {
-        // หากระบบ "จำภาพนี้ได้" ให้ดึงความจำมาใช้
-        statusText = matchedMemory.statusText;
-        statusClass = matchedMemory.statusClass;
-        advice = matchedMemory.advice;
-        focusBtn = matchedMemory.focusBtn;
+        statusText = matchedMemory.statusText; statusClass = matchedMemory.statusClass;
+        advice = matchedMemory.advice; focusBtn = matchedMemory.focusBtn;
       } else {
-        // หากจำไม่ได้ ให้เข้ากระบวนการวิเคราะห์ตามเกณฑ์ปกติ
+        // การวิเคราะห์เกณฑ์ปกติหากไม่ตรงกับหน่วยความจำจำเพาะ
         if (isSeverelyWashedOut) {
-          statusText = "⚠️ ภาพสว่างขาวโพลน (Severe Underexposure / High Gain)"; statusClass = "text-danger";
-          advice = "💡 <b>Educational Note:</b> ภาพสว่างแบนราบเกิดจากรังสีน้อยไป (Underexposure) หรือตั้ง Gain สูงเกินใน Ultrasound แนะนำให้ <b>ลด Brightness ลง</b> และ <b>เพิ่ม Contrast</b> เพื่อดึงรายละเอียดเนื้อเยื่อ";
-          focusBtn = "btn-mean";
+          statusText = "⚠️ Severe Underexposure / High Gain"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ภาพสว่างแบนราบเกิดจากรังสีน้อยไปหรือตั้ง Gain สูงเกิน แนะนำให้ <b>ลด Brightness</b> และ <b>เพิ่ม Contrast</b>";
         } else if (darkRatio > 25 || tissueBrightness < 80) {
-          statusText = "⚠️ ภาพมืดทึบเกินเกณฑ์ (Possible Overexposure / Low Gain)"; statusClass = "text-danger";
-          advice = "💡 <b>Educational Note:</b> ในงานรังสีดิจิทัล ภาพที่มืดเกิดจากได้รับรังสีมากเกินไป (Overexposure) ระวังภาวะ Dose Creep! แนะนำให้ <b>เพิ่ม Brightness</b> เพื่อดึงรายละเอียดในเงามืดออกมา";
-          focusBtn = "";
-        } else if (spRatio > 0.5) {
-          statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
-          advice = "💡 <b>Educational Note:</b> ตรวจพบสัญญาณแทรกสอดแบบจุดขาวดำชัดเจน (Salt & Pepper) แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้";
-          focusBtn = "btn-median";
-        } else if (noiseRatio > 6) {
-          statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Grainy)"; statusClass = "text-warning";
-          advice = "💡 <b>Educational Note:</b> ภาพมีเกรนละเอียดทั่วทั้งภาพ (Quantum Mottle) มักเกิดจากปริมาณรังสีไม่เพียงพอ แนะนำให้ใช้ <b>Gaussian Blur</b> เพื่อเกลี่ยเกรนให้เนียนตาขึ้น";
-          focusBtn = "btn-gaussian";
-        } else if (blurScore < 30) {
-          statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
-          advice = "💡 <b>Educational Note:</b> ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของคนไข้ แนะนำให้ใช้ <b>Gaussian Blur</b> เกลี่ยจุดรบกวนก่อน แล้วเพิ่ม <b>Sharpness</b> เพื่อเน้นขอบเขตโครงสร้าง";
-          focusBtn = "btn-gaussian";
-        } else if (rmsContrast < 35 && tissueBrightness > 40 && tissueBrightness < 200) {
+          statusText = "⚠️ Possible Overexposure / Low Gain"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ภาพมืดเกิดจากได้รับรังสีมากเกินไป แนะนำให้ <b>เพิ่ม Brightness</b> เพื่อดึงรายละเอียดในเงามืดออกมา";
+        } else if (rmsContrast < 35) {
           statusText = "💡 Low Contrast (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
-          advice = "ตรวจพบค่าความแปรปรวนของระดับสีต่ำ (RMS Contrast = " + rmsContrast.toFixed(1) + ") เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>ปรับ Contrast เพิ่มขึ้น</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างที่ชัดเจนขึ้น";
-          focusBtn = "";
+          advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>เพิ่ม Contrast</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างชัดเจนขึ้น";
         } else {
-          statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Exposure)"; statusClass = "text-success";
-          advice = "สัญญาณภาพอยู่ในเกณฑ์มาตรฐาน (EI เหมาะสม) มีความคมชัดสูง แนะนำให้ปรับเพียง Sharpness เล็กน้อย หากต้องการเน้นขอบเขตอวัยวะ";
-        }
-
-        if (isMedicalImage && isUltrasound) {
-          advice += "<br><br>🩺 <b>คำแนะนำเพิ่มเติมเฉพาะภาพอัลตราซาวด์ (Ultrasound Tuning):</b>";
-          advice += "<ul style='margin-top: 8px; margin-bottom: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6;'>";
-          
-          if (brightRatio > 10 || tissueBrightness > 140) {
-              advice += "<li><b>Over-gained:</b> ภาพดูสว่างเกินไป (ตั้งค่า Overall Gain หรือ TGC สูงไป) แนะนำให้ <b>ลด Brightness</b> เพื่อลดสัญญาณแทรกซ้อน (Artifacts) ในส่วนที่เป็นของเหลว (Anechoic)</li>";
-          }
-          if (tissueBrightness < 60) {
-              advice += "<li><b>Under-gained:</b> สัญญาณ Echo ต่ำ ภาพดูมืด แนะนำให้ <b>เพิ่ม Brightness</b> หรือขยาย <b>Contrast</b> เพื่อให้เห็นรายละเอียดโครงสร้างเนื้อเยื่อที่อยู่ลึกชัดเจนขึ้น</li>";
-          }
-          if (rmsContrast < 35) {
-              advice += "<li><b>Low Contrast Resolution:</b> ระดับความทึบเสียง (Echogenicity) แยกออกได้ยาก แนะนำให้ <b>เพิ่ม Contrast</b> เพื่อดึงความแตกต่างระหว่างเนื้อเยื่อปกติและรอยโรค (Lesion)</li>";
-          }
-          if (spRatio > 0.05 || noiseRatio > 4) {
-              advice += "<li><b>Acoustic Speckle:</b> พบ Noise แบบจุดกระจัดกระจาย แนะนำให้ใช้ <b>Median Filter</b> ซึ่งเป็นวิธีที่ดีที่สุดในการเกลี่ยจุดรบกวนของภาพอัลตราซาวด์ โดยไม่ทำให้ขอบเขต (Border) เบลอ</li>";
-          }
-          if (!(brightRatio > 10 || tissueBrightness > 140) && !(tissueBrightness < 60) && !(rmsContrast < 35) && !(spRatio > 0.05 || noiseRatio > 4)) {
-              advice += "<li><b>Optimal Settings:</b> ภาพมีระดับคลื่นเสียงที่เหมาะสม แนะนำให้ปรับ <b>Smoothing เล็กน้อย (1-2px)</b> คู่กับ <b>Sharpness</b> เพื่อขับเน้นขอบเขตของอวัยวะให้ดูเป็นธรรมชาติ</li>";
-          }
-          advice += "</ul>";
+          statusText = "✅ ภาพปกติดี ไม่มี Noise"; statusClass = "text-success";
+          advice = "ภาพปกติดี ระดับแสงและความคมชัดเหมาะสม สามารถใช้วินิจฉัยได้ทันที";
         }
       }
 
       recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
       
       if (!isMedicalImage) {
-        editorUI.style.display = "none";
-        mainImg.style.filter = "none";
+        editorUI.style.display = "none"; mainImg.style.filter = "none";
       } else {
-        editorUI.style.display = "block";
-        editorUI.classList.remove('hidden');
+        editorUI.style.display = "block"; editorUI.classList.remove('hidden');
         document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
         if(focusBtn) {
             const targetBtn = document.getElementById(focusBtn);
@@ -464,13 +435,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function applyPixelFilter(type) {
     if (type === 'none') {
-      processedBaseSrc = originalSrc;
-      mainImg.src = processedBaseSrc;
-      updateStyles();
-      filterDescText.innerHTML = "คืนค่าภาพต้นฉบับสำเร็จ";
-      return;
+      processedBaseSrc = originalSrc; mainImg.src = processedBaseSrc;
+      updateStyles(); filterDescText.innerHTML = "คืนค่าภาพต้นฉบับสำเร็จ"; return;
     }
-
     const img = new Image();
     img.src = originalSrc;
     img.onload = function() {
@@ -480,7 +447,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const h = img.naturalHeight || img.height;
       canvas.width = w; canvas.height = h;
       ctx.drawImage(img, 0, 0);
-
       const imageData = ctx.getImageData(0, 0, w, h);
       const data = imageData.data;
       const tempData = new Uint8ClampedArray(data); 
@@ -488,83 +454,56 @@ document.addEventListener("DOMContentLoaded", function () {
       for (let y = 1; y < h - 1; y++) {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
-
           if (type === 'median') {
             let neighbors = [];
             for (let wy = -1; wy <= 1; wy++) {
               for (let wx = -1; wx <= 1; wx++) {
-                const idx = ((y + wy) * w + (x + wx)) * 4;
-                neighbors.push(tempData[idx]);
+                neighbors.push(tempData[((y + wy) * w + (x + wx)) * 4]);
               }
             }
             neighbors.sort((a, b) => a - b);
-            const medianValue = neighbors[4];
-            data[i] = data[i+1] = data[i+2] = medianValue;
-
+            data[i] = data[i+1] = data[i+2] = neighbors[4];
           } else if (type === 'gaussian') {
-            const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
-            const kernelWeight = 16;
-            let sum = 0; let kIndex = 0;
+            const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1], kernelWeight = 16;
+            let sum = 0, kIdx = 0;
             for (let wy = -1; wy <= 1; wy++) {
               for (let wx = -1; wx <= 1; wx++) {
-                const idx = ((y + wy) * w + (x + wx)) * 4;
-                sum += tempData[idx] * kernel[kIndex];
-                kIndex++;
+                sum += tempData[((y + wy) * w + (x + wx)) * 4] * kernel[kIdx++];
               }
             }
             data[i] = data[i+1] = data[i+2] = sum / kernelWeight;
-
           } else if (type === 'mean') {
             let total = 0;
             for (let wy = -1; wy <= 1; wy++) {
               for (let wx = -1; wx <= 1; wx++) {
-                const idx = ((y + wy) * w + (x + wx)) * 4;
-                total += tempData[idx];
+                total += tempData[((y + wy) * w + (x + wx)) * 4];
               }
             }
             data[i] = data[i+1] = data[i+2] = total / 9;
           }
         }
       }
-
       ctx.putImageData(imageData, 0, 0);
       processedBaseSrc = canvas.toDataURL('image/png');
       mainImg.src = processedBaseSrc; 
-      
-      let textDesc = filterDescText.innerHTML;
-      filterDescText.innerHTML = textDesc.replace(
-        "<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>", 
-        "<span style='color:#27ae60;'>✅ ประมวลผลคณิตศาสตร์ระดับพิกเซลสำเร็จ:</span><br>"
-      );
+      filterDescText.innerHTML = "<span style='color:#27ae60;'>✅ ประมวลผลคณิตศาสตร์ระดับพิกเซลสำเร็จ</span><br>";
       updateStyles();
     };
   }
 
   window.setFilter = function(f) {
     currentFilter = f; filterDescBox.style.display = "block";
-    let text = "";
-    
-    switch(f) {
-      case 'mean': text = "<b>Averaging (Mean) Filter:</b> คำนวณค่าเฉลี่ยของพิกเซลในกรอบ 3x3 ช่วยลดเกรน (Quantum Mottle) ได้ แต่อาจทำให้ขอบภาพกระดูกเบลอได้"; break;
-      case 'gaussian': text = "<b>Gaussian Filter:</b> ใช้ Gaussian Kernel ในการถ่วงน้ำหนักพิกเซลตรงกลางให้มากที่สุด ช่วยเกลี่ย Gaussian Noise (Quantum Mottle) อย่างเป็นธรรมชาติโดยรักษารายละเอียดได้ดีกว่าแบบ Mean"; break;
-      case 'median': text = "<b>Median Filter:</b> เลือกค่าพิกเซลตรงกลางจากการเรียงลำดับ เป็นอัลกอริทึมที่ดีที่สุดในการกำจัด Noise ที่กระโดดข้ามค่าไปมาแบบ Salt & Pepper ใน Ultrasound"; break;
-    }
-    
+    let text = f === 'mean' ? "<b>Mean:</b> ลดเกรนแต่ขอบกระดูกอาจเบลอ" : f === 'gaussian' ? "<b>Gaussian:</b> เกลี่ยเกรนอย่างเป็นธรรมชาติ" : "<b>Median:</b> ดีที่สุดในการกำจัดจุดรบกวน Speckle ใน Ultrasound";
     document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
     const activeBtn = document.getElementById('btn-' + f);
     if(activeBtn) activeBtn.style.border = "2px solid #222";
-
     filterDescText.innerHTML = "<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>" + text;
     setTimeout(() => { applyPixelFilter(f); }, 50); 
   }
 
   function updateStyles() {
-    const sVal = parseInt(sharp.value); 
-    const smVal = parseInt(smooth.value);
-    
-    let filterStr = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%)`;
-    mainImg.style.filter = filterStr;
-    
+    const sVal = parseInt(sharp.value), smVal = parseInt(smooth.value);
+    mainImg.style.filter = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%)`;
     document.getElementById('v-bright').innerText = brightness.value + '%';
     document.getElementById('v-contrast').innerText = contrast.value + '%';
     document.getElementById('v-smooth').innerText = smVal + 'px';
@@ -579,106 +518,54 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   upload.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
+    const file = e.target.files[0]; if (!file) return;
     fileExtension = file.type;
     const reader = new FileReader();
     reader.onload = (event) => {
-      originalSrc = event.target.result;
-      processedBaseSrc = originalSrc; 
-      mainImg.src = originalSrc;
-      document.getElementById('before-img').src = originalSrc;
-      
-      editorUI.style.display = "none"; 
-      mainImg.classList.remove('hidden'); 
-      
-      analyzeDiagnosticImage(); 
-      resetAll();
+      originalSrc = event.target.result; processedBaseSrc = originalSrc;
+      mainImg.src = originalSrc; document.getElementById('before-img').src = originalSrc;
+      editorUI.style.display = "none"; mainImg.classList.remove('hidden'); 
+      analyzeDiagnosticImage(); resetAll();
     }
     reader.readAsDataURL(file);
   });
   
   window.showFinal = function() { 
-    editorUI.style.display = "none";
-    document.getElementById('result-ui').classList.remove('hidden'); 
-    
-    const canvas = document.getElementById('after-canvas');
-    const finalImg = document.getElementById('final-result-img');
-    const ctx = canvas.getContext('2d');
-    const img = new Image(); 
-    
+    editorUI.style.display = "none"; document.getElementById('result-ui').classList.remove('hidden'); 
+    const canvas = document.getElementById('after-canvas'), finalImg = document.getElementById('final-result-img'), ctx = canvas.getContext('2d'), img = new Image(); 
     img.src = mainImg.src; 
-    
     img.onload = function() { 
-      canvas.width = img.naturalWidth; 
-      canvas.height = img.naturalHeight; 
-      ctx.imageSmoothingEnabled = false; 
-      
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-      
-      const bVal = parseInt(brightness.value) / 100;       
-      const cVal = parseInt(contrast.value) / 100;         
-      const sVal = parseInt(sharp.value);                  
-      const smVal = parseInt(smooth.value);                
-      const totalContrast = cVal * (1 + (sVal * 0.4) / 100);
-
+      const bVal = parseInt(brightness.value) / 100, cVal = parseInt(contrast.value) / 100, sVal = parseInt(sharp.value), smVal = parseInt(smooth.value), totalContrast = cVal * (1 + (sVal * 0.4) / 100);
       try {
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imageData.data;
-
           for (let i = 0; i < data.length; i += 4) {
-              let r = data[i];
-              let g = data[i+1];
-              let b = data[i+2];
-
-              r *= bVal; g *= bVal; b *= bVal;
-
+              let r = data[i] * bVal, g = data[i+1] * bVal, b = data[i+2] * bVal;
               r = ((r / 255 - 0.5) * totalContrast + 0.5) * 255;
               g = ((g / 255 - 0.5) * totalContrast + 0.5) * 255;
               b = ((b / 255 - 0.5) * totalContrast + 0.5) * 255;
-
-              r = Math.min(255, Math.max(0, r));
-              g = Math.min(255, Math.max(0, g));
-              b = Math.min(255, Math.max(0, b));
-
-              let gray = (r * 0.299 + g * 0.587 + b * 0.114);
-
+              let gray = Math.min(255, Math.max(0, r * 0.299 + g * 0.587 + b * 0.114));
               data[i] = data[i+1] = data[i+2] = gray;
           }
-          
           ctx.putImageData(imageData, 0, 0);
-
           if (smVal > 0) {
               const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = canvas.width;
-              tempCanvas.height = canvas.height;
+              tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
               const tempCtx = tempCanvas.getContext('2d');
-              tempCtx.filter = `blur(${smVal}px)`;
-              tempCtx.drawImage(canvas, 0, 0);
-              
+              tempCtx.filter = `blur(${smVal}px)`; tempCtx.drawImage(canvas, 0, 0);
               finalImg.src = tempCanvas.toDataURL(fileExtension || 'image/png', 1.0);
-          } else {
-              finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0);
-          }
-
-      } catch (e) {
-          console.error("เกิดข้อผิดพลาดในการประมวลผลพิกเซลบนอุปกรณ์ของคุณ:", e);
-          finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0);
-      }
+          } else { finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0); }
+      } catch (e) { finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0); }
     } 
   }
   
   window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
-  
   window.downloadImage = () => { 
-    const finalImg = document.getElementById('final-result-img');
-    const link = document.createElement('a'); 
-    link.download = 'medical_report_image.' + (fileExtension.split('/')[1] || 'png'); 
-    link.href = finalImg.src;
-    document.body.appendChild(link);
-    link.click(); 
-    document.body.removeChild(link);
+    const finalImg = document.getElementById('final-result-img'), link = document.createElement('a'); 
+    link.download = 'medical_report_image.' + (fileExtension.split('/')[1] || 'png'); link.href = finalImg.src;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
   
   brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
