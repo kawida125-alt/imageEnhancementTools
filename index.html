@@ -270,7 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const imageData = ctx.getImageData(0, 0, w, h);
       const pixelData = imageData.data;
       
-      let validPixels = 0, totalGray = 0;
+      let validPixels = 0, totalGray = 0, totalGraySq = 0; // เพิ่มตัวแปรสำหรับเก็บค่าความแปรปรวน
       let brightPixels = 0, darkPixels = 0, pureBlackCount = 0;
       let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
@@ -301,7 +301,10 @@ document.addEventListener("DOMContentLoaded", function () {
           if (grayValue > 40 && maxDiff > 8) structuralEdgeCount++;
 
           if (grayValue > 15) { 
-              validPixels++; totalGray += grayValue;
+              validPixels++; 
+              totalGray += grayValue;
+              totalGraySq += (grayValue * grayValue); // เก็บผลรวมกำลังสองของพิกเซล เพื่อหาค่า Standard Deviation
+              
               if (grayValue > 220) brightPixels++;
               if (grayValue <= 60) darkPixels++;
               const bot = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
@@ -315,6 +318,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const blurScore = lapCount > 0 ? (lapSumSq / lapCount) - Math.pow(lapSum / lapCount, 2) : 100;
       const tissueBrightness = totalGray / validPixels;
+      
+      // การคำนวณ RMS Contrast (Standard Deviation ของพิกเซลทั้งหมด)
+      const rmsContrast = Math.sqrt(Math.max(0, (totalGraySq / validPixels) - (tissueBrightness * tissueBrightness)));
+
       const brightRatio = (brightPixels / validPixels) * 100;
       const darkRatio = (darkPixels / validPixels) * 100;
       const totalArea = w * h;
@@ -365,10 +372,10 @@ document.addEventListener("DOMContentLoaded", function () {
           statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
           advice = "💡 <b>Educational Note:</b> ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของคนไข้ แนะนำให้ใช้ <b>Gaussian Blur</b> เกลี่ยจุดรบกวนก่อน แล้วเพิ่ม <b>Sharpness</b> เพื่อเน้นขอบเขตโครงสร้าง";
           focusBtn = "btn-gaussian";
-        } else if (brightRatio < 5 && darkRatio < 5 && tissueBrightness > 80 && tissueBrightness < 160) {
-          // ส่วนที่แก้ไขใหม่ เพื่อรองรับ Low Contrast โดยเฉพาะ
+        } else if (rmsContrast < 35 && tissueBrightness > 40 && tissueBrightness < 200) {
+          // ส่วนที่แก้ไขใหม่ เพื่อใช้ค่าเบี่ยงเบนมาตรฐาน (RMS Contrast) ประเมินความเปรียบต่าง
           statusText = "💡 Low Contrast (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
-          advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>ปรับ Contrast เพิ่มขึ้น</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างที่ชัดเจนขึ้น";
+          advice = "ตรวจพบค่าความแปรปรวนของระดับสีต่ำ (RMS Contrast = " + rmsContrast.toFixed(1) + ") เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>ปรับ Contrast เพิ่มขึ้น</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างที่ชัดเจนขึ้น";
           focusBtn = "";
         } else {
           statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Exposure)"; statusClass = "text-success";
