@@ -143,7 +143,7 @@
   <div class="header-banner">
     <h1>Image Diagnostics</h1>
     <span class="wave-line">〰〰〰</span>
-    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อวิเคราะห์ทางสถิติของพิกเซล</p>
+    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มต้นการวิเคราะห์พิกเซล</p>
   </div>
 
   <div class="container">
@@ -333,39 +333,41 @@ document.addEventListener("DOMContentLoaded", function () {
       let isMedicalImage = true;
 
       const isAnatomicalShapeDetected = (structuralRatio > 0.5);
+      
+      // อัปเดต 1: ตัวแปรใหม่ บายพาสให้รูป Underexposed ขาวโพลนผ่านเข้าระบบได้
+      const isSeverelyWashedOut = (brightRatio > 15 || tissueBrightness > 160) && (colorRatio < 5);
 
       if (colorRatio > 12) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากมีเฉดสีมากเกินไป (Color Image)";
         isMedicalImage = false;
-      } else if (pureBlackRatio < 0.2 && !isAnatomicalShapeDetected) {
+      // อัปเดต 2: ตรวจจับว่าถ้าไม่ดำ ไม่เห็นขอบโครงสร้าง แต่เป็นภาพ Underexposed ให้ปล่อยผ่าน
+      } else if (pureBlackRatio < 0.2 && !isAnatomicalShapeDetected && !isSeverelyWashedOut) {
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
         isMedicalImage = false;
       } else {
-        if (isAnatomicalShapeDetected && pureBlackRatio < 0.2) {
-            console.log("Anatomical Structure Detected: Bypassed background check.");
+        if ((isAnatomicalShapeDetected || isSeverelyWashedOut) && pureBlackRatio < 0.2) {
+            console.log("Anatomical Structure or Wash-out Detected: Bypassed background check.");
         }
 
-        // ======================================================================
-        // อัปเดตส่วนนี้: แทรกความรู้เรื่อง Overexposure, Underexposure, Quantum Mottle
-        // ======================================================================
-        if (blurScore < 30 && noiseRatio < 8) {
+        // อัปเดต 3: สลับให้เช็คแสงก่อนเช็คความเบลอ ป้องกันภาพสว่างไปตกเงื่อนไขภาพเบลอ
+        if (brightRatio > 15 || tissueBrightness > 160) {
+          statusText = "⚠️ ภาพสว่างขาวโพลน (Severe Underexposure)"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ภาพสว่างและแบนราบแบบนี้เกิดจาก <b>Underexposure (รังสีน้อยไปมาก)</b> ทำให้รังสีทะลุไปถึงฉากรับภาพได้น้อย แนะนำให้ใช้ <b>Averaging (Mean)</b> เพื่อเกลี่ยภาพ และเพิ่ม Contrast";
+          focusBtn = "btn-mean";
+        } else if (darkRatio > 25 || tissueBrightness < 80) {
+          statusText = "⚠️ ภาพมืดทึบเกินเกณฑ์ (Possible Overexposure)"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ตรงข้ามกับภาพถ่ายทั่วไป ภาพรังสีที่มืดทึบเกิดจาก <b>Overexposure (ได้รับรังสีมากไป)</b> ระวังภาวะ <b>Dose Creep</b>! เบื้องต้นแนะนำให้เพิ่ม Brightness เพื่อดึงรายละเอียด";
+          focusBtn = "btn-none";
+        } else if (noiseRatio > 6 || spRatio > 0.5) {
+          statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Speckle)"; statusClass = "text-warning";
+          advice = "💡 <b>Educational Note:</b> สัญญาณรบกวนหนาแน่น (มักเกิดจาก <b>Underexposure</b> อ่อนๆ) หากเป็นจุดดำ-ขาวชัดเจน ให้ใช้ <b>Median Filter</b> / หากเป็นเม็ดเกรนละเอียดทั่วภาพ แนะนำ <b>Gaussian Blur</b>";
+          focusBtn = "btn-gaussian";
+        } else if (blurScore < 30) {
           statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
           advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของคนไข้ แนะนำให้ใช้ <b>Gaussian Blur</b> เพื่อเกลี่ยจุดรบกวนก่อน แล้วจึงปรับความคมชัด (Sharpness)";
           focusBtn = "btn-gaussian";
-        } else if (brightRatio > 20 || (tissueBrightness > 160 && noiseRatio > 5)) {
-          statusText = "⚠️ ภาพสว่างและมีสัญญาณรบกวน (Possible Underexposure)"; statusClass = "text-danger";
-          advice = "💡 <b>Educational Note:</b> ในระบบรังสีดิจิทัล ภาพที่สว่างและมีเกรน มักเกิดจาก <b>Underexposure (ได้รับรังสีน้อยเกินไป)</b> แล้วซอฟต์แวร์พยายามเร่งแสงชดเชย (Auto-rescaling) ทำให้เกิด Quantum Mottle แนะนำให้ใช้ <b>Averaging (Mean)</b> หรือ <b>Gaussian</b> เพื่อเกลี่ยแสง";
-          focusBtn = "btn-mean";
-        } else if (noiseRatio > 6 || spRatio > 0.5) {
-          statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Speckle)"; statusClass = "text-warning";
-          advice = "💡 <b>Educational Note:</b> ภาพมีสัญญาณรบกวนหนาแน่น (มักเป็นผลจากภาวะ <b>Underexposure</b>) หากจุดรบกวนเป็นสีขาวดำกระโดดกันชัดเจน ให้ใช้ <b>Median Filter</b> / หากเป็นเกรนเม็ดทรายละเอียดทั่วภาพแบบ Gaussian Noise ให้ใช้ <b>Gaussian Blur</b>";
-          focusBtn = "btn-gaussian";
-        } else if (darkRatio > 25 || tissueBrightness < 80) {
-          statusText = "⚠️ ภาพมืดทึบเกินเกณฑ์ (Possible Overexposure)"; statusClass = "text-danger";
-          advice = "💡 <b>Educational Note:</b> ตรงข้ามกับภาพถ่ายทั่วไป ภาพรังสีที่มืดทึบเกิดจาก <b>Overexposure (ได้รับรังสีมากเกินไป)</b> รังสีทะลุเนื้อเยื่อไปตกที่ฉากรับภาพมาก ระวังภาวะ <b>Dose Creep</b>! เบื้องต้นแนะนำให้เพิ่ม Brightness เพื่อดึงรายละเอียดที่ซ่อนอยู่ในเงามืด";
-          focusBtn = "btn-none";
         } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
           statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
           advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้เพิ่ม Contrast เพื่อขยาย Window Width ให้เห็นมิติความเปรียบต่างที่ชัดเจนขึ้น";
