@@ -192,8 +192,6 @@
           <button class="btn-filter" id="btn-wiener" onclick="setFilter('wiener')">Edge Enhance (Wiener)</button>
           <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Tissue Smooth (Mean)</button>
           <button class="btn-reset" onclick="resetAll()">Reset</button>
-          
-          <button class="btn-filter" style="border-color: #888;" onclick="addSaltAndPepperNoise(0.04)">Simulate S&P Noise</button>
         </div>
         
         <div class="button-group" style="border-top: none; padding-top: 0; margin-top: 15px;">
@@ -249,6 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
+  // --- ฟังก์ชันที่ถูกอัปเดตระบบวิเคราะห์โครงสร้างรอบทิศทาง ---
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     const img = new Image();
@@ -286,9 +285,11 @@ document.addEventListener("DOMContentLoaded", function () {
           if (maxColor - minColor > 30) colorPixelCount++;
           if (grayValue < 15) pureBlackCount++; 
 
+          // คำนวณพิกเซลรอบข้างเพื่อหา Edge ทั้งแกน X และ Y
           const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
           const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
           
+          // หาค่าความต่างสูดสุดไม่ว่าจะในแนวนอนหรือแนวตั้ง (ตรวจซี่โครงได้แม่นขึ้น)
           let diffX = Math.abs(grayValue - l);
           let diffY = Math.abs(grayValue - t);
           let maxDiff = Math.max(diffX, diffY);
@@ -296,6 +297,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (maxDiff > 35) generalNoiseCount++;
           if ((grayValue > 240 && l < 180) || (grayValue < 15 && l > 60)) saltPepperCount++;
 
+          // [อัปเดต] เงื่อนไขตรวจโครงสร้างที่ยืดหยุ่นมากๆ
           if (grayValue > 40 && maxDiff > 8) {
               structuralEdgeCount++;
           }
@@ -330,8 +332,10 @@ document.addEventListener("DOMContentLoaded", function () {
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
+      // [อัปเดต] ขอแค่ตรวจเจอ edge โครงสร้าง > 0.5% ก็ผ่านให้เลย
       const isAnatomicalShapeDetected = (structuralRatio > 0.5);
 
+      // ผ่อนปรนเรื่องสีนิดหน่อย เผื่อภาพ X-ray มีโทนสีฟ้าหรือ JPG noise
       if (colorRatio > 12) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากมีเฉดสีมากเกินไป (Color Image)";
@@ -385,47 +389,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // --- ฟังก์ชันจำลอง Salt & Pepper Noise ---
-  window.addSaltAndPepperNoise = function(prob = 0.04) {
-    const img = new Image();
-    img.src = processedBaseSrc; 
-    
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const w = img.naturalWidth || img.width; 
-      const h = img.naturalHeight || img.height;
-      canvas.width = w; canvas.height = h;
-      ctx.drawImage(img, 0, 0);
-
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const data = imageData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const rand = Math.random(); 
-        
-        if (rand < prob / 2) {
-          data[i] = 0;     
-          data[i+1] = 0;   
-          data[i+2] = 0;   
-        } else if (rand < prob) {
-          data[i] = 255;   
-          data[i+1] = 255; 
-          data[i+2] = 255; 
-        }
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-      processedBaseSrc = canvas.toDataURL('image/png'); 
-      mainImg.src = processedBaseSrc; 
-      
-      filterDescBox.style.display = "block";
-      filterDescText.innerHTML = `<span style='color:#f39c12;'>⚠️ เพิ่ม Salt & Pepper Noise สำเร็จ (Probability = ${prob})</span><br>ทดสอบกดใช้ Denoise (Median) เพื่อดูผลลัพธ์การคัดกรองจุดสีรบกวนระดับพิกเซล`;
-      
-      updateStyles();
-    };
-  }
-
+  // --- ส่วนฟังก์ชันเดิมคงไว้ไม่เปลี่ยนแปลง ---
   function applyPixelFilter(type) {
     if (type === 'none') {
       processedBaseSrc = originalSrc;
