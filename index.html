@@ -277,20 +277,19 @@ document.addEventListener("DOMContentLoaded", function () {
     {
       id: "optimal_ultrasound_pattern",
       name: "Optimal Ultrasound Pattern",
-      // ปรับเกณฑ์ให้แม่นยำกับภาพอัลตราซาวด์ทารก (มีส่วนน้ำคร่ำสีดำ และเกรน/Noise ต่ำมาก)
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => (pureBlack > 2 || sp > 0.001) && sp < 0.3 && noise < 4.5 && tissueBrightness > 15 && tissueBrightness < 170,
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => (pureBlack > 2 || sp > 0.001) && sp < 0.3 && noise < 5.0 && tissueBrightness > 15 && tissueBrightness < 170,
       statusClass: "text-success",
-      statusText: "✅ ระบบจดจำได้: ภาพอัลตราซาวด์ปกติดี ไม่มี Noise",
-      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจน <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี สามารถนำไปใช้วินิจฉัยได้ทันที",
+      statusText: "✅ ภาพปกติดี ไม่มี Noise",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจน <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี ไม่มี Noise มารบกวน สามารถนำไปใช้วินิจฉัยรอยโรคได้ทันที",
       focusBtn: ""
     },
     {
       id: "optimal_xray_pattern",
       name: "Optimal X-Ray Pattern",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => pureBlack <= 15 && sp < 0.1 && noise < 3.5 && rms >= 30 && tissueBrightness >= 40 && tissueBrightness <= 180,
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark) => pureBlack <= 15 && sp < 0.1 && noise < 5.0 && rms >= 25 && tissueBrightness >= 40 && tissueBrightness <= 180,
       statusClass: "text-success",
-      statusText: "✅ ระบบจดจำได้: ภาพเอกซเรย์ปกติดี ไม่มี Noise",
-      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลตรงกับฐานข้อมูลภาพเอกซเรย์ที่ปกติดี <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี สามารถนำไปใช้วินิจฉัยได้ทันที",
+      statusText: "✅ ภาพปกติดี ไม่มี Noise",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลตรงกับฐานข้อมูลภาพเอกซเรย์ที่ปกติดี <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี ไม่มี Noise มารบกวน ระดับแสงและความเปรียบต่างเหมาะสม สามารถนำไปใช้วินิจฉัยได้ทันที",
       focusBtn: ""
     }
   ];
@@ -409,8 +408,9 @@ document.addEventListener("DOMContentLoaded", function () {
           statusText = "💡 Low Contrast (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
           advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>เพิ่ม Contrast</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างชัดเจนขึ้น";
         } else {
+          // ส่วนแจ้งเตือนกรณีปกติดี (Fallback logic ที่ไม่เข้าข่ายเคสใดๆ เลย)
           statusText = "✅ ภาพปกติดี ไม่มี Noise"; statusClass = "text-success";
-          advice = "ภาพปกติดี สามารถนำไปใช้วินิจฉัยได้ทันที";
+          advice = "ภาพปกติดี ระดับแสงและความคมชัดเหมาะสม ไม่มี Noise มารบกวน สามารถใช้วินิจฉัยได้ทันที";
         }
       }
 
