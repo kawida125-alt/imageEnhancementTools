@@ -213,7 +213,7 @@
         <button class="btn-filter" onclick="goBack()">RETURN TO EDITOR</button>
       </div>
       <p style="color: #666; font-size: 0.9rem; margin-top: 20px; text-align: center; line-height: 1.5;">
-        📱 <b>ทริคสำหรับมือถือ:</b> หากปุ่ม Save ด้านบนไม่ทำงาน สามารถ <b style="color:var(--danger)">"แตะค้างที่รูปภาพ"</b> แล้วเลือก <b>"บันทึกรูปภาพ"</b> ลงเครื่องได้เลย ครับ
+        📱 <b>ทริคสำหรับมือถือ:</b> หากปุ่ม Save ด้านบนไม่ทำงาน สามารถ <b style="color:var(--danger)">"แตะค้างที่รูปภาพ"</b> แล้วเลือก <b>"บันทึกรูปภาพ"</b> ลงเครื่องได้เลยครับ
       </p>
     </div>
   </div>
@@ -349,17 +349,20 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Anatomical Structure or Wash-out Detected: Bypassed background check.");
         }
 
+        // ======================================================================
+        // [อัปเดต]: แทรกความรู้เรื่องการปรับเพิ่ม/ลด Brightness ตามภาวะ Exposure
+        // ======================================================================
         if (brightRatio > 15 || tissueBrightness > 160) {
           statusText = "⚠️ ภาพสว่างขาวโพลน (Severe Underexposure)"; statusClass = "text-danger";
-          advice = "💡 <b>Educational Note:</b> ภาพสว่างและแบนราบเกิดจาก <b>Underexposure (รังสีน้อยไป)</b> ทำให้ระบบเร่งแสงชดเชยจนภาพขาดมิติ แนะนำให้ <b>ลด Brightness ลง</b> ควบคู่กับการ <b>เพิ่ม Contrast</b> และใช้ <b>Averaging (Mean)</b> เพื่อเกลี่ย Noise";
+          advice = "💡 <b>Educational Note:</b> ภาพสว่างจ้าและแบนราบเกิดจาก <b>Underexposure (รังสีน้อยไป)</b> ทำให้ระบบเร่งแสงชดเชยจนภาพขาดมิติ แนะนำให้ <b>ลด Brightness ลง</b> ควบคู่กับ <b>เพิ่ม Contrast</b> และใช้ <b>Averaging (Mean)</b> เพื่อเกลี่ยจุดรบกวน";
           focusBtn = "btn-mean";
         } else if (darkRatio > 25 || tissueBrightness < 80) {
           statusText = "⚠️ ภาพมืดทึบเกินเกณฑ์ (Possible Overexposure)"; statusClass = "text-danger";
-          advice = "💡 <b>Educational Note:</b> ตรงข้ามกับภาพถ่ายทั่วไป ภาพรังสีที่มืดทึบเกิดจาก <b>Overexposure (ได้รับรังสีมากไป)</b> ระวังภาวะ <b>Dose Creep</b>! แนะนำเพิ่ม Brightness เพื่อดึงรายละเอียดในเงามืด";
+          advice = "💡 <b>Educational Note:</b> ภาพรังสีที่มืดทึบเกิดจาก <b>Overexposure (ได้รับรังสีมากไป)</b> ระวังภาวะ <b>Dose Creep</b>! แนะนำให้ <b>เพิ่ม Brightness</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่ในเงามืดออกมาให้ชัดเจนขึ้น";
           focusBtn = "";
         } else if (noiseRatio > 6 || spRatio > 0.5) {
           statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Speckle)"; statusClass = "text-warning";
-          advice = "💡 <b>Educational Note:</b> สัญญาณรบกวนหนาแน่น (มักเกิดจาก <b>Underexposure</b>) หากเป็นจุดดำ-ขาวชัดเจน แนะนำ <b>Median Filter</b> / หากเป็นเม็ดเกรน แนะนำ <b>Gaussian Blur</b>";
+          advice = "💡 <b>Educational Note:</b> สัญญาณรบกวนหนาแน่น (มักเกิดจาก <b>Underexposure</b>) หากเป็นจุดดำ-ขาวชัดเจน แนะนำ <b>Median Filter</b> / หากเป็นเม็ดเกรนละเอียดทั่วภาพ แนะนำ <b>Gaussian Blur</b>";
           focusBtn = "btn-gaussian";
         } else if (blurScore < 30) {
           statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
@@ -432,15 +435,9 @@ document.addEventListener("DOMContentLoaded", function () {
             data[i] = data[i+1] = data[i+2] = medianValue;
 
           } else if (type === 'gaussian') {
-            const kernel = [
-              1, 2, 1,
-              2, 4, 2,
-              1, 2, 1
-            ];
+            const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
             const kernelWeight = 16;
-            let sum = 0;
-            let kIndex = 0;
-            
+            let sum = 0; let kIndex = 0;
             for (let wy = -1; wy <= 1; wy++) {
               for (let wx = -1; wx <= 1; wx++) {
                 const idx = ((y + wy) * w + (x + wx)) * 4;
@@ -448,9 +445,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 kIndex++;
               }
             }
-            
-            const finalVal = sum / kernelWeight;
-            data[i] = data[i+1] = data[i+2] = finalVal;
+            data[i] = data[i+1] = data[i+2] = sum / kernelWeight;
 
           } else if (type === 'mean') {
             let total = 0;
@@ -460,8 +455,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 total += tempData[idx];
               }
             }
-            const averageVal = total / 9;
-            data[i] = data[i+1] = data[i+2] = averageVal;
+            data[i] = data[i+1] = data[i+2] = total / 9;
           }
         }
       }
