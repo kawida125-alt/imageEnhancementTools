@@ -333,20 +333,29 @@ document.addEventListener("DOMContentLoaded", function () {
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
-      const isAnatomicalShapeDetected = (structuralRatio > 0.5);
-      const isSeverelyWashedOut = (brightRatio > 15 || tissueBrightness > 160) && (colorRatio < 5);
+      // 1. ปรับเงื่อนไขการแยกแยะประเภทภาพให้รัดกุมขึ้น
+      const isAnatomicalShapeDetected = (structuralRatio > 0.5 && structuralRatio < 15);
       
-      // [อัปเดต]: เพิ่มเงื่อนไขตรวจจับ Ultrasound (มีพื้นที่ดำกว้าง + สัญญาณแทรกสอด)
+      // X-ray ที่สว่างจ้า ต้องมีความสว่างระดับนึง แต่ไม่ถึงขั้นขาวโพลนทั้งแผ่นแบบกระดาษ และต้องหลงเหลือขอบดำบ้าง
+      const isSeverelyWashedOut = (brightRatio > 15 && brightRatio < 60) && (colorRatio < 5) && (pureBlackRatio > 0.05);
+      
       const isUltrasound = (pureBlackRatio > 8 && spRatio > 0.05 && colorRatio < 5);
+      
+      // เงื่อนไขใหม่: ดักจับภาพถ่ายเอกสาร, กระดาษชีท, หรือรูปที่มีพื้นขาวสว่างจ้าเกินไป
+      const isDocumentOrWhitePaper = (brightRatio > 60 || tissueBrightness > 190) && pureBlackRatio < 2;
 
+      // 2. ด่านตรวจคัดกรองภาพ (Validation)
       if (colorRatio > 12) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากมีเฉดสีมากเกินไป (Color Image)";
         isMedicalImage = false;
-      // [อัปเดต]: ยอมให้ Ultrasound ผ่านด่านตรวจได้
+      } else if (isDocumentOrWhitePaper) {
+        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
+        advice = "ตรวจพบพื้นหลังสีขาวสว่างจ้าผิดปกติ คาดว่าเป็นภาพถ่ายเอกสารหรือไม่ใช่ภาพถ่ายรังสี";
+        isMedicalImage = false;
       } else if (pureBlackRatio < 0.2 && !isAnatomicalShapeDetected && !isSeverelyWashedOut && !isUltrasound) {
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
+        advice = "ไม่พบความเปรียบต่างของพื้นหลังรังสี และไม่พบโครงสร้างเนื้อเยื่อที่ชัดเจน";
         isMedicalImage = false;
       } else {
         if ((isAnatomicalShapeDetected || isSeverelyWashedOut) && pureBlackRatio < 0.2) {
@@ -372,7 +381,7 @@ document.addEventListener("DOMContentLoaded", function () {
               focusBtn = "btn-median";
             }
         } else {
-            // โหมดวิเคราะห์ X-Ray/CT (โค้ดเดิมที่ผู้ใช้ไม่อยากให้ลบ)
+            // โหมดวิเคราะห์ X-Ray/CT
             if (brightRatio > 15 || tissueBrightness > 160) {
               statusText = "⚠️ ภาพสว่างขาวโพลน (Severe Underexposure)"; statusClass = "text-danger";
               advice = "💡 <b>Educational Note:</b> ภาพสว่างจ้าและแบนราบเกิดจาก <b>Underexposure (รังสีน้อยไป)</b> ทำให้ระบบเร่งแสงชดเชยจนภาพขาดมิติ แนะนำให้ <b>ลด Brightness ลง</b> ควบคู่กับ <b>เพิ่ม Contrast</b> และใช้ <b>Averaging (Mean)</b> เพื่อเกลี่ยจุดรบกวน";
