@@ -206,11 +206,15 @@
     </div>
 
     <div id="result-ui" class="hidden">
-      <canvas id="after-canvas" style="border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px; max-width: 100%;"></canvas>
+      <img id="final-result-img" alt="Final Diagnostic Image" style="border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px; max-width: 100%; display: block; margin: 0 auto;" />
+      <canvas id="after-canvas" style="display:none;"></canvas>
       <div class="button-group" style="border: none;">
         <button class="btn-main" onclick="downloadImage()">💾 SAVE DIAGNOSTIC IMAGE</button>
         <button class="btn-filter" onclick="goBack()">RETURN TO EDITOR</button>
       </div>
+      <p style="color: #666; font-size: 0.9rem; margin-top: 20px; text-align: center; line-height: 1.5;">
+        📱 <b>ทริคสำหรับมือถือ:</b> หากปุ่ม Save ด้านบนไม่ทำงาน สามารถ <b style="color:var(--danger)">"แตะค้างที่รูปภาพ"</b> แล้วเลือก <b>"บันทึกรูปภาพ"</b> ลงเครื่องได้เลยครับ
+      </p>
     </div>
   </div>
 
@@ -381,7 +385,6 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // --- อัปเดตฟิลเตอร์ให้ตรงกับ Python: Mean, Gaussian, Median ---
   function applyPixelFilter(type) {
     if (type === 'none') {
       processedBaseSrc = originalSrc;
@@ -409,7 +412,6 @@ document.addEventListener("DOMContentLoaded", function () {
         for (let x = 1; x < w - 1; x++) {
           const i = (y * w + x) * 4;
 
-          // 1. Median Filter (Equivalent to cv2.medianBlur)
           if (type === 'median') {
             let neighbors = [];
             for (let wy = -1; wy <= 1; wy++) {
@@ -422,7 +424,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const medianValue = neighbors[4];
             data[i] = data[i+1] = data[i+2] = medianValue;
 
-          // 2. Gaussian Blur (Equivalent to cv2.GaussianBlur)
           } else if (type === 'gaussian') {
             const kernel = [
               1, 2, 1,
@@ -444,7 +445,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const finalVal = sum / kernelWeight;
             data[i] = data[i+1] = data[i+2] = finalVal;
 
-          // 3. Averaging/Mean Filter (Equivalent to cv2.blur)
           } else if (type === 'mean') {
             let total = 0;
             for (let wy = -1; wy <= 1; wy++) {
@@ -531,25 +531,105 @@ document.addEventListener("DOMContentLoaded", function () {
     reader.readAsDataURL(file);
   });
   
+  // =========================================================
+  // ฟังก์ชันใหม่สำหรับการแสดงผลและบันทึกภาพ (แก้ปัญหาบนมือถือ)
+  // =========================================================
   window.showFinal = function() { 
     editorUI.style.display = "none";
     document.getElementById('result-ui').classList.remove('hidden'); 
+    
     const canvas = document.getElementById('after-canvas');
+    const finalImg = document.getElementById('final-result-img');
     const ctx = canvas.getContext('2d');
     const img = new Image(); 
-    img.src = mainImg.src; 
+    
+    img.src = mainImg.src; // ภาพที่ผ่านการ Denoise เบื้องต้นแล้ว
     
     img.onload = function() { 
       canvas.width = img.naturalWidth; 
       canvas.height = img.naturalHeight; 
       ctx.imageSmoothingEnabled = false; 
-      ctx.filter = mainImg.style.filter; 
+      
+      // วาดภาพลง Canvas ก่อน เพื่อให้เข้าถึง Pixel Data ได้
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
+      
+      // ดึงค่าพารามิเตอร์ต่างๆ จากสไลเดอร์
+      const bVal = parseInt(brightness.value) / 100;       // แสงสว่าง (0 - 2.5)
+      const cVal = parseInt(contrast.value) / 100;         // ความเปรียบต่าง (0 - 2.5)
+      const sVal = parseInt(sharp.value);                  // ความคมชัด (0 - 100)
+      const smVal = parseInt(smooth.value);                // ความเบลอ (0 - 10)
+      const totalContrast = cVal * (1 + (sVal * 0.4) / 100);
+
+      try {
+          // ดึงพิกเซลมาประมวลผล (เพื่อฝังค่าต่างๆ ลงไปในภาพเลย ไม่ต้องพึ่ง CSS)
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          for (let i = 0; i < data.length; i += 4) {
+              let r = data[i];
+              let g = data[i+1];
+              let b = data[i+2];
+
+              // 1. ปรับ Brightness
+              r *= bVal; g *= bVal; b *= bVal;
+
+              // 2. ปรับ Contrast
+              r = ((r / 255 - 0.5) * totalContrast + 0.5) * 255;
+              g = ((g / 255 - 0.5) * totalContrast + 0.5) * 255;
+              b = ((b / 255 - 0.5) * totalContrast + 0.5) * 255;
+
+              // บังคับไม่ให้ค่าสีเกินขอบเขต
+              r = Math.min(255, Math.max(0, r));
+              g = Math.min(255, Math.max(0, g));
+              b = Math.min(255, Math.max(0, b));
+
+              // 3. บังคับเป็น Grayscale
+              let gray = (r * 0.299 + g * 0.587 + b * 0.114);
+
+              // เขียนค่ากลับลงไป
+              data[i] = data[i+1] = data[i+2] = gray;
+          }
+          
+          ctx.putImageData(imageData, 0, 0);
+
+          // 4. สร้างการเบลอด้วย Context ของ Canvas ถัดไป (ถ้ามีการปรับ Smooth)
+          if (smVal > 0) {
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = canvas.width;
+              tempCanvas.height = canvas.height;
+              const tempCtx = tempCanvas.getContext('2d');
+              tempCtx.filter = `blur(${smVal}px)`;
+              tempCtx.drawImage(canvas, 0, 0);
+              
+              // นำภาพที่เบลอแล้วไปใส่ <img>
+              finalImg.src = tempCanvas.toDataURL(fileExtension || 'image/png', 1.0);
+          } else {
+              // ถ้าไม่ได้ปรับ Smooth ให้เอาภาพจาก Canvas ไปใส่ <img> ได้เลย
+              finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0);
+          }
+
+      } catch (e) {
+          console.error("เกิดข้อผิดพลาดในการประมวลผลพิกเซลบนอุปกรณ์ของคุณ:", e);
+          // Fallback เผื่อเกิด Error ให้ใช้รูปเดิมแสดงไปก่อน
+          finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0);
+      }
     } 
   }
   
   window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
-  window.downloadImage = () => { const canvas = document.getElementById('after-canvas'); const link = document.createElement('a'); link.download = 'medical_report_image.png'; link.href = canvas.toDataURL(fileExtension, 1.0); link.click(); }
+  
+  window.downloadImage = () => { 
+    // ดึงค่าภาพจากแท็ก img เพื่อให้มั่นใจว่าเป็นภาพเดียวกับที่แสดงผล
+    const finalImg = document.getElementById('final-result-img');
+    
+    // สร้างลิงก์ดาวน์โหลด
+    const link = document.createElement('a'); 
+    link.download = 'medical_report_image.' + (fileExtension.split('/')[1] || 'png'); 
+    link.href = finalImg.src;
+    document.body.appendChild(link);
+    link.click(); 
+    document.body.removeChild(link);
+  }
   
   brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
 });
