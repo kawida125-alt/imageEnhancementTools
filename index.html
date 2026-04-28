@@ -292,11 +292,12 @@ document.addEventListener("DOMContentLoaded", function () {
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับภาพเอกซเรย์ทรวงอกที่ได้รับรังสีมากเกินไป (Overpenetrated) ทำให้เนื้อปอดดำทึบจนเสียรายละเอียด (Burn-out) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Brightness (Level)</b> เพื่อกู้รายละเอียดหลอดเลือดในปอด (Lung markings) และอาจ <b>ลด Contrast</b> เล็กน้อยเพื่อเกลี่ยแสง",
       focusBtn: ""
     },
-    // --- [ปรับปรุง] ภาพมืดทึบ Overexposure (เพิ่มการกรองโครงสร้างกระดูก เพื่อไม่ให้ซ้ำซ้อนกับ Ultrasound) ---
+    // --- [ย้ายขึ้นมา!] เพื่อดักจับ Overexposure ให้เจอก่อนที่มันจะร่วงไปเป็น Optimal Ultrasound ---
+    // เพิ่มเงื่อนไข rms < 35 เพื่อให้ฟันธงว่าเป็นภาพที่ขาดคอนทราสต์จนดำทึบ ไม่ใช่อัลตราซาวด์ที่ส่วนสว่างตัดกับสีดำ
     {
       id: "severe_overexposure_pattern",
       name: "Severe Overexposure Pattern (Over ดำเยอะ)",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright, structuralRatio) => (pureBlack > 20 || dark > 40) && sp < 0.1 && tissueBrightness < 100 && structuralRatio > 1,
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright, structuralRatio) => (pureBlack > 20 || dark > 40) && sp < 0.1 && tissueBrightness < 100 && rms < 35,
       statusClass: "text-danger",
       statusText: "🧠 ระบบจดจำได้: ภาพมืดทึบเกินเกณฑ์ (Severe Overexposure)",
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลดำทึบมาก (Over ดำเยอะ) ตรงกับแพทเทิร์นภาพรังสีที่ได้รับปริมาณ Dose สูงเกินไป (Overexposure) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพรังสีมืดทึบจนไม่เห็นรายละเอียด (Burn-out) แนะนำให้ <b>เพิ่ม Brightness (Level)</b> อย่างมากเพื่อดึงรายละเอียดที่จมในเงามืดออกมา และเพิ่ม <b>Contrast</b> เล็กน้อย",
@@ -311,11 +312,10 @@ document.addEventListener("DOMContentLoaded", function () {
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลกระจุกตัวอยู่ระดับสีเทา (Low Contrast) ขาดสีดำสนิทและขาวจัด ตรงกับฐานข้อมูลภาพที่ขาดความเปรียบต่าง <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Contrast (Width)</b> เพื่อขยายช่วงสี (Windowing) ให้ความแตกต่างระหว่างกระดูกและเนื้อเยื่ออ่อน (Soft tissue) แยกออกจากกันอย่างชัดเจน",
       focusBtn: ""
     },
-    // --- [ปรับปรุง] อัลตราซาวด์ที่สมบูรณ์ (ลดความทับซ้อนกับ Overexposure โดยบีบเงื่อนไข structuralRatio ให้เฉพาะเจาะจงกับเนื้อเยื่อทารก) ---
     {
       id: "optimal_ultrasound_pattern",
       name: "Optimal Ultrasound Pattern",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright, structuralRatio) => (pureBlack > 2 || sp > 0.001) && sp < 0.3 && noise < 5.5 && tissueBrightness > 15 && tissueBrightness < 180 && structuralRatio <= 1,
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright, structuralRatio) => (pureBlack > 2 || sp > 0.001) && sp < 0.3 && noise < 5.5 && tissueBrightness > 15 && tissueBrightness < 180,
       statusClass: "text-success",
       statusText: "✅ ระบบจดจำได้: ภาพอัลตราซาวด์ปกติดี ไม่มี Noise",
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจน <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี ระดับคลื่นเสียง (Gain) และความเปรียบต่าง (Echogenicity) อยู่ในเกณฑ์มาตรฐาน ไม่มีสัญญาณรบกวน (Speckle Noise) สามารถนำไปใช้วินิจฉัยทางสูติกรรมได้ทันที",
@@ -415,7 +415,7 @@ document.addEventListener("DOMContentLoaded", function () {
           isUltrasound = true;
       }
 
-      // ตรวจสอบกับ Diagnostic Memory (เพิ่มการส่ง structuralRatio ไปช่วยวิเคราะห์)
+      // ตรวจสอบกับ Diagnostic Memory ลำดับความสำคัญ
       for (let memory of diagnosticMemory) {
         if (memory.checkCondition(spRatio, noiseRatio, rmsContrast, tissueBrightness, pureBlackRatio, darkRatio, brightRatio, structuralRatio)) {
           matchedMemory = memory;
