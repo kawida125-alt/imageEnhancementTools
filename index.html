@@ -356,9 +356,10 @@ document.addEventListener("DOMContentLoaded", function () {
           advice = "ภาพสว่างจ้าเกินไป อาจเกิดจากการตั้งค่า Gain สูง แนะนำให้ใช้ <b>Averaging (Mean)</b> เพื่อเกลี่ยแสง";
           focusBtn = "btn-mean";
         } else if (noiseRatio > 6 || spRatio > 0.5) {
-          statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
-          advice = "ภาพมีคลื่นแทรกสอด หรือจุด Salt & Pepper แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบไว้";
-          focusBtn = "btn-median";
+          // แก้ไขเฉพาะบรรทัดนี้ ให้ครอบคลุม Quantum Mottle / Gaussian Noise
+          statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Speckle)"; statusClass = "text-warning";
+          advice = "ภาพมีสัญญาณรบกวนหนาแน่น: หากเป็นจุดดำ-ขาวชัดเจน แนะนำ <b>Median Filter</b> / หากเป็นเม็ดเกรนละเอียดทั่วภาพ แนะนำ <b>Gaussian Blur</b>";
+          focusBtn = "btn-gaussian";
         } else if (darkRatio > 25 || tissueBrightness < 80) {
           statusText = "⚠️ Low Gain / Acoustic Attenuation"; statusClass = "text-danger";
           advice = "ภาพมีพื้นที่มืดทึบกว้างผิดปกติ แนะนำให้เพิ่ม Brightness เพื่อดึงรายละเอียดที่ซ่อนอยู่";
@@ -531,9 +532,6 @@ document.addEventListener("DOMContentLoaded", function () {
     reader.readAsDataURL(file);
   });
   
-  // =========================================================
-  // ฟังก์ชันใหม่สำหรับการแสดงผลและบันทึกภาพ (แก้ปัญหาบนมือถือ)
-  // =========================================================
   window.showFinal = function() { 
     editorUI.style.display = "none";
     document.getElementById('result-ui').classList.remove('hidden'); 
@@ -543,25 +541,22 @@ document.addEventListener("DOMContentLoaded", function () {
     const ctx = canvas.getContext('2d');
     const img = new Image(); 
     
-    img.src = mainImg.src; // ภาพที่ผ่านการ Denoise เบื้องต้นแล้ว
+    img.src = mainImg.src; 
     
     img.onload = function() { 
       canvas.width = img.naturalWidth; 
       canvas.height = img.naturalHeight; 
       ctx.imageSmoothingEnabled = false; 
       
-      // วาดภาพลง Canvas ก่อน เพื่อให้เข้าถึง Pixel Data ได้
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
       
-      // ดึงค่าพารามิเตอร์ต่างๆ จากสไลเดอร์
-      const bVal = parseInt(brightness.value) / 100;       // แสงสว่าง (0 - 2.5)
-      const cVal = parseInt(contrast.value) / 100;         // ความเปรียบต่าง (0 - 2.5)
-      const sVal = parseInt(sharp.value);                  // ความคมชัด (0 - 100)
-      const smVal = parseInt(smooth.value);                // ความเบลอ (0 - 10)
+      const bVal = parseInt(brightness.value) / 100;       
+      const cVal = parseInt(contrast.value) / 100;         
+      const sVal = parseInt(sharp.value);                  
+      const smVal = parseInt(smooth.value);                
       const totalContrast = cVal * (1 + (sVal * 0.4) / 100);
 
       try {
-          // ดึงพิกเซลมาประมวลผล (เพื่อฝังค่าต่างๆ ลงไปในภาพเลย ไม่ต้องพึ่ง CSS)
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imageData.data;
 
@@ -570,29 +565,23 @@ document.addEventListener("DOMContentLoaded", function () {
               let g = data[i+1];
               let b = data[i+2];
 
-              // 1. ปรับ Brightness
               r *= bVal; g *= bVal; b *= bVal;
 
-              // 2. ปรับ Contrast
               r = ((r / 255 - 0.5) * totalContrast + 0.5) * 255;
               g = ((g / 255 - 0.5) * totalContrast + 0.5) * 255;
               b = ((b / 255 - 0.5) * totalContrast + 0.5) * 255;
 
-              // บังคับไม่ให้ค่าสีเกินขอบเขต
               r = Math.min(255, Math.max(0, r));
               g = Math.min(255, Math.max(0, g));
               b = Math.min(255, Math.max(0, b));
 
-              // 3. บังคับเป็น Grayscale
               let gray = (r * 0.299 + g * 0.587 + b * 0.114);
 
-              // เขียนค่ากลับลงไป
               data[i] = data[i+1] = data[i+2] = gray;
           }
           
           ctx.putImageData(imageData, 0, 0);
 
-          // 4. สร้างการเบลอด้วย Context ของ Canvas ถัดไป (ถ้ามีการปรับ Smooth)
           if (smVal > 0) {
               const tempCanvas = document.createElement('canvas');
               tempCanvas.width = canvas.width;
@@ -601,16 +590,13 @@ document.addEventListener("DOMContentLoaded", function () {
               tempCtx.filter = `blur(${smVal}px)`;
               tempCtx.drawImage(canvas, 0, 0);
               
-              // นำภาพที่เบลอแล้วไปใส่ <img>
               finalImg.src = tempCanvas.toDataURL(fileExtension || 'image/png', 1.0);
           } else {
-              // ถ้าไม่ได้ปรับ Smooth ให้เอาภาพจาก Canvas ไปใส่ <img> ได้เลย
               finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0);
           }
 
       } catch (e) {
           console.error("เกิดข้อผิดพลาดในการประมวลผลพิกเซลบนอุปกรณ์ของคุณ:", e);
-          // Fallback เผื่อเกิด Error ให้ใช้รูปเดิมแสดงไปก่อน
           finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0);
       }
     } 
@@ -619,10 +605,7 @@ document.addEventListener("DOMContentLoaded", function () {
   window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
   
   window.downloadImage = () => { 
-    // ดึงค่าภาพจากแท็ก img เพื่อให้มั่นใจว่าเป็นภาพเดียวกับที่แสดงผล
     const finalImg = document.getElementById('final-result-img');
-    
-    // สร้างลิงก์ดาวน์โหลด
     const link = document.createElement('a'); 
     link.download = 'medical_report_image.' + (fileExtension.split('/')[1] || 'png'); 
     link.href = finalImg.src;
