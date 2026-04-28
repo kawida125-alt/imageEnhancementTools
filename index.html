@@ -270,7 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const imageData = ctx.getImageData(0, 0, w, h);
       const pixelData = imageData.data;
       
-      let validPixels = 0, totalGray = 0, totalGraySq = 0; // เพิ่มตัวแปรสำหรับเก็บค่าความแปรปรวน
+      let validPixels = 0, totalGray = 0, totalGraySq = 0;
       let brightPixels = 0, darkPixels = 0, pureBlackCount = 0;
       let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
@@ -303,7 +303,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (grayValue > 15) { 
               validPixels++; 
               totalGray += grayValue;
-              totalGraySq += (grayValue * grayValue); // เก็บผลรวมกำลังสองของพิกเซล เพื่อหาค่า Standard Deviation
+              totalGraySq += (grayValue * grayValue); 
               
               if (grayValue > 220) brightPixels++;
               if (grayValue <= 60) darkPixels++;
@@ -319,7 +319,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const blurScore = lapCount > 0 ? (lapSumSq / lapCount) - Math.pow(lapSum / lapCount, 2) : 100;
       const tissueBrightness = totalGray / validPixels;
       
-      // การคำนวณ RMS Contrast (Standard Deviation ของพิกเซลทั้งหมด)
       const rmsContrast = Math.sqrt(Math.max(0, (totalGraySq / validPixels) - (tissueBrightness * tissueBrightness)));
 
       const brightRatio = (brightPixels / validPixels) * 100;
@@ -338,7 +337,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const isSeverelyWashedOut = (brightRatio > 15 || tissueBrightness > 160) && (colorRatio < 5);
 
       let isUltrasound = false;
-      if ((pureBlackRatio > 18 && spRatio > 0.05) || spRatio > 0.4) {
+      if (pureBlackRatio > 5 || spRatio > 0.05 || (noiseRatio > 2.5 && pureBlackRatio > 2)) {
           isUltrasound = true;
       }
 
@@ -351,7 +350,6 @@ document.addEventListener("DOMContentLoaded", function () {
         advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
         isMedicalImage = false;
       } else {
-        // [ระบบวิเคราะห์ Noise และภาวะ Exposure แบบผู้เชี่ยวชาญ]
         if (isSeverelyWashedOut) {
           statusText = "⚠️ ภาพสว่างขาวโพลน (Severe Underexposure / High Gain)"; statusClass = "text-danger";
           advice = "💡 <b>Educational Note:</b> ภาพสว่างแบนราบเกิดจากรังสีน้อยไป (Underexposure) หรือตั้ง Gain สูงเกินใน Ultrasound แนะนำให้ <b>ลด Brightness ลง</b> และ <b>เพิ่ม Contrast</b> เพื่อดึงรายละเอียดเนื้อเยื่อ";
@@ -373,7 +371,6 @@ document.addEventListener("DOMContentLoaded", function () {
           advice = "💡 <b>Educational Note:</b> ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของคนไข้ แนะนำให้ใช้ <b>Gaussian Blur</b> เกลี่ยจุดรบกวนก่อน แล้วเพิ่ม <b>Sharpness</b> เพื่อเน้นขอบเขตโครงสร้าง";
           focusBtn = "btn-gaussian";
         } else if (rmsContrast < 35 && tissueBrightness > 40 && tissueBrightness < 200) {
-          // ส่วนที่แก้ไขใหม่ เพื่อใช้ค่าเบี่ยงเบนมาตรฐาน (RMS Contrast) ประเมินความเปรียบต่าง
           statusText = "💡 Low Contrast (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
           advice = "ตรวจพบค่าความแปรปรวนของระดับสีต่ำ (RMS Contrast = " + rmsContrast.toFixed(1) + ") เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>ปรับ Contrast เพิ่มขึ้น</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างที่ชัดเจนขึ้น";
           focusBtn = "";
@@ -383,17 +380,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
-      let typeBadge = "";
       if (isMedicalImage) {
         if (isUltrasound) {
-          typeBadge = `<span style="display:inline-block; background:#f39c12; color:#fff; padding:4px 10px; border-radius:6px; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">🎥 ภาพอัลตราซาวด์ (Ultrasound Detected)</span><br>`;
           advice += "<br><br>🩺 <b>ข้อแนะนำเพิ่มเติมสำหรับ Ultrasound:</b> ตรวจพบลักษณะภาพแบบ Sector/Linear หรือมี Acoustic Speckle แนะนำให้ปรับค่า <b>Contrast</b> ให้กว้างขึ้นเพื่อแยกระดับ Echogenicity (Hyperechoic/Hypoechoic) ให้ชัดเจนยิ่งขึ้น และอาจใช้ <b>Median Filter</b> เพื่อลดจุดรบกวนโดยไม่ทำให้ขอบเขตเนื้อเยื่อเบลอ";
-        } else {
-          typeBadge = `<span style="display:inline-block; background:#2980b9; color:#fff; padding:4px 10px; border-radius:6px; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">🩻 ภาพรังสีเอกซเรย์/CT (X-Ray / CT Detected)</span><br>`;
         }
       }
 
-      recContent.innerHTML = `${typeBadge}<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
+      recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
       
       if (!isMedicalImage) {
         editorUI.style.display = "none";
