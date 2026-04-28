@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
-  // --- ฟังก์ชันที่ถูกอัปเดตระบบวิเคราะห์โครงสร้างร่างกาย ---
+  // --- ฟังก์ชันที่ปรับจูนให้รองรับภาพครอป ---
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     const img = new Image();
@@ -291,7 +291,8 @@ document.addEventListener("DOMContentLoaded", function () {
           if (diff > 35) generalNoiseCount++;
           if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
 
-          if (grayValue > 120 && diff > 40 && diff < 150) {
+          // [อัปเดต] ลดเกณฑ์ลงเพื่อให้จับซี่โครงง่ายขึ้น
+          if (grayValue > 90 && diff > 25) {
               structuralEdgeCount++;
           }
 
@@ -327,18 +328,20 @@ document.addEventListener("DOMContentLoaded", function () {
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
-      const isAnatomicalShapeDetected = (structuralRatio > 3.5 && structuralRatio < 15) && (colorRatio < 5);
+      // [อัปเดต] ปรับเกณฑ์การตรวจจับโครงสร้างให้ยืดหยุ่นขึ้นมาก
+      const isAnatomicalShapeDetected = (structuralRatio > 1.2) && (colorRatio < 5);
 
       if (colorRatio > 10) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบว่าภาพมีเฉดสี (Color Image)";
         isMedicalImage = false;
-      } else if (pureBlackRatio < 5 && !isAnatomicalShapeDetected) {
+      // [อัปเดต] ปรับลดเกณฑ์พื้นหลังดำลงเหลือ 1%
+      } else if (pureBlackRatio < 1 && !isAnatomicalShapeDetected) {
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ไม่พบพื้นหลังรังสี (Pure Black) และไม่พบโครงสร้างทางกายวิภาคที่ชัดเจน อาจเป็นภาพถ่ายขาวดำทั่วไป";
         isMedicalImage = false;
       } else {
-        if (isAnatomicalShapeDetected && pureBlackRatio < 5) {
+        if (isAnatomicalShapeDetected && pureBlackRatio < 1) {
             console.log("Anatomical Structure Detected: Bypassed background check.");
         }
 
