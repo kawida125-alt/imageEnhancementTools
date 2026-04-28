@@ -268,7 +268,6 @@ document.addEventListener("DOMContentLoaded", function () {
     {
       id: "severe_speckle_pattern",
       name: "Severe Speckle Ultrasound Pattern",
-      // ปรับเกณฑ์ noise > 6.5 เพื่อหลีกเลี่ยงการจับอัลตราซาวด์ทารกปกติ
       checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (sp > 0.4 || (noise > 6.5 && pureBlack > 2)),
       statusClass: "text-memory",
       statusText: "🧠 ระบบจดจำได้: ภาพอัลตราซาวด์ (มีจุดรบกวน)",
@@ -311,14 +310,15 @@ document.addEventListener("DOMContentLoaded", function () {
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลกระจุกตัวอยู่ระดับสีเทา (Low Contrast) ขาดสีดำสนิทและขาวจัด ตรงกับฐานข้อมูลภาพที่ขาดความเปรียบต่าง <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Contrast (Width)</b> เพื่อขยายช่วงสี (Windowing) ให้ความแตกต่างระหว่างกระดูกและเนื้อเยื่ออ่อน (Soft tissue) แยกออกจากกันอย่างชัดเจน",
       focusBtn: ""
     },
+    // --- [อัปเดต] โปรไฟล์: จดจำภาพอัลตราซาวด์ทารกที่สมบูรณ์ ---
     {
-      id: "optimal_ultrasound_pattern",
-      name: "Optimal Ultrasound Pattern",
-      // ขยายเพดาน noise เป็น 6.5 เพื่อรองรับเนื้อเกรนธรรมชาติของทารกในครรภ์
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 2 || sp > 0.001) && sp < 0.4 && noise < 6.5 && tissueBrightness > 15 && tissueBrightness < 170,
+      id: "optimal_obstetric_ultrasound",
+      name: "Optimal Obstetric Ultrasound Pattern",
+      // เจาะจงตรวจจับภาพที่มีขอบดำหรือน้ำคร่ำ และไม่มี Noise แทรกซ้อน 
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 5 || sp > 0.005) && sp < 0.1 && noise < 3.5 && rms > 25 && tissueBrightness > 10 && tissueBrightness < 150,
       statusClass: "text-success",
       statusText: "✅ ระบบจดจำได้: ภาพอัลตราซาวด์ปกติดี ไม่มี Noise",
-      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจน <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี สามารถนำไปใช้วินิจฉัยได้ทันที",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจนสมบูรณ์ <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี ระดับความถี่คลื่นเสียง (Gain) และความเปรียบต่าง (Echogenicity) อยู่ในเกณฑ์มาตรฐาน ไม่มีสัญญาณรบกวน (Speckle Noise) สามารถนำไปใช้วินิจฉัยทางสูติกรรมได้ทันที อาจปรับเพิ่ม Sharpness เล็กน้อยหากต้องการเน้นขอบเขตอวัยวะทารกให้ชัดขึ้น",
       focusBtn: ""
     },
     {
