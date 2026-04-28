@@ -251,11 +251,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
+  // ======================================================================
+  // ระบบวิเคราะห์ภาพการแพทย์ขั้นสูง (Ultrasound & X-ray Professional Analysis)
+  // ======================================================================
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     const img = new Image();
-    
-    // ย้าย onload ขึ้นมาก่อน src เพื่อแก้บั๊ก Race Condition
+    img.src = mainImg.src;
     img.onload = function() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -281,7 +283,6 @@ document.addEventListener("DOMContentLoaded", function () {
           const r = pixelData[i];
           const g = pixelData[i + 1];
           const b = pixelData[i + 2];
-          
           let grayValue = (r + g + b) / 3;
           let maxColor = Math.max(r, g, b);
           let minColor = Math.min(r, g, b);
@@ -291,24 +292,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
           const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
           const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
-          
           let diffX = Math.abs(grayValue - l);
           let diffY = Math.abs(grayValue - t);
           let maxDiff = Math.max(diffX, diffY);
 
           if (maxDiff > 35) generalNoiseCount++;
           if ((grayValue > 240 && l < 180) || (grayValue < 15 && l > 60)) saltPepperCount++;
-
-          if (grayValue > 40 && maxDiff > 8) {
-              structuralEdgeCount++;
-          }
+          if (grayValue > 40 && maxDiff > 8) structuralEdgeCount++;
 
           if (grayValue > 15) { 
-              validPixels++;
-              totalGray += grayValue;
+              validPixels++; totalGray += grayValue;
               if (grayValue > 220) brightPixels++;
               if (grayValue <= 60) darkPixels++;
-              
               const bot = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
               const r_pixel = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
               const lap = 4 * grayValue - t - bot - l - r_pixel;
@@ -327,91 +322,71 @@ document.addEventListener("DOMContentLoaded", function () {
       const spRatio = (saltPepperCount / totalArea) * 100;
       const colorRatio = (colorPixelCount / totalArea) * 100;
       const pureBlackRatio = (pureBlackCount / totalArea) * 100; 
-      
       const structuralRatio = (structuralEdgeCount / totalArea) * 100;
 
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
-      // ปรับปรุงเงื่อนไขให้ยืดหยุ่นขึ้น
-      const isAnatomicalShapeDetected = (structuralRatio > 0.5 && structuralRatio < 25); // เพิ่มเพดาน structuralRatio เพื่อรองรับ X-ray ที่มีรายละเอียดเยอะ
-      
-      // X-ray ที่สว่างจ้า ต้องมีความสว่างระดับนึง แต่ไม่ถึงขั้นขาวโพลนทั้งแผ่นแบบกระดาษ และต้องหลงเหลือขอบดำบ้าง
-      const isSeverelyWashedOut = (brightRatio > 15 && brightRatio < 80) && (colorRatio < 5); // ปรับลดเงื่อนไข pureBlackRatio ออก เพราะบางภาพอาจจะสว่างจนไม่เหลือสีดำสนิทเลย
-      
-      const isUltrasound = (pureBlackRatio > 5 && spRatio > 0.05 && colorRatio < 5); // ลดเกณฑ์ pureBlackRatio ลงนิดหน่อย
-      
-      // เงื่อนไขใหม่: ดักจับภาพถ่ายเอกสาร, กระดาษชีท, หรือรูปที่มีพื้นขาวสว่างจ้าเกินไป (ปรับให้แม่นยำขึ้น โดยพิจารณาสีดำและโครงสร้างขอบ)
-      // เอกสารมักจะมี brightRatio สูงมาก (พื้นขาว), มี pureBlackRatio ต่ำมาก, และมีโครงสร้างขอบ (ตัวหนังสือ) ในระดับปานกลาง
-      const isDocumentOrWhitePaper = (brightRatio > 70 || tissueBrightness > 200) && pureBlackRatio < 1 && structuralRatio > 5;
+      const isAnatomicalShapeDetected = (structuralRatio > 0.5);
+      const isSeverelyWashedOut = (brightRatio > 15 || tissueBrightness > 160) && (colorRatio < 5);
 
-      // 2. ด่านตรวจคัดกรองภาพ (Validation)
+      let isUltrasound = false;
+      if ((pureBlackRatio > 18 && spRatio > 0.05) || spRatio > 0.4) {
+          isUltrasound = true;
+      }
+
       if (colorRatio > 12) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
         advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากมีเฉดสีมากเกินไป (Color Image)";
         isMedicalImage = false;
-      } else if (isDocumentOrWhitePaper) {
+      } else if (pureBlackRatio < 0.2 && !isAnatomicalShapeDetected && !isSeverelyWashedOut) {
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ตรวจพบพื้นหลังสีขาวสว่างจ้าผิดปกติ คาดว่าเป็นภาพถ่ายเอกสารหรือไม่ใช่ภาพถ่ายรังสี";
-        isMedicalImage = false;
-      // ปรับเงื่อนไขนี้ให้อ่อนลง เพื่อลดโอกาสเด้งภาพ X-ray ทิ้ง
-      } else if (pureBlackRatio < 0.1 && !isAnatomicalShapeDetected && !isSeverelyWashedOut && !isUltrasound) {
-        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ไม่พบความเปรียบต่างของพื้นหลังรังสี และไม่พบโครงสร้างเนื้อเยื่อที่ชัดเจน";
+        advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
         isMedicalImage = false;
       } else {
-        if ((isAnatomicalShapeDetected || isSeverelyWashedOut) && pureBlackRatio < 0.2) {
-            console.log("Anatomical Structure or Wash-out Detected: Bypassed background check.");
-        }
-
-        // ======================================================================
-        // [อัปเดต]: แยกลอจิกคำแนะนำระหว่าง Ultrasound และ X-Ray/CT
-        // ======================================================================
-        if (isUltrasound) {
-            // โหมดวิเคราะห์ Ultrasound
-            if (brightRatio > 12 || tissueBrightness > 150) {
-              statusText = "⚠️ High Receiver Gain (Ultrasound)"; statusClass = "text-danger";
-              advice = "💡 <b>Educational Note:</b> ภาพสว่างจ้าและขาดมิติ เกิดจากการตั้งค่า <b>Gain</b> สูงเกินไป แนะนำให้ <b>ลด Brightness ลง</b> และใช้ <b>Median Filter</b> เพื่อลดจุดรบกวน";
-              focusBtn = "btn-median";
-            } else if (darkRatio > 25 || tissueBrightness < 80) {
-              statusText = "⚠️ Acoustic Attenuation / Low Gain"; statusClass = "text-danger";
-              advice = "💡 <b>Educational Note:</b> ภาพมืดทึบอาจเกิดจากการดูดกลืนคลื่นเสียงสูง หรือตั้ง Gain ต่ำ แนะนำให้ <b>เพิ่ม Brightness</b> เพื่อดึงรายละเอียดของ Echogenicity ที่ซ่อนอยู่ออกมา";
-              focusBtn = "";
-            } else {
-              statusText = "✅ ตรวจพบ Acoustic Speckle Noise"; statusClass = "text-warning";
-              advice = "💡 <b>Educational Note:</b> พบสัญญาณแทรกสอดแบบจุดที่เป็นเอกลักษณ์ของ Ultrasound แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยยังรักษาขอบเขตอวัยวะไว้";
-              focusBtn = "btn-median";
-            }
+        // [ระบบวิเคราะห์ Noise และภาวะ Exposure แบบผู้เชี่ยวชาญ]
+        if (isSeverelyWashedOut) {
+          statusText = "⚠️ ภาพสว่างขาวโพลน (Severe Underexposure / High Gain)"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ภาพสว่างแบนราบเกิดจากรังสีน้อยไป (Underexposure) หรือตั้ง Gain สูงเกินใน Ultrasound แนะนำให้ <b>ลด Brightness ลง</b> และ <b>เพิ่ม Contrast</b> เพื่อดึงรายละเอียดเนื้อเยื่อ";
+          focusBtn = "btn-mean";
+        } else if (darkRatio > 25 || tissueBrightness < 80) {
+          statusText = "⚠️ ภาพมืดทึบเกินเกณฑ์ (Possible Overexposure / Low Gain)"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ในงานรังสีดิจิทัล ภาพที่มืดเกิดจากได้รับรังสีมากเกินไป (Overexposure) ระวังภาวะ Dose Creep! แนะนำให้ <b>เพิ่ม Brightness</b> เพื่อดึงรายละเอียดในเงามืดออกมา";
+          focusBtn = "";
+        } else if (spRatio > 0.5) {
+          statusText = "⚠️ ตรวจพบ Acoustic Speckle Noise หนาแน่น"; statusClass = "text-warning";
+          advice = "💡 <b>Educational Note:</b> ตรวจพบสัญญาณแทรกสอดแบบจุดขาวดำชัดเจน (Salt & Pepper) ซึ่งเป็นลักษณะเฉพาะของ Ultrasound แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้";
+          focusBtn = "btn-median";
+        } else if (noiseRatio > 6) {
+          statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Grainy)"; statusClass = "text-warning";
+          advice = "💡 <b>Educational Note:</b> ภาพมีเกรนละเอียดทั่วทั้งภาพ (Quantum Mottle) มักเกิดจากปริมาณรังสีไม่เพียงพอ แนะนำให้ใช้ <b>Gaussian Blur</b> เพื่อเกลี่ยเกรนให้เนียนตาขึ้น";
+          focusBtn = "btn-gaussian";
+        } else if (blurScore < 30) {
+          statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
+          advice = "💡 <b>Educational Note:</b> ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัวของคนไข้ แนะนำให้ใช้ <b>Gaussian Blur</b> เกลี่ยจุดรบกวนก่อน แล้วเพิ่ม <b>Sharpness</b> เพื่อเน้นขอบเขตโครงสร้าง";
+          focusBtn = "btn-gaussian";
+        } else if (brightRatio < 5 && darkRatio < 5 && tissueBrightness > 80 && tissueBrightness < 160) {
+          // ส่วนที่แก้ไขใหม่ เพื่อรองรับ Low Contrast โดยเฉพาะ
+          statusText = "💡 Low Contrast (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
+          advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>ปรับ Contrast เพิ่มขึ้น</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างที่ชัดเจนขึ้น";
+          focusBtn = "";
         } else {
-            // โหมดวิเคราะห์ X-Ray/CT
-            if (brightRatio > 15 || tissueBrightness > 160) {
-              statusText = "⚠️ ภาพสว่างขาวโพลน (Severe Underexposure)"; statusClass = "text-danger";
-              advice = "💡 <b>Educational Note:</b> ภาพสว่างจ้าและแบนราบเกิดจาก <b>Underexposure (รังสีน้อยไป)</b> ทำให้ระบบเร่งแสงชดเชยจนภาพขาดมิติ แนะนำให้ <b>ลด Brightness ลง</b> ควบคู่กับ <b>เพิ่ม Contrast</b> และใช้ <b>Averaging (Mean)</b> เพื่อเกลี่ยจุดรบกวน";
-              focusBtn = "btn-mean";
-            } else if (darkRatio > 25 || tissueBrightness < 80) {
-              statusText = "⚠️ ภาพมืดทึบเกินเกณฑ์ (Possible Overexposure)"; statusClass = "text-danger";
-              advice = "💡 <b>Educational Note:</b> ภาพรังสีที่มืดทึบเกิดจาก <b>Overexposure (ได้รับรังสีมากไป)</b> ระวังภาวะ <b>Dose Creep</b>! แนะนำให้ <b>เพิ่ม Brightness</b> เพื่อดึงรายละเอียดที่ซ่อนอยู่ในเงามืดออกมาให้ชัดเจนขึ้น";
-              focusBtn = "";
-            } else if (noiseRatio > 6 || spRatio > 0.5) {
-              statusText = "⚠️ ตรวจพบ High Noise Level (Quantum Mottle / Speckle)"; statusClass = "text-warning";
-              advice = "💡 <b>Educational Note:</b> สัญญาณรบกวนหนาแน่น (มักเกิดจาก <b>Underexposure</b>) หากเป็นจุดดำ-ขาวชัดเจน แนะนำ <b>Median Filter</b> / หากเป็นเม็ดเกรนละเอียดทั่วภาพ แนะนำ <b>Gaussian Blur</b>";
-              focusBtn = "btn-gaussian";
-            } else if (blurScore < 30) {
-              statusText = "⚠️ ตรวจพบ Motion Artifact (ภาพเบลอ)"; statusClass = "text-warning";
-              advice = "ความคมชัดของเส้นขอบต่ำ อาจเกิดจากการขยับตัว แนะนำให้ใช้ <b>Gaussian Blur</b> เพื่อเกลี่ยจุดก่อนปรับความคมชัด";
-              focusBtn = "btn-gaussian";
-            } else if (brightRatio === 0 && darkRatio === 0 && tissueBrightness > 100 && tissueBrightness < 140) {
-              statusText = "💡 Low Dynamic Range (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
-              advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้เพิ่ม Contrast เพื่อขยายระยะห่างของ Echogenicity ให้เห็นมิติชัดเจนขึ้น";
-              focusBtn = "";
-            } else {
-              statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Exposure)"; statusClass = "text-success";
-              advice = "สัญญาณภาพอยู่ในเกณฑ์มาตรฐาน (Exposure Index เหมาะสม) มีความคมชัดสูง แนะนำให้ปรับเพียง Sharpness เล็กน้อย หากต้องการเน้นขอบเขต";
-            }
+          statusText = "✅ ภาพมีคุณภาพดี (Optimal Gain & Exposure)"; statusClass = "text-success";
+          advice = "สัญญาณภาพอยู่ในเกณฑ์มาตรฐาน (EI เหมาะสม) มีความคมชัดสูง แนะนำให้ปรับเพียง Sharpness เล็กน้อย หากต้องการเน้นขอบเขตอวัยวะ";
         }
       }
 
-      recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
+      let typeBadge = "";
+      if (isMedicalImage) {
+        if (isUltrasound) {
+          typeBadge = `<span style="display:inline-block; background:#f39c12; color:#fff; padding:4px 10px; border-radius:6px; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">🎥 ภาพอัลตราซาวด์ (Ultrasound Detected)</span><br>`;
+          advice += "<br><br>🩺 <b>ข้อแนะนำเพิ่มเติมสำหรับ Ultrasound:</b> ตรวจพบลักษณะภาพแบบ Sector/Linear หรือมี Acoustic Speckle แนะนำให้ปรับค่า <b>Contrast</b> ให้กว้างขึ้นเพื่อแยกระดับ Echogenicity (Hyperechoic/Hypoechoic) ให้ชัดเจนยิ่งขึ้น และอาจใช้ <b>Median Filter</b> เพื่อลดจุดรบกวนโดยไม่ทำให้ขอบเขตเนื้อเยื่อเบลอ";
+        } else {
+          typeBadge = `<span style="display:inline-block; background:#2980b9; color:#fff; padding:4px 10px; border-radius:6px; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">🩻 ภาพรังสีเอกซเรย์/CT (X-Ray / CT Detected)</span><br>`;
+        }
+      }
+
+      recContent.innerHTML = `${typeBadge}<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
       
       if (!isMedicalImage) {
         editorUI.style.display = "none";
@@ -426,9 +401,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
     };
-    
-    // กำหนด src หลังประกาศ onload
-    img.src = mainImg.src;
   }
 
   function applyPixelFilter(type) {
@@ -441,8 +413,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const img = new Image();
-    
-    // ย้าย onload ขึ้นมาก่อน src
+    img.src = originalSrc;
     img.onload = function() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -508,9 +479,6 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       updateStyles();
     };
-    
-    // กำหนด src หลังประกาศ onload
-    img.src = originalSrc;
   }
 
   window.setFilter = function(f) {
@@ -581,7 +549,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const ctx = canvas.getContext('2d');
     const img = new Image(); 
     
-    // ย้าย onload ขึ้นมาก่อน src
+    img.src = mainImg.src; 
+    
     img.onload = function() { 
       canvas.width = img.naturalWidth; 
       canvas.height = img.naturalHeight; 
@@ -639,9 +608,6 @@ document.addEventListener("DOMContentLoaded", function () {
           finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0);
       }
     } 
-
-    // กำหนด src หลังประกาศ onload
-    img.src = mainImg.src; 
   }
   
   window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
