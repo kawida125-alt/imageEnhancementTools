@@ -296,7 +296,7 @@ document.addEventListener("DOMContentLoaded", function () {
     {
       id: "low_contrast_pattern",
       name: "Low Contrast X-Ray Pattern",
-      // เจาะจงตรวจจับภาพที่สีเทากลืนกัน ขาดดำสนิทและขาวจัด (rms ต่ำมาก) เหมือนภาพ Hand, Chest, Abdomen ที่ส่งมาล่าสุด
+      // เจาะจงตรวจจับภาพที่สีเทากลืนกัน ขาดดำสนิทและขาวจัด (rms ต่ำมาก)
       checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => rms < 35 && pureBlack < 10 && bright < 15 && sp < 0.1,
       statusClass: "text-info",
       statusText: "🧠 ระบบจดจำได้: ภาพขาดความเปรียบต่าง (Low Contrast)",
