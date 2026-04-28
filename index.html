@@ -254,7 +254,8 @@ document.addEventListener("DOMContentLoaded", function () {
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     const img = new Image();
-    img.src = mainImg.src;
+    
+    // ย้าย onload ขึ้นมาก่อน src เพื่อแก้บั๊ก Race Condition
     img.onload = function() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -414,6 +415,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
     };
+    
+    // กำหนด src หลังประกาศ onload
+    img.src = mainImg.src;
   }
 
   function applyPixelFilter(type) {
@@ -426,7 +430,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const img = new Image();
-    img.src = originalSrc;
+    
+    // ย้าย onload ขึ้นมาก่อน src
     img.onload = function() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -492,6 +497,9 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       updateStyles();
     };
+    
+    // กำหนด src หลังประกาศ onload
+    img.src = originalSrc;
   }
 
   window.setFilter = function(f) {
@@ -562,8 +570,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const ctx = canvas.getContext('2d');
     const img = new Image(); 
     
-    img.src = mainImg.src; 
-    
+    // ย้าย onload ขึ้นมาก่อน src
     img.onload = function() { 
       canvas.width = img.naturalWidth; 
       canvas.height = img.naturalHeight; 
@@ -621,6 +628,9 @@ document.addEventListener("DOMContentLoaded", function () {
           finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0);
       }
     } 
+
+    // กำหนด src หลังประกาศ onload
+    img.src = mainImg.src; 
   }
   
   window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
