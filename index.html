@@ -265,25 +265,25 @@ document.addEventListener("DOMContentLoaded", function () {
       advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบว่าภาพนี้มีลักษณะของสัญญาณรบกวน (Noise) กระจายอยู่หนาแน่นทั่วทั้งภาพ <br>✅ <b>ข้อแนะนำ:</b> แนะนำให้แก้ปัญหาภาพนี้ด้วยฟังก์ชัน <b>Gaussian Blur</b> เพื่อเกลี่ยจุดรบกวนให้เรียบเนียนขึ้น",
       focusBtn: "btn-gaussian"
     },
-    {
-      id: "severe_speckle_pattern",
-      name: "Severe Speckle Ultrasound Pattern",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (sp > 0.4 || (noise > 6.5 && pureBlack > 2)),
-      statusClass: "text-memory",
-      statusText: "🧠 ระบบจดจำได้: ภาพอัลตราซาวด์ (มีจุดรบกวน)",
-      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลลักษณะเม็ดทราย (Speckle) ตรงกับฐานข้อมูลภาพอัลตราซาวด์ <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้ และเพิ่ม <b>Contrast</b> เพื่อให้เห็นความแตกต่างของเนื้อเยื่อ (Echogenicity) ชัดเจนขึ้น",
-      focusBtn: "btn-median"
-    },
-    // --- [ปรับปรุง] ให้จำแนกอัลตราซาวด์ทารก (Optimal Ultrasound) ได้แม่นยำขึ้นเหนือ Low Contrast
+    // สลับโปรไฟล์ Optimal Ultrasound ขึ้นมาก่อน Severe Speckle เพื่อความแม่นยำ
     {
       id: "optimal_ultrasound_pattern",
       name: "Optimal Ultrasound Pattern",
-      // ปรับเกณฑ์: อนุญาตให้มีพื้นที่สีดำ (น้ำคร่ำ/ขอบ) > 2%, Noise ต่ำ, และครอบคลุมความสว่างที่กว้างขึ้น
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 2 || sp > 0.001) && sp < 0.3 && noise < 5.5 && tissueBrightness > 15 && tissueBrightness < 180,
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 20 || sp > 0.001) && sp < 0.25 && noise < 5.5 && tissueBrightness > 15 && tissueBrightness < 180,
       statusClass: "text-success",
       statusText: "✅ ระบบจดจำได้: ภาพอัลตราซาวด์ปกติดี ไม่มี Noise",
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจน <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี ระดับคลื่นเสียง (Gain) และความเปรียบต่าง (Echogenicity) อยู่ในเกณฑ์มาตรฐาน ไม่มีสัญญาณรบกวน (Speckle Noise) สามารถนำไปใช้วินิจฉัยทางสูติกรรมได้ทันที",
       focusBtn: ""
+    },
+    {
+      id: "severe_speckle_pattern",
+      name: "Severe Speckle Ultrasound Pattern",
+      // ถ้าไม่ตรงกับ Optimal ค่อยมาเช็คว่าเป็น Speckle หรือไม่
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (sp >= 0.25 || (noise > 5.5 && pureBlack > 2)),
+      statusClass: "text-memory",
+      statusText: "🧠 ระบบจดจำได้: ภาพอัลตราซาวด์ (มีจุดรบกวน)",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลลักษณะเม็ดทราย (Speckle) ตรงกับฐานข้อมูลภาพอัลตราซาวด์ <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้ และเพิ่ม <b>Contrast</b> เพื่อให้เห็นความแตกต่างของเนื้อเยื่อ (Echogenicity) ชัดเจนขึ้น",
+      focusBtn: "btn-median"
     },
     {
       id: "severe_underexposure_pattern",
@@ -315,7 +315,6 @@ document.addEventListener("DOMContentLoaded", function () {
     {
       id: "low_contrast_pattern",
       name: "Low Contrast X-Ray Pattern",
-      // ตรวจจับภาพ x-ray ที่ขาดความเปรียบต่าง
       checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => rms < 40 && pureBlack < 15 && bright < 20 && sp < 0.1,
       statusClass: "text-info",
       statusText: "🧠 ระบบจดจำได้: ภาพขาดความเปรียบต่าง (Low Contrast)",
