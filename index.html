@@ -1,607 +1,607 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diagnostic Image Enhancer - Pro</title>
-  
-  <style>
-    /* =========================================
-       1. VARIABLES & RESET
-       ========================================= */
-    :root {
-      --primary: #4a6363;
-      --primary-dark: #2c3e3e;
-      --secondary: #2c3e3e;
-      --accent: #b0c4c4;
-      --accent-dark: #1a2525;
-      --bg-color: #f4f7f7;
-      --card-bg: #ffffff;
-      --input-bg: #e8eeee;
-      --white: #ffffff;
-      --danger: #d9534f;
-      --success: #5cb85c;
-      --warning: #f39c12;
-    }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnostic Image Enhancer - Pro</title>
+  
+  <style>
+    /* =========================================
+       1. VARIABLES & RESET
+       ========================================= */
+    :root {
+      --primary: #4a6363;
+      --primary-dark: #2c3e3e;
+      --secondary: #2c3e3e;
+      --accent: #b0c4c4;
+      --accent-dark: #1a2525;
+      --bg-color: #f4f7f7;
+      --card-bg: #ffffff;
+      --input-bg: #e8eeee;
+      --white: #ffffff;
+      --danger: #d9534f;
+      --success: #5cb85c;
+      --warning: #f39c12;
+    }
 
-    * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--secondary); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-    .hidden { display: none !important; }
+    * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--secondary); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+    .hidden { display: none !important; }
 
-    /* =========================================
-       2. KEYFRAMES
-       ========================================= */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes slideOutUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+    /* =========================================
+       2. KEYFRAMES
+       ========================================= */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideOutUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
 
-    /* =========================================
-       3. INTRO SCREEN
-       ========================================= */
-    #intro-screen {
-      position: absolute; top: 0; left: 0; width: 100%; min-height: 100vh;
-      background: linear-gradient(135deg, var(--bg-light) 0%, #dce5e5 100%);
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
-      transition: all 0.5s ease;
-    }
+    /* =========================================
+       3. INTRO SCREEN
+       ========================================= */
+    #intro-screen {
+      position: absolute; top: 0; left: 0; width: 100%; min-height: 100vh;
+      background: linear-gradient(135deg, var(--bg-light) 0%, #dce5e5 100%);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
+      transition: all 0.5s ease;
+    }
 
-    .intro-title { font-size: 4.5rem; font-weight: 900; color: var(--accent-dark); margin: 0 0 10px 0; letter-spacing: -1.5px; animation: fadeIn 0.8s ease; }
-    .intro-wave { font-size: 2rem; color: var(--primary); letter-spacing: -2px; margin-bottom: 20px; font-weight: bold; animation: fadeIn 1s ease; }
-    .intro-subtitle { font-size: 1.2rem; color: var(--secondary); max-width: 600px; line-height: 1.6; margin-bottom: 40px; animation: fadeIn 1.2s ease; }
+    .intro-title { font-size: 4.5rem; font-weight: 900; color: var(--accent-dark); margin: 0 0 10px 0; letter-spacing: -1.5px; animation: fadeIn 0.8s ease; }
+    .intro-wave { font-size: 2rem; color: var(--primary); letter-spacing: -2px; margin-bottom: 20px; font-weight: bold; animation: fadeIn 1s ease; }
+    .intro-subtitle { font-size: 1.2rem; color: var(--secondary); max-width: 600px; line-height: 1.6; margin-bottom: 40px; animation: fadeIn 1.2s ease; }
 
-    .btn-start {
-      background-color: var(--accent-dark); color: white; padding: 18px 45px;
-      font-size: 1.1rem; font-weight: 800; border-radius: 40px; border: none;
-      cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; animation: fadeIn 1.4s ease;
-    }
-    .btn-start:hover { background-color: var(--primary); transform: translateY(-3px); box-shadow: 0 15px 25px rgba(118, 155, 155, 0.4); }
+    .btn-start {
+      background-color: var(--accent-dark); color: white; padding: 18px 45px;
+      font-size: 1.1rem; font-weight: 800; border-radius: 40px; border: none;
+      cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; animation: fadeIn 1.4s ease;
+    }
+    .btn-start:hover { background-color: var(--primary); transform: translateY(-3px); box-shadow: 0 15px 25px rgba(118, 155, 155, 0.4); }
 
-    .features-badge { display: flex; gap: 15px; margin-top: 40px; flex-wrap: wrap; justify-content: center; animation: fadeIn 1.6s ease; }
-    .badge { background: rgba(255, 255, 255, 0.6); color: var(--secondary); padding: 8px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(118, 155, 155, 0.3); }
+    .features-badge { display: flex; gap: 15px; margin-top: 40px; flex-wrap: wrap; justify-content: center; animation: fadeIn 1.6s ease; }
+    .badge { background: rgba(255, 255, 255, 0.6); color: var(--secondary); padding: 8px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(118, 155, 155, 0.3); }
 
-    /* =========================================
-       4. MAIN APP LAYOUT
-       ========================================= */
-    #main-app { display: none; flex-direction: column; align-items: center; width: 100%; min-height: 100vh; animation: fadeIn 0.5s ease; }
-    .header-banner { width: 100%; padding: 60px 20px 40px 20px; text-align: center; }
-    .header-banner h1 { font-size: 3.5rem; margin: 0 0 10px 0; font-weight: 900; color: var(--accent-dark); }
-    .header-banner .wave-line { font-size: 1.5rem; color: var(--primary); letter-spacing: -2px; margin: 5px 0 15px 0; display: block; }
-    .header-banner p { color: #666; max-width: 550px; margin: 0 auto; line-height: 1.6; font-size: 1rem; }
-    .container { max-width: 1000px; width: 90%; margin-bottom: 60px; flex: 1; }
+    /* =========================================
+       4. MAIN APP LAYOUT
+       ========================================= */
+    #main-app { display: none; flex-direction: column; align-items: center; width: 100%; min-height: 100vh; animation: fadeIn 0.5s ease; }
+    .header-banner { width: 100%; padding: 60px 20px 40px 20px; text-align: center; }
+    .header-banner h1 { font-size: 3.5rem; margin: 0 0 10px 0; font-weight: 900; color: var(--accent-dark); }
+    .header-banner .wave-line { font-size: 1.5rem; color: var(--primary); letter-spacing: -2px; margin: 5px 0 15px 0; display: block; }
+    .header-banner p { color: #666; max-width: 550px; margin: 0 auto; line-height: 1.6; font-size: 1rem; }
+    .container { max-width: 1000px; width: 90%; margin-bottom: 60px; flex: 1; }
 
-    /* =========================================
-       5. UPLOAD & RECOMMENDATION
-       ========================================= */
-    .upload-zone { background-color: var(--input-bg); padding: 40px; border-radius: 20px; margin-bottom: 40px; text-align: center; border: 2px dashed rgba(74, 99, 99, 0.3); transition: 0.3s; }
-    .upload-zone:hover { border-color: var(--primary); }
-    .upload-zone p { color: var(--secondary); font-weight: 700; margin-top: 0; margin-bottom: 20px; }
-    .upload-zone input[type="file"] { background: var(--white); padding: 12px 20px; border-radius: 30px; color: var(--secondary); font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: none; }
+    /* =========================================
+       5. UPLOAD & RECOMMENDATION
+       ========================================= */
+    .upload-zone { background-color: var(--input-bg); padding: 40px; border-radius: 20px; margin-bottom: 40px; text-align: center; border: 2px dashed rgba(74, 99, 99, 0.3); transition: 0.3s; }
+    .upload-zone:hover { border-color: var(--primary); }
+    .upload-zone p { color: var(--secondary); font-weight: 700; margin-top: 0; margin-bottom: 20px; }
+    .upload-zone input[type="file"] { background: var(--white); padding: 12px 20px; border-radius: 30px; color: var(--secondary); font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: none; }
 
-    #recommendation-box { background-color: var(--primary); color: white; padding: 35px; border-radius: 20px; margin-bottom: 40px; display: none; animation: fadeIn 0.5s ease; box-shadow: 0 10px 20px rgba(118, 155, 155, 0.3); }
-    #recommendation-box h3 { margin: 0 0 15px 0; font-size: 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 10px; }
+    #recommendation-box { background-color: var(--primary); color: white; padding: 35px; border-radius: 20px; margin-bottom: 40px; display: none; animation: fadeIn 0.5s ease; box-shadow: 0 10px 20px rgba(118, 155, 155, 0.3); }
+    #recommendation-box h3 { margin: 0 0 15px 0; font-size: 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 10px; }
 
-    .status-tag { display: inline-block; padding: 8px 20px; border-radius: 30px; font-weight: 900; font-size: 1rem; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-    .text-danger { background: #fffafa; color: #c0392b; border: 2px solid #e74c3c; }
-    .text-success { background: #f2fcf5; color: #145a32; border: 2px solid #27ae60; }
-    .text-info { background: #f4f9fd; color: #154360; border: 2px solid #2980b9; }
-    .text-warning { background: #fffdf0; color: #b9770e; border: 2px solid #f1c40f; }
-    .text-memory { background: #f5eeff; color: #6c3483; border: 2px solid #9b59b6; } 
+    .status-tag { display: inline-block; padding: 8px 20px; border-radius: 30px; font-weight: 900; font-size: 1rem; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .text-danger { background: #fffafa; color: #c0392b; border: 2px solid #e74c3c; }
+    .text-success { background: #f2fcf5; color: #145a32; border: 2px solid #27ae60; }
+    .text-info { background: #f4f9fd; color: #154360; border: 2px solid #2980b9; }
+    .text-warning { background: #fffdf0; color: #b9770e; border: 2px solid #f1c40f; }
+    .text-memory { background: #f5eeff; color: #6c3483; border: 2px solid #9b59b6; } 
 
-    /* =========================================
-       6. PREVIEW & EDITOR CARDS
-       ========================================= */
-    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
-    .image-card { background: var(--card-bg); border-radius: 20px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
-    .image-card label { display: block; padding: 15px; background: var(--white); color: var(--secondary); font-weight: 800; font-size: 0.9rem; text-align: center; border-bottom: 1px solid #f0f0f0; }
-    
-    img, canvas { max-width: 100%; width: auto; height: auto; max-height: 70vh; display: block; margin: 0 auto; background: #111; object-fit: contain; }
+    /* =========================================
+       6. PREVIEW & EDITOR CARDS
+       ========================================= */
+    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
+    .image-card { background: var(--card-bg); border-radius: 20px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
+    .image-card label { display: block; padding: 15px; background: var(--white); color: var(--secondary); font-weight: 800; font-size: 0.9rem; text-align: center; border-bottom: 1px solid #f0f0f0; }
+    
+    img, canvas { max-width: 100%; width: auto; height: auto; max-height: 70vh; display: block; margin: 0 auto; background: #111; object-fit: contain; }
 
-    .editor-section { background: var(--card-bg); padding: 35px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
-    .slider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
-    .slider-group label { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; font-size: 0.95rem; color: #333; }
-    .slider-group span { color: var(--primary-dark); }
-    input[type="range"] { width: 100%; height: 8px; border-radius: 5px; accent-color: var(--primary-dark); cursor: pointer; background: #e0e6e6; outline: none; }
+    .editor-section { background: var(--card-bg); padding: 35px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
+    .slider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
+    .slider-group label { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; font-size: 0.95rem; color: #333; }
+    .slider-group span { color: var(--primary-dark); }
+    input[type="range"] { width: 100%; height: 8px; border-radius: 5px; accent-color: var(--primary-dark); cursor: pointer; background: #e0e6e6; outline: none; }
 
-    /* =========================================
-       7. BUTTONS
-       ========================================= */
-    .button-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 30px; padding-top: 30px; border-top: 1px solid #f0f0f0; }
-    button { padding: 15px 30px; border-radius: 30px; border: none; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
-    .btn-filter { background: var(--input-bg); color: var(--secondary); border: 2px solid transparent;}
-    .btn-filter:hover { background: var(--primary); color: white; transform: translateY(-2px); }
-    .btn-main { background: var(--accent-dark); color: white; padding: 15px 40px; }
-    .btn-main:hover { background: #111; transform: translateY(-2px); }
-    .btn-reset { background: transparent; color: var(--danger); border: 2px solid var(--danger); }
-    .btn-reset:hover { background: var(--danger); color: white; }
-    #filter-description { background: #fdfdfd; padding: 20px; border-radius: 12px; margin-top: 25px; display: none; text-align: left; border: 1px solid #eee; }
+    /* =========================================
+       7. BUTTONS
+       ========================================= */
+    .button-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 30px; padding-top: 30px; border-top: 1px solid #f0f0f0; }
+    button { padding: 15px 30px; border-radius: 30px; border: none; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
+    .btn-filter { background: var(--input-bg); color: var(--secondary); border: 2px solid transparent;}
+    .btn-filter:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+    .btn-main { background: var(--accent-dark); color: white; padding: 15px 40px; }
+    .btn-main:hover { background: #111; transform: translateY(-2px); }
+    .btn-reset { background: transparent; color: var(--danger); border: 2px solid var(--danger); }
+    .btn-reset:hover { background: var(--danger); color: white; }
+    #filter-description { background: #fdfdfd; padding: 20px; border-radius: 12px; margin-top: 25px; display: none; text-align: left; border: 1px solid #eee; }
 
-    /* =========================================
-       8. FOOTER
-       ========================================= */
-    .footer { width: 100%; background: #4a6363; padding: 40px 20px; text-align: center; color: white; margin-top: auto; }
-    @media (max-width: 768px) { .preview-grid, .slider-grid { grid-template-columns: 1fr; } .intro-title { font-size: 3rem; } }
-  </style>
+    /* =========================================
+       8. FOOTER
+       ========================================= */
+    .footer { width: 100%; background: #4a6363; padding: 40px 20px; text-align: center; color: white; margin-top: auto; }
+    @media (max-width: 768px) { .preview-grid, .slider-grid { grid-template-columns: 1fr; } .intro-title { font-size: 3rem; } }
+  </style>
 </head>
 <body>
 
 <div id="intro-screen">
-  <h1 class="intro-title">Image Diagnostics</h1>
-  <div class="intro-wave">〰〰〰〰</div>
-  <p class="intro-subtitle">
-    ระบบวิเคราะห์และยกระดับคุณภาพภาพถ่ายทางการแพทย์อัตโนมัติ<br>
-    เรียนรู้หลักการประมวลผลสัญญาณภาพรังสีดิจิทัล (Digital Radiography)
-  </p>
-  <button id="btn-start" class="btn-start">เข้าสู่ระบบวิเคราะห์ภาพ</button>
-  
-  <div class="features-badge">
-    <span class="badge">🤖 Pixel Analysis AI</span>
-    <span class="badge">📚 Radiography Education</span>
-  </div>
+  <h1 class="intro-title">Image Diagnostics</h1>
+  <div class="intro-wave">〰〰〰〰</div>
+  <p class="intro-subtitle">
+    ระบบวิเคราะห์และยกระดับคุณภาพภาพถ่ายทางการแพทย์อัตโนมัติ<br>
+    เรียนรู้หลักการประมวลผลสัญญาณภาพรังสีดิจิทัล (Digital Radiography)
+  </p>
+  <button id="btn-start" class="btn-start">เข้าสู่ระบบวิเคราะห์ภาพ</button>
+  
+  <div class="features-badge">
+    <span class="badge">🤖 Pixel Analysis AI</span>
+    <span class="badge">📚 Radiography Education</span>
+  </div>
 </div>
 
 <div id="main-app">
-  
-  <div class="header-banner">
-    <h1>Image Diagnostics</h1>
-    <span class="wave-line">〰〰〰</span>
-    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มต้นการวิเคราะห์พิกเซล</p>
-  </div>
+  
+  <div class="header-banner">
+    <h1>Image Diagnostics</h1>
+    <span class="wave-line">〰〰〰</span>
+    <p>อัปโหลดภาพ X-ray, CT Scan หรือ Ultrasound เพื่อเริ่มต้นการวิเคราะห์พิกเซล</p>
+  </div>
 
-  <div class="container">
-    
-    <div class="upload-zone">
-      <p>เลือกไฟล์ภาพสแกน (PNG, JPG)</p>
-      <input type="file" id="upload" accept="image/*">
-    </div>
+  <div class="container">
+    
+    <div class="upload-zone">
+      <p>เลือกไฟล์ภาพสแกน (PNG, JPG)</p>
+      <input type="file" id="upload" accept="image/*">
+    </div>
 
-    <div id="recommendation-box">
-      <h3>🩺 Clinical Advice & Educational Note</h3>
-      <div id="recommendation-content" style="font-size: 1rem; line-height: 1.6;">กำลังวิเคราะห์พิกเซลภาพ...</div>
-      <p style="font-size: 0.85rem; color: #ffd1d1; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.4);">
-        * เครื่องมือนี้จัดทำขึ้นเพื่อการศึกษาหลักการประมวลผลภาพทางการแพทย์ ไม่สามารถใช้ทดแทนการวินิจฉัยจริงได้
-      </p>
-    </div>
+    <div id="recommendation-box">
+      <h3>🩺 Clinical Advice & Educational Note</h3>
+      <div id="recommendation-content" style="font-size: 1rem; line-height: 1.6;">กำลังวิเคราะห์พิกเซลภาพ...</div>
+      <p style="font-size: 0.85rem; color: #ffd1d1; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.4);">
+        * เครื่องมือนี้จัดทำขึ้นเพื่อการศึกษาหลักการประมวลผลภาพทางการแพทย์ ไม่สามารถใช้ทดแทนการวินิจฉัยจริงได้
+      </p>
+    </div>
 
-    <div class="preview-grid">
-      <div class="image-card"><label>ORIGINAL SCAN</label><img id="before-img" alt="Original Image"></div>
-      <div class="image-card"><label>DIAGNOSTIC VIEW</label><img id="main-img" class="hidden" alt="Processed Image"></div>
-    </div>
+    <div class="preview-grid">
+      <div class="image-card"><label>ORIGINAL SCAN</label><img id="before-img" alt="Original Image"></div>
+      <div class="image-card"><label>DIAGNOSTIC VIEW</label><img id="main-img" class="hidden" alt="Processed Image"></div>
+    </div>
 
-    <div id="editor-ui" class="hidden">
-      <div class="editor-section">
-        <div class="slider-grid">
-          <div class="slider-group">
-            <label>Brightness (Level) <span id="v-bright">100%</span></label>
-            <input type="range" id="bright" min="0" max="250" value="100">
-          </div>
-          <div class="slider-group">
-            <label>Contrast (Width) <span id="v-contrast">100%</span></label>
-            <input type="range" id="contrast" min="0" max="250" value="100">
-          </div>
-          <div class="slider-group">
-            <label>Smoothing (Tissue Blend) <span id="v-smooth">0px</span></label>
-            <input type="range" id="smooth" min="0" max="10" value="0">
-          </div>
-          <div class="slider-group">
-            <label>Sharpness (Edge Definition) <span id="v-sharp">0%</span></label>
-            <input type="range" id="sharp" min="0" max="100" value="0">
-          </div>
-        </div>
+    <div id="editor-ui" class="hidden">
+      <div class="editor-section">
+        <div class="slider-grid">
+          <div class="slider-group">
+            <label>Brightness (Level) <span id="v-bright">100%</span></label>
+            <input type="range" id="bright" min="0" max="250" value="100">
+          </div>
+          <div class="slider-group">
+            <label>Contrast (Width) <span id="v-contrast">100%</span></label>
+            <input type="range" id="contrast" min="0" max="250" value="100">
+          </div>
+          <div class="slider-group">
+            <label>Smoothing (Tissue Blend) <span id="v-smooth">0px</span></label>
+            <input type="range" id="smooth" min="0" max="10" value="0">
+          </div>
+          <div class="slider-group">
+            <label>Sharpness (Edge Definition) <span id="v-sharp">0%</span></label>
+            <input type="range" id="sharp" min="0" max="100" value="0">
+          </div>
+        </div>
 
-        <div class="button-group">
-          <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Averaging (Mean)</button>
-          <button class="btn-filter" id="btn-gaussian" onclick="setFilter('gaussian')">Gaussian Blur</button>
-          <button class="btn-filter" id="btn-median" onclick="setFilter('median')">Median Filter</button>
-          <button class="btn-reset" onclick="resetAll()">Reset</button>
-        </div>
-        
-        <div class="button-group" style="border-top: none; padding-top: 0; margin-top: 15px;">
-          <button class="btn-main" onclick="showFinal()">GENERATE FINAL IMAGE</button>
-        </div>
+        <div class="button-group">
+          <button class="btn-filter" id="btn-mean" onclick="setFilter('mean')">Averaging (Mean)</button>
+          <button class="btn-filter" id="btn-gaussian" onclick="setFilter('gaussian')">Gaussian Blur</button>
+          <button class="btn-filter" id="btn-median" onclick="setFilter('median')">Median Filter</button>
+          <button class="btn-reset" onclick="resetAll()">Reset</button>
+        </div>
+        
+        <div class="button-group" style="border-top: none; padding-top: 0; margin-top: 15px;">
+          <button class="btn-main" onclick="showFinal()">GENERATE FINAL IMAGE</button>
+        </div>
 
-        <div id="filter-description">
-          <strong style="color: var(--primary-dark);">🔍 หลักการประมวลผลทางคลินิก:</strong>
-          <p id="filter-description-text" style="margin-top: 8px; color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;"></p>
-        </div>
-      </div>
-    </div>
+        <div id="filter-description">
+          <strong style="color: var(--primary-dark);">🔍 หลักการประมวลผลทางคลินิก:</strong>
+          <p id="filter-description-text" style="margin-top: 8px; color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;"></p>
+        </div>
+      </div>
+    </div>
 
-    <div id="result-ui" class="hidden">
-      <img id="final-result-img" alt="Final Diagnostic Image" style="border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px; max-width: 100%; display: block; margin: 0 auto;" />
-      <canvas id="after-canvas" style="display:none;"></canvas>
-      <div class="button-group" style="border: none;">
-        <button class="btn-main" onclick="downloadImage()">💾 SAVE DIAGNOSTIC IMAGE</button>
-        <button class="btn-filter" onclick="goBack()">RETURN TO EDITOR</button>
-      </div>
-      <p style="color: #666; font-size: 0.9rem; margin-top: 20px; text-align: center; line-height: 1.5;">
-        📱 <b>ทริคสำหรับมือถือ:</b> หากปุ่ม Save ด้านบนไม่ทำงาน สามารถ <b style="color:var(--danger)">"แตะค้างที่รูปภาพ"</b> แล้วเลือก <b>"บันทึกรูปภาพ"</b> ลงเครื่องได้เลยครับ
-      </p>
-    </div>
-  </div>
+    <div id="result-ui" class="hidden">
+      <img id="final-result-img" alt="Final Diagnostic Image" style="border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px; max-width: 100%; display: block; margin: 0 auto;" />
+      <canvas id="after-canvas" style="display:none;"></canvas>
+      <div class="button-group" style="border: none;">
+        <button class="btn-main" onclick="downloadImage()">💾 SAVE DIAGNOSTIC IMAGE</button>
+        <button class="btn-filter" onclick="goBack()">RETURN TO EDITOR</button>
+      </div>
+      <p style="color: #666; font-size: 0.9rem; margin-top: 20px; text-align: center; line-height: 1.5;">
+        📱 <b>ทริคสำหรับมือถือ:</b> หากปุ่ม Save ด้านบนไม่ทำงาน สามารถ <b style="color:var(--danger)">"แตะค้างที่รูปภาพ"</b> แล้วเลือก <b>"บันทึกรูปภาพ"</b> ลงเครื่องได้เลยครับ
+      </p>
+    </div>
+  </div>
 
-  <div class="footer">
-    <h3 style="margin: 0 0 10px 0;">Influenca Medical System</h3>
-    <p style="font-size: 0.85rem; opacity: 0.8; margin: 0;">© 2024 Developed for Clinical Image Enhancement.</p>
-  </div>
+  <div class="footer">
+    <h3 style="margin: 0 0 10px 0;">Influenca Medical System</h3>
+    <p style="font-size: 0.85rem; opacity: 0.8; margin: 0;">© 2024 Developed for Clinical Image Enhancement.</p>
+  </div>
 
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  
-  const btnStart = document.getElementById('btn-start');
-  if(btnStart) {
-    btnStart.addEventListener('click', function() {
-      const introScreen = document.getElementById('intro-screen');
-      const mainApp = document.getElementById('main-app');
-      
-      introScreen.style.animation = "slideOutUp 0.6s forwards";
-      setTimeout(() => {
-        introScreen.style.display = 'none';
-        mainApp.style.display = 'flex';
-      }, 500);
-    });
-  }
+  
+  const btnStart = document.getElementById('btn-start');
+  if(btnStart) {
+    btnStart.addEventListener('click', function() {
+      const introScreen = document.getElementById('intro-screen');
+      const mainApp = document.getElementById('main-app');
+      
+      introScreen.style.animation = "slideOutUp 0.6s forwards";
+      setTimeout(() => {
+        introScreen.style.display = 'none';
+        mainApp.style.display = 'flex';
+      }, 500);
+    });
+  }
 
-  const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
-  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
-  const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
-  const recBox = document.getElementById('recommendation-box'), recContent = document.getElementById('recommendation-content');
-  const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
-  const editorUI = document.getElementById('editor-ui'); 
+  const upload = document.getElementById('upload'), mainImg = document.getElementById('main-img');
+  const brightness = document.getElementById('bright'), contrast = document.getElementById('contrast');
+  const sharp = document.getElementById('sharp'), smooth = document.getElementById('smooth');
+  const recBox = document.getElementById('recommendation-box'), recContent = document.getElementById('recommendation-content');
+  const filterDescBox = document.getElementById('filter-description'), filterDescText = document.getElementById('filter-description-text');
+  const editorUI = document.getElementById('editor-ui'); 
 
-  let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
+  let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
-  // ======================================================================
-  // Diagnostic Knowledge Base (ฐานข้อมูลความจำลักษณะภาพทางคลินิก)
-  // ======================================================================
-  const diagnosticMemory = [
-    {
-      id: "gaussian_noise_pattern",
-      name: "Gaussian Noise Pattern",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => noise > 5 && pureBlack < 5,
-      statusClass: "text-warning",
-      statusText: "🧠 ระบบจดจำได้: ภาพมีสัญญาณรบกวน (Gaussian Noise)",
-      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบว่าภาพนี้มีลักษณะของสัญญาณรบกวน (Noise) กระจายอยู่หนาแน่นทั่วทั้งภาพ <br>✅ <b>ข้อแนะนำ:</b> แนะนำให้แก้ปัญหาภาพนี้ด้วยฟังก์ชัน <b>Gaussian Blur</b> เพื่อเกลี่ยจุดรบกวนให้เรียบเนียนขึ้น",
-      focusBtn: "btn-gaussian"
-    },
-    {
-      id: "severe_speckle_pattern",
-      name: "Severe Speckle Ultrasound Pattern",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (sp > 0.4 || (noise > 6.5 && pureBlack > 2)),
-      statusClass: "text-memory",
-      statusText: "🧠 ระบบจดจำได้: ภาพอัลตราซาวด์ (มีจุดรบกวน)",
-      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลลักษณะเม็ดทราย (Speckle) ตรงกับฐานข้อมูลภาพอัลตราซาวด์ <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้ และเพิ่ม <b>Contrast</b> เพื่อให้เห็นความแตกต่างของเนื้อเยื่อ (Echogenicity) ชัดเจนขึ้น",
-      focusBtn: "btn-median"
-    },
-    {
-      id: "severe_underexposure_pattern",
-      name: "Severe Underexposure Pattern (Under ขาว)",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (bright > 15 || tissueBrightness > 160) && sp < 0.1,
-      statusClass: "text-warning",
-      statusText: "🧠 ระบบจดจำได้: ภาพสว่างขาวโพลน (Severe Underexposure)",
-      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลสว่างเกินไป (Under ขาว) มักเกิดจากการให้ปริมาณรังสีไม่เพียงพอ (Underexposure) ทำให้เซนเซอร์รับภาพได้น้อย <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>ลด Brightness (Level)</b> เพื่อดึงรายละเอียดเนื้อเยื่อหรือกระดูกที่ซ่อนอยู่ในพื้นที่สีขาวโพลนกลับมา และ <b>เพิ่ม Contrast</b> เพื่อสร้างมิติของขอบภาพ",
-      focusBtn: "btn-mean"
-    },
-    {
-      id: "chest_overexposure_pattern",
-      name: "Chest Overexposure Pattern",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => pureBlack > 15 && bright > 2 && rms > 35 && sp < 0.1 && tissueBrightness < 120,
-      statusClass: "text-danger",
-      statusText: "🧠 ระบบจดจำได้: ภาพปอดดำทึบ (Chest Overexposure)",
-      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับภาพเอกซเรย์ทรวงอกที่ได้รับรังสีมากเกินไป (Overpenetrated) ทำให้เนื้อปอดดำทึบจนเสียรายละเอียด (Burn-out) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Brightness (Level)</b> เพื่อกู้รายละเอียดหลอดเลือดในปอด (Lung markings) และอาจ <b>ลด Contrast</b> เล็กน้อยเพื่อเกลี่ยแสง",
-      focusBtn: ""
-    },
-    {
-      id: "severe_overexposure_pattern",
-      name: "Severe Overexposure Pattern (Over ดำเยอะ)",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 20 || dark > 40) && sp < 0.1 && tissueBrightness < 100,
-      statusClass: "text-danger",
-      statusText: "🧠 ระบบจดจำได้: ภาพมืดทึบเกินเกณฑ์ (Severe Overexposure)",
-      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลดำทึบมาก (Over ดำเยอะ) ตรงกับแพทเทิร์นภาพรังสีที่ได้รับปริมาณ Dose สูงเกินไป (Overexposure) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพรังสีมืดทึบจนไม่เห็นรายละเอียด (Burn-out) แนะนำให้ <b>เพิ่ม Brightness (Level)</b> อย่างมากเพื่อดึงรายละเอียดที่จมในเงามืดออกมา และเพิ่ม <b>Contrast</b> เล็กน้อย",
-      focusBtn: ""
-    },
-    {
-      id: "low_contrast_pattern",
-      name: "Low Contrast X-Ray Pattern",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => rms < 40 && pureBlack < 15 && bright < 20 && sp < 0.1,
-      statusClass: "text-info",
-      statusText: "🧠 ระบบจดจำได้: ภาพขาดความเปรียบต่าง (Low Contrast)",
-      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลกระจุกตัวอยู่ระดับสีเทา (Low Contrast) ขาดสีดำสนิทและขาวจัด ตรงกับฐานข้อมูลภาพที่ขาดความเปรียบต่าง <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Contrast (Width)</b> เพื่อขยายช่วงสี (Windowing) ให้ความแตกต่างระหว่างกระดูกและเนื้อเยื่ออ่อน (Soft tissue) แยกออกจากกันอย่างชัดเจน",
-      focusBtn: ""
-    },
-    // --- [อัปเดต] โปรไฟล์: จดจำภาพอัลตราซาวด์ทารกที่สมบูรณ์ ---
-    {
-      id: "optimal_obstetric_ultrasound",
-      name: "Optimal Obstetric Ultrasound Pattern",
-      // เจาะจงตรวจจับภาพที่มีขอบดำหรือน้ำคร่ำ และไม่มี Noise แทรกซ้อน 
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 5 || sp > 0.005) && sp < 0.1 && noise < 3.5 && rms > 25 && tissueBrightness > 10 && tissueBrightness < 150,
-      statusClass: "text-success",
-      statusText: "✅ ระบบจดจำได้: ภาพอัลตราซาวด์ปกติดี ไม่มี Noise",
-      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจนสมบูรณ์ <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี ระดับความถี่คลื่นเสียง (Gain) และความเปรียบต่าง (Echogenicity) อยู่ในเกณฑ์มาตรฐาน ไม่มีสัญญาณรบกวน (Speckle Noise) สามารถนำไปใช้วินิจฉัยทางสูติกรรมได้ทันที อาจปรับเพิ่ม Sharpness เล็กน้อยหากต้องการเน้นขอบเขตอวัยวะทารกให้ชัดขึ้น",
-      focusBtn: ""
-    },
-    {
-      id: "optimal_xray_pattern",
-      name: "Optimal X-Ray Pattern",
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => pureBlack <= 15 && sp < 0.1 && noise < 3.5 && rms >= 30 && tissueBrightness >= 40 && tissueBrightness <= 180 && dark < 40 && bright < 15,
-      statusClass: "text-success",
-      statusText: "✅ ระบบจดจำได้: ภาพเอกซเรย์ปกติดี ไม่มี Noise",
-      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลตรงกับฐานข้อมูลภาพเอกซเรย์ที่ปกติดี <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี สามารถนำไปใช้วินิจฉัยได้ทันที",
-      focusBtn: ""
-    }
-  ];
+  // ======================================================================
+  // Diagnostic Knowledge Base (ฐานข้อมูลความจำลักษณะภาพทางคลินิก)
+  // ======================================================================
+  const diagnosticMemory = [
+    {
+      id: "gaussian_noise_pattern",
+      name: "Gaussian Noise Pattern",
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => noise > 5 && pureBlack < 5,
+      statusClass: "text-warning",
+      statusText: "🧠 ระบบจดจำได้: ภาพมีสัญญาณรบกวน (Gaussian Noise)",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบว่าภาพนี้มีลักษณะของสัญญาณรบกวน (Noise) กระจายอยู่หนาแน่นทั่วทั้งภาพ <br>✅ <b>ข้อแนะนำ:</b> แนะนำให้แก้ปัญหาภาพนี้ด้วยฟังก์ชัน <b>Gaussian Blur</b> เพื่อเกลี่ยจุดรบกวนให้เรียบเนียนขึ้น",
+      focusBtn: "btn-gaussian"
+    },
+    {
+      id: "severe_speckle_pattern",
+      name: "Severe Speckle Ultrasound Pattern",
+      // ปรับเกณฑ์ noise > 6.5 เพื่อหลีกเลี่ยงการจับอัลตราซาวด์ทารกปกติ
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (sp > 0.4 || (noise > 6.5 && pureBlack > 2)),
+      statusClass: "text-memory",
+      statusText: "🧠 ระบบจดจำได้: ภาพอัลตราซาวด์ (มีจุดรบกวน)",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลลักษณะเม็ดทราย (Speckle) ตรงกับฐานข้อมูลภาพอัลตราซาวด์ <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ใช้ <b>Median Filter</b> เพื่อเกลี่ยจุดรบกวนออกโดยรักษาขอบเขตอวัยวะไว้ และเพิ่ม <b>Contrast</b> เพื่อให้เห็นความแตกต่างของเนื้อเยื่อ (Echogenicity) ชัดเจนขึ้น",
+      focusBtn: "btn-median"
+    },
+    {
+      id: "severe_underexposure_pattern",
+      name: "Severe Underexposure Pattern (Under ขาว)",
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (bright > 15 || tissueBrightness > 160) && sp < 0.1,
+      statusClass: "text-warning",
+      statusText: "🧠 ระบบจดจำได้: ภาพสว่างขาวโพลน (Severe Underexposure)",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลสว่างเกินไป (Under ขาว) มักเกิดจากการให้ปริมาณรังสีไม่เพียงพอ (Underexposure) ทำให้เซนเซอร์รับภาพได้น้อย <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>ลด Brightness (Level)</b> เพื่อดึงรายละเอียดเนื้อเยื่อหรือกระดูกที่ซ่อนอยู่ในพื้นที่สีขาวโพลนกลับมา และ <b>เพิ่ม Contrast</b> เพื่อสร้างมิติของขอบภาพ",
+      focusBtn: "btn-mean"
+    },
+    {
+      id: "chest_overexposure_pattern",
+      name: "Chest Overexposure Pattern",
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => pureBlack > 15 && bright > 2 && rms > 35 && sp < 0.1 && tissueBrightness < 120,
+      statusClass: "text-danger",
+      statusText: "🧠 ระบบจดจำได้: ภาพปอดดำทึบ (Chest Overexposure)",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับภาพเอกซเรย์ทรวงอกที่ได้รับรังสีมากเกินไป (Overpenetrated) ทำให้เนื้อปอดดำทึบจนเสียรายละเอียด (Burn-out) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Brightness (Level)</b> เพื่อกู้รายละเอียดหลอดเลือดในปอด (Lung markings) และอาจ <b>ลด Contrast</b> เล็กน้อยเพื่อเกลี่ยแสง",
+      focusBtn: ""
+    },
+    {
+      id: "severe_overexposure_pattern",
+      name: "Severe Overexposure Pattern (Over ดำเยอะ)",
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 20 || dark > 40) && sp < 0.1 && tissueBrightness < 100,
+      statusClass: "text-danger",
+      statusText: "🧠 ระบบจดจำได้: ภาพมืดทึบเกินเกณฑ์ (Severe Overexposure)",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลดำทึบมาก (Over ดำเยอะ) ตรงกับแพทเทิร์นภาพรังสีที่ได้รับปริมาณ Dose สูงเกินไป (Overexposure) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพรังสีมืดทึบจนไม่เห็นรายละเอียด (Burn-out) แนะนำให้ <b>เพิ่ม Brightness (Level)</b> อย่างมากเพื่อดึงรายละเอียดที่จมในเงามืดออกมา และเพิ่ม <b>Contrast</b> เล็กน้อย",
+      focusBtn: ""
+    },
+    {
+      id: "low_contrast_pattern",
+      name: "Low Contrast X-Ray Pattern",
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => rms < 40 && pureBlack < 15 && bright < 20 && sp < 0.1,
+      statusClass: "text-info",
+      statusText: "🧠 ระบบจดจำได้: ภาพขาดความเปรียบต่าง (Low Contrast)",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลกระจุกตัวอยู่ระดับสีเทา (Low Contrast) ขาดสีดำสนิทและขาวจัด ตรงกับฐานข้อมูลภาพที่ขาดความเปรียบต่าง <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Contrast (Width)</b> เพื่อขยายช่วงสี (Windowing) ให้ความแตกต่างระหว่างกระดูกและเนื้อเยื่ออ่อน (Soft tissue) แยกออกจากกันอย่างชัดเจน",
+      focusBtn: ""
+    },
+    {
+      id: "optimal_ultrasound_pattern",
+      name: "Optimal Ultrasound Pattern",
+      // ขยายเพดาน noise เป็น 6.5 เพื่อรองรับเนื้อเกรนธรรมชาติของทารกในครรภ์
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => (pureBlack > 2 || sp > 0.001) && sp < 0.4 && noise < 6.5 && tissueBrightness > 15 && tissueBrightness < 170,
+      statusClass: "text-success",
+      statusText: "✅ ระบบจดจำได้: ภาพอัลตราซาวด์ปกติดี ไม่มี Noise",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลตรงกับฐานข้อมูลภาพอัลตราซาวด์ที่ชัดเจน <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี สามารถนำไปใช้วินิจฉัยได้ทันที",
+      focusBtn: ""
+    },
+    {
+      id: "optimal_xray_pattern",
+      name: "Optimal X-Ray Pattern",
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => pureBlack <= 15 && sp < 0.1 && noise < 3.5 && rms >= 30 && tissueBrightness >= 40 && tissueBrightness <= 180 && dark < 40 && bright < 15,
+      statusClass: "text-success",
+      statusText: "✅ ระบบจดจำได้: ภาพเอกซเรย์ปกติดี ไม่มี Noise",
+      advice: "💡 <b>Pattern Recognized:</b> ระบบตรวจพบโครงสร้างพิกเซลตรงกับฐานข้อมูลภาพเอกซเรย์ที่ปกติดี <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพปกติดี สามารถนำไปใช้วินิจฉัยได้ทันที",
+      focusBtn: ""
+    }
+  ];
 
-  // ======================================================================
-  // ระบบวิเคราะห์ภาพการแพทย์ขั้นสูง (Advanced Pixel Intelligence)
-  // ======================================================================
-  function analyzeDiagnosticImage() {
-    recBox.style.display = "block";
-    const img = new Image();
-    img.src = mainImg.src;
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const scale = Math.min(300 / img.width, 300 / img.height);
-      const w = Math.floor(img.width * scale);
-      const h = Math.floor(img.height * scale);
-      canvas.width = w; canvas.height = h;
-      ctx.drawImage(img, 0, 0, w, h);
-      
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const pixelData = imageData.data;
-      
-      let validPixels = 0, totalGray = 0, totalGraySq = 0;
-      let brightPixels = 0, darkPixels = 0, pureBlackCount = 0;
-      let generalNoiseCount = 0, saltPepperCount = 0;
-      let lapSum = 0, lapSumSq = 0, lapCount = 0;
-      let colorPixelCount = 0;
-      let structuralEdgeCount = 0; 
+  // ======================================================================
+  // ระบบวิเคราะห์ภาพการแพทย์ขั้นสูง (Advanced Pixel Intelligence)
+  // ======================================================================
+  function analyzeDiagnosticImage() {
+    recBox.style.display = "block";
+    const img = new Image();
+    img.src = mainImg.src;
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const scale = Math.min(300 / img.width, 300 / img.height);
+      const w = Math.floor(img.width * scale);
+      const h = Math.floor(img.height * scale);
+      canvas.width = w; canvas.height = h;
+      ctx.drawImage(img, 0, 0, w, h);
+      
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const pixelData = imageData.data;
+      
+      let validPixels = 0, totalGray = 0, totalGraySq = 0;
+      let brightPixels = 0, darkPixels = 0, pureBlackCount = 0;
+      let generalNoiseCount = 0, saltPepperCount = 0;
+      let lapSum = 0, lapSumSq = 0, lapCount = 0;
+      let colorPixelCount = 0;
+      let structuralEdgeCount = 0; 
 
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          const i = (y * w + x) * 4;
-          const r = pixelData[i], g = pixelData[i + 1], b = pixelData[i + 2];
-          let grayValue = (r + g + b) / 3;
-          
-          if (Math.max(r, g, b) - Math.min(r, g, b) > 30) colorPixelCount++;
-          if (grayValue < 15) pureBlackCount++; 
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = (y * w + x) * 4;
+          const r = pixelData[i], g = pixelData[i + 1], b = pixelData[i + 2];
+          let grayValue = (r + g + b) / 3;
+          
+          if (Math.max(r, g, b) - Math.min(r, g, b) > 30) colorPixelCount++;
+          if (grayValue < 15) pureBlackCount++; 
 
-          const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
-          const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
-          let diffX = Math.abs(grayValue - l);
-          let diffY = Math.abs(grayValue - t);
-          let maxDiff = Math.max(diffX, diffY);
+          const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
+          const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
+          let diffX = Math.abs(grayValue - l);
+          let diffY = Math.abs(grayValue - t);
+          let maxDiff = Math.max(diffX, diffY);
 
-          if (maxDiff > 35) generalNoiseCount++;
-          if ((grayValue > 240 && l < 180) || (grayValue < 15 && l > 60)) saltPepperCount++;
-          if (grayValue > 40 && maxDiff > 8) structuralEdgeCount++;
+          if (maxDiff > 35) generalNoiseCount++;
+          if ((grayValue > 240 && l < 180) || (grayValue < 15 && l > 60)) saltPepperCount++;
+          if (grayValue > 40 && maxDiff > 8) structuralEdgeCount++;
 
-          if (grayValue > 15) { 
-              validPixels++; 
-              totalGray += grayValue;
-              totalGraySq += (grayValue * grayValue); 
-              if (grayValue > 220) brightPixels++;
-              if (grayValue <= 60) darkPixels++;
-              const bot = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
-              const r_pixel = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
-              const lap = 4 * grayValue - t - bot - l - r_pixel;
-              lapSum += lap; lapSumSq += lap * lap; lapCount++;
-          }
-        }
-      }
-      if (validPixels === 0) validPixels = 1; 
+          if (grayValue > 15) { 
+              validPixels++; 
+              totalGray += grayValue;
+              totalGraySq += (grayValue * grayValue); 
+              if (grayValue > 220) brightPixels++;
+              if (grayValue <= 60) darkPixels++;
+              const bot = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
+              const r_pixel = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
+              const lap = 4 * grayValue - t - bot - l - r_pixel;
+              lapSum += lap; lapSumSq += lap * lap; lapCount++;
+          }
+        }
+      }
+      if (validPixels === 0) validPixels = 1; 
 
-      const blurScore = lapCount > 0 ? (lapSumSq / lapCount) - Math.pow(lapSum / lapCount, 2) : 100;
-      const tissueBrightness = totalGray / validPixels;
-      const rmsContrast = Math.sqrt(Math.max(0, (totalGraySq / validPixels) - (tissueBrightness * tissueBrightness)));
-      const brightRatio = (brightPixels / validPixels) * 100;
-      const darkRatio = (darkPixels / validPixels) * 100;
-      const totalArea = w * h;
-      const noiseRatio = (generalNoiseCount / totalArea) * 100;
-      const spRatio = (saltPepperCount / totalArea) * 100;
-      const colorRatio = (colorPixelCount / totalArea) * 100;
-      const pureBlackRatio = (pureBlackCount / totalArea) * 100; 
-      const structuralRatio = (structuralEdgeCount / totalArea) * 100;
+      const blurScore = lapCount > 0 ? (lapSumSq / lapCount) - Math.pow(lapSum / lapCount, 2) : 100;
+      const tissueBrightness = totalGray / validPixels;
+      const rmsContrast = Math.sqrt(Math.max(0, (totalGraySq / validPixels) - (tissueBrightness * tissueBrightness)));
+      const brightRatio = (brightPixels / validPixels) * 100;
+      const darkRatio = (darkPixels / validPixels) * 100;
+      const totalArea = w * h;
+      const noiseRatio = (generalNoiseCount / totalArea) * 100;
+      const spRatio = (saltPepperCount / totalArea) * 100;
+      const colorRatio = (colorPixelCount / totalArea) * 100;
+      const pureBlackRatio = (pureBlackCount / totalArea) * 100; 
+      const structuralRatio = (structuralEdgeCount / totalArea) * 100;
 
-      let advice = "", statusClass = "", statusText = "", focusBtn = "";
-      let isMedicalImage = true;
-      let matchedMemory = null;
+      let advice = "", statusClass = "", statusText = "", focusBtn = "";
+      let isMedicalImage = true;
+      let matchedMemory = null;
 
-      const isAnatomicalShapeDetected = (structuralRatio > 0.5);
+      const isAnatomicalShapeDetected = (structuralRatio > 0.5);
 
-      let isUltrasound = false;
-      if (pureBlackRatio > 5 || spRatio > 0.01 || (noiseRatio > 1.5 && pureBlackRatio > 1)) {
-          isUltrasound = true;
-      }
+      let isUltrasound = false;
+      if (pureBlackRatio > 5 || spRatio > 0.01 || (noiseRatio > 1.5 && pureBlackRatio > 1)) {
+          isUltrasound = true;
+      }
 
-      // ตรวจสอบกับ Diagnostic Memory ลำดับความสำคัญ
-      for (let memory of diagnosticMemory) {
-        if (memory.checkCondition(spRatio, noiseRatio, rmsContrast, tissueBrightness, pureBlackRatio, darkRatio, brightRatio)) {
-          matchedMemory = memory;
-          break;
-        }
-      }
+      // ตรวจสอบกับ Diagnostic Memory ลำดับความสำคัญ
+      for (let memory of diagnosticMemory) {
+        if (memory.checkCondition(spRatio, noiseRatio, rmsContrast, tissueBrightness, pureBlackRatio, darkRatio, brightRatio)) {
+          matchedMemory = memory;
+          break;
+        }
+      }
 
-      if (matchedMemory) {
-        statusText = matchedMemory.statusText; statusClass = matchedMemory.statusClass;
-        advice = matchedMemory.advice; focusBtn = matchedMemory.focusBtn;
-      } else if (colorRatio > 12) { 
-        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากมีเฉดสีมากเกินไป (Color Image)";
-        isMedicalImage = false;
-      } else if (pureBlackRatio < 0.1 && !isAnatomicalShapeDetected && brightRatio < 15) {
-        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
-        isMedicalImage = false;
-      } else {
-        // Fallback Logic กรณีไม่ตรงกับภาพที่สอนให้จำ
-        if (brightRatio > 15 || tissueBrightness > 160) {
-          statusText = "⚠️ Severe Underexposure (ภาพสว่างขาวโพลน)"; statusClass = "text-warning";
-          advice = "💡 <b>Educational Note:</b> ภาพสว่างขาว (Under) เกิดจากรังสีน้อยไปหรือรับแสงไม่เต็มที่ แนะนำให้ <b>ลด Brightness</b> และ <b>เพิ่ม Contrast</b>";
-        } else if (darkRatio > 25 || tissueBrightness < 80) {
-          statusText = "⚠️ Severe Overexposure (ภาพมืดดำทึบ)"; statusClass = "text-danger";
-          advice = "💡 <b>Educational Note:</b> ภาพมืดทึบดำ (Over) เกิดจากได้รับปริมาณรังสีมากเกินไป แนะนำให้ <b>เพิ่ม Brightness</b> อย่างมากเพื่อดึงรายละเอียดออกมา";
-        } else if (rmsContrast < 35) {
-          statusText = "💡 Low Contrast (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
-          advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>เพิ่ม Contrast</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างชัดเจนขึ้น";
-        } else {
-          statusText = "✅ ภาพปกติดี ไม่มี Noise"; statusClass = "text-success";
-          advice = "ภาพปกติดี ระดับแสงและความคมชัดเหมาะสม สามารถใช้วินิจฉัยได้ทันที";
-        }
-      }
+      if (matchedMemory) {
+        statusText = matchedMemory.statusText; statusClass = matchedMemory.statusClass;
+        advice = matchedMemory.advice; focusBtn = matchedMemory.focusBtn;
+      } else if (colorRatio > 12) { 
+        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
+        advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากมีเฉดสีมากเกินไป (Color Image)";
+        isMedicalImage = false;
+      } else if (pureBlackRatio < 0.1 && !isAnatomicalShapeDetected && brightRatio < 15) {
+        statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
+        advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
+        isMedicalImage = false;
+      } else {
+        // Fallback Logic กรณีไม่ตรงกับภาพที่สอนให้จำ
+        if (brightRatio > 15 || tissueBrightness > 160) {
+          statusText = "⚠️ Severe Underexposure (ภาพสว่างขาวโพลน)"; statusClass = "text-warning";
+          advice = "💡 <b>Educational Note:</b> ภาพสว่างขาว (Under) เกิดจากรังสีน้อยไปหรือรับแสงไม่เต็มที่ แนะนำให้ <b>ลด Brightness</b> และ <b>เพิ่ม Contrast</b>";
+        } else if (darkRatio > 25 || tissueBrightness < 80) {
+          statusText = "⚠️ Severe Overexposure (ภาพมืดดำทึบ)"; statusClass = "text-danger";
+          advice = "💡 <b>Educational Note:</b> ภาพมืดทึบดำ (Over) เกิดจากได้รับปริมาณรังสีมากเกินไป แนะนำให้ <b>เพิ่ม Brightness</b> อย่างมากเพื่อดึงรายละเอียดออกมา";
+        } else if (rmsContrast < 35) {
+          statusText = "💡 Low Contrast (ภาพขาดความเปรียบต่าง)"; statusClass = "text-info";
+          advice = "เนื้อเยื่อสีกลืนกัน แนะนำให้ <b>เพิ่ม Contrast</b> เพื่อขยาย Window Width ให้เห็นมิติความแตกต่างชัดเจนขึ้น";
+        } else {
+          statusText = "✅ ภาพปกติดี ไม่มี Noise"; statusClass = "text-success";
+          advice = "ภาพปกติดี ระดับแสงและความคมชัดเหมาะสม สามารถใช้วินิจฉัยได้ทันที";
+        }
+      }
 
-      recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
-      
-      if (!isMedicalImage) {
-        editorUI.style.display = "none"; mainImg.style.filter = "none";
-      } else {
-        editorUI.style.display = "block"; editorUI.classList.remove('hidden');
-        document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-        if(focusBtn) {
-            const targetBtn = document.getElementById(focusBtn);
-            if(targetBtn) targetBtn.style.border = "2px solid #222";
-        }
-      }
-    };
-  }
+      recContent.innerHTML = `<div class="status-tag ${statusClass}">${statusText}</div><p style="margin-bottom:0; color: white;">${advice}</p>`;
+      
+      if (!isMedicalImage) {
+        editorUI.style.display = "none"; mainImg.style.filter = "none";
+      } else {
+        editorUI.style.display = "block"; editorUI.classList.remove('hidden');
+        document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
+        if(focusBtn) {
+            const targetBtn = document.getElementById(focusBtn);
+            if(targetBtn) targetBtn.style.border = "2px solid #222";
+        }
+      }
+    };
+  }
 
-  function applyPixelFilter(type) {
-    if (type === 'none') {
-      processedBaseSrc = originalSrc; mainImg.src = processedBaseSrc;
-      updateStyles(); filterDescText.innerHTML = "คืนค่าภาพต้นฉบับสำเร็จ"; return;
-    }
-    const img = new Image();
-    img.src = originalSrc;
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const w = img.naturalWidth || img.width; 
-      const h = img.naturalHeight || img.height;
-      canvas.width = w; canvas.height = h;
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const data = imageData.data;
-      const tempData = new Uint8ClampedArray(data); 
+  function applyPixelFilter(type) {
+    if (type === 'none') {
+      processedBaseSrc = originalSrc; mainImg.src = processedBaseSrc;
+      updateStyles(); filterDescText.innerHTML = "คืนค่าภาพต้นฉบับสำเร็จ"; return;
+    }
+    const img = new Image();
+    img.src = originalSrc;
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const w = img.naturalWidth || img.width; 
+      const h = img.naturalHeight || img.height;
+      canvas.width = w; canvas.height = h;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const data = imageData.data;
+      const tempData = new Uint8ClampedArray(data); 
 
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          const i = (y * w + x) * 4;
-          if (type === 'median') {
-            let neighbors = [];
-            for (let wy = -1; wy <= 1; wy++) {
-              for (let wx = -1; wx <= 1; wx++) {
-                neighbors.push(tempData[((y + wy) * w + (x + wx)) * 4]);
-              }
-            }
-            neighbors.sort((a, b) => a - b);
-            data[i] = data[i+1] = data[i+2] = neighbors[4];
-          } else if (type === 'gaussian') {
-            const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1], kernelWeight = 16;
-            let sum = 0, kIdx = 0;
-            for (let wy = -1; wy <= 1; wy++) {
-              for (let wx = -1; wx <= 1; wx++) {
-                sum += tempData[((y + wy) * w + (x + wx)) * 4] * kernel[kIdx++];
-              }
-            }
-            data[i] = data[i+1] = data[i+2] = sum / kernelWeight;
-          } else if (type === 'mean') {
-            let total = 0;
-            for (let wy = -1; wy <= 1; wy++) {
-              for (let wx = -1; wx <= 1; wx++) {
-                total += tempData[((y + wy) * w + (x + wx)) * 4];
-              }
-            }
-            data[i] = data[i+1] = data[i+2] = total / 9;
-          }
-        }
-      }
-      ctx.putImageData(imageData, 0, 0);
-      processedBaseSrc = canvas.toDataURL('image/png');
-      mainImg.src = processedBaseSrc; 
-      filterDescText.innerHTML = "<span style='color:#27ae60;'>✅ ประมวลผลคณิตศาสตร์ระดับพิกเซลสำเร็จ</span><br>";
-      updateStyles();
-    };
-  }
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = (y * w + x) * 4;
+          if (type === 'median') {
+            let neighbors = [];
+            for (let wy = -1; wy <= 1; wy++) {
+              for (let wx = -1; wx <= 1; wx++) {
+                neighbors.push(tempData[((y + wy) * w + (x + wx)) * 4]);
+              }
+            }
+            neighbors.sort((a, b) => a - b);
+            data[i] = data[i+1] = data[i+2] = neighbors[4];
+          } else if (type === 'gaussian') {
+            const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1], kernelWeight = 16;
+            let sum = 0, kIdx = 0;
+            for (let wy = -1; wy <= 1; wy++) {
+              for (let wx = -1; wx <= 1; wx++) {
+                sum += tempData[((y + wy) * w + (x + wx)) * 4] * kernel[kIdx++];
+              }
+            }
+            data[i] = data[i+1] = data[i+2] = sum / kernelWeight;
+          } else if (type === 'mean') {
+            let total = 0;
+            for (let wy = -1; wy <= 1; wy++) {
+              for (let wx = -1; wx <= 1; wx++) {
+                total += tempData[((y + wy) * w + (x + wx)) * 4];
+              }
+            }
+            data[i] = data[i+1] = data[i+2] = total / 9;
+          }
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      processedBaseSrc = canvas.toDataURL('image/png');
+      mainImg.src = processedBaseSrc; 
+      filterDescText.innerHTML = "<span style='color:#27ae60;'>✅ ประมวลผลคณิตศาสตร์ระดับพิกเซลสำเร็จ</span><br>";
+      updateStyles();
+    };
+  }
 
-  window.setFilter = function(f) {
-    currentFilter = f; filterDescBox.style.display = "block";
-    let text = f === 'mean' ? "<b>Mean:</b> ลดเกรนแต่ขอบกระดูกอาจเบลอ" : f === 'gaussian' ? "<b>Gaussian:</b> เกลี่ยเกรนอย่างเป็นธรรมชาติ" : "<b>Median:</b> ดีที่สุดในการกำจัดจุดรบกวน Speckle ใน Ultrasound";
-    document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-    const activeBtn = document.getElementById('btn-' + f);
-    if(activeBtn) activeBtn.style.border = "2px solid #222";
-    filterDescText.innerHTML = "<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>" + text;
-    setTimeout(() => { applyPixelFilter(f); }, 50); 
-  }
+  window.setFilter = function(f) {
+    currentFilter = f; filterDescBox.style.display = "block";
+    let text = f === 'mean' ? "<b>Mean:</b> ลดเกรนแต่ขอบกระดูกอาจเบลอ" : f === 'gaussian' ? "<b>Gaussian:</b> เกลี่ยเกรนอย่างเป็นธรรมชาติ" : "<b>Median:</b> ดีที่สุดในการกำจัดจุดรบกวน Speckle ใน Ultrasound";
+    document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
+    const activeBtn = document.getElementById('btn-' + f);
+    if(activeBtn) activeBtn.style.border = "2px solid #222";
+    filterDescText.innerHTML = "<span style='color:#e74c3c;'>⏳ กำลังคำนวณ Convolution Matrix...</span><br>" + text;
+    setTimeout(() => { applyPixelFilter(f); }, 50); 
+  }
 
-  function updateStyles() {
-    const sVal = parseInt(sharp.value), smVal = parseInt(smooth.value);
-    mainImg.style.filter = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%)`;
-    document.getElementById('v-bright').innerText = brightness.value + '%';
-    document.getElementById('v-contrast').innerText = contrast.value + '%';
-    document.getElementById('v-smooth').innerText = smVal + 'px';
-    document.getElementById('v-sharp').innerText = sVal + '%';
-  }
+  function updateStyles() {
+    const sVal = parseInt(sharp.value), smVal = parseInt(smooth.value);
+    mainImg.style.filter = `brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${smVal}px) grayscale(100%) contrast(${100 + (sVal * 0.4)}%)`;
+    document.getElementById('v-bright').innerText = brightness.value + '%';
+    document.getElementById('v-contrast').innerText = contrast.value + '%';
+    document.getElementById('v-smooth').innerText = smVal + 'px';
+    document.getElementById('v-sharp').innerText = sVal + '%';
+  }
 
-  window.resetAll = () => { 
-    brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; 
-    currentFilter = 'none'; filterDescBox.style.display = "none"; 
-    document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
-    applyPixelFilter('none'); 
-  }
+  window.resetAll = () => { 
+    brightness.value = 100; contrast.value = 100; sharp.value = 0; smooth.value = 0; 
+    currentFilter = 'none'; filterDescBox.style.display = "none"; 
+    document.querySelectorAll('.btn-filter').forEach(b => b.style.border = "2px solid transparent");
+    applyPixelFilter('none'); 
+  }
 
-  upload.addEventListener('change', function(e) {
-    const file = e.target.files[0]; if (!file) return;
-    fileExtension = file.type;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      originalSrc = event.target.result; processedBaseSrc = originalSrc;
-      mainImg.src = originalSrc; document.getElementById('before-img').src = originalSrc;
-      editorUI.style.display = "none"; mainImg.classList.remove('hidden'); 
-      analyzeDiagnosticImage(); resetAll();
-    }
-    reader.readAsDataURL(file);
-  });
-  
-  window.showFinal = function() { 
-    editorUI.style.display = "none"; document.getElementById('result-ui').classList.remove('hidden'); 
-    const canvas = document.getElementById('after-canvas'), finalImg = document.getElementById('final-result-img'), ctx = canvas.getContext('2d'), img = new Image(); 
-    img.src = mainImg.src; 
-    img.onload = function() { 
-      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; 
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-      const bVal = parseInt(brightness.value) / 100, cVal = parseInt(contrast.value) / 100, sVal = parseInt(sharp.value), smVal = parseInt(smooth.value), totalContrast = cVal * (1 + (sVal * 0.4) / 100);
-      try {
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-          for (let i = 0; i < data.length; i += 4) {
-              let r = data[i] * bVal, g = data[i+1] * bVal, b = data[i+2] * bVal;
-              r = ((r / 255 - 0.5) * totalContrast + 0.5) * 255;
-              g = ((g / 255 - 0.5) * totalContrast + 0.5) * 255;
-              b = ((b / 255 - 0.5) * totalContrast + 0.5) * 255;
-              let gray = Math.min(255, Math.max(0, r * 0.299 + g * 0.587 + b * 0.114));
-              data[i] = data[i+1] = data[i+2] = gray;
-          }
-          ctx.putImageData(imageData, 0, 0);
-          if (smVal > 0) {
-              const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
-              const tempCtx = tempCanvas.getContext('2d');
-              tempCtx.filter = `blur(${smVal}px)`; tempCtx.drawImage(canvas, 0, 0);
-              finalImg.src = tempCanvas.toDataURL(fileExtension || 'image/png', 1.0);
-          } else { finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0); }
-      } catch (e) { finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0); }
-    } 
-  }
-  
-  window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
-  window.downloadImage = () => { 
-    const finalImg = document.getElementById('final-result-img'), link = document.createElement('a'); 
-    link.download = 'medical_report_image.' + (fileExtension.split('/')[1] || 'png'); link.href = finalImg.src;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-  }
-  
-  brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
+  upload.addEventListener('change', function(e) {
+    const file = e.target.files[0]; if (!file) return;
+    fileExtension = file.type;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      originalSrc = event.target.result; processedBaseSrc = originalSrc;
+      mainImg.src = originalSrc; document.getElementById('before-img').src = originalSrc;
+      editorUI.style.display = "none"; mainImg.classList.remove('hidden'); 
+      analyzeDiagnosticImage(); resetAll();
+    }
+    reader.readAsDataURL(file);
+  });
+  
+  window.showFinal = function() { 
+    editorUI.style.display = "none"; document.getElementById('result-ui').classList.remove('hidden'); 
+    const canvas = document.getElementById('after-canvas'), finalImg = document.getElementById('final-result-img'), ctx = canvas.getContext('2d'), img = new Image(); 
+    img.src = mainImg.src; 
+    img.onload = function() { 
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; 
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
+      const bVal = parseInt(brightness.value) / 100, cVal = parseInt(contrast.value) / 100, sVal = parseInt(sharp.value), smVal = parseInt(smooth.value), totalContrast = cVal * (1 + (sVal * 0.4) / 100);
+      try {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          for (let i = 0; i < data.length; i += 4) {
+              let r = data[i] * bVal, g = data[i+1] * bVal, b = data[i+2] * bVal;
+              r = ((r / 255 - 0.5) * totalContrast + 0.5) * 255;
+              g = ((g / 255 - 0.5) * totalContrast + 0.5) * 255;
+              b = ((b / 255 - 0.5) * totalContrast + 0.5) * 255;
+              let gray = Math.min(255, Math.max(0, r * 0.299 + g * 0.587 + b * 0.114));
+              data[i] = data[i+1] = data[i+2] = gray;
+          }
+          ctx.putImageData(imageData, 0, 0);
+          if (smVal > 0) {
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
+              const tempCtx = tempCanvas.getContext('2d');
+              tempCtx.filter = `blur(${smVal}px)`; tempCtx.drawImage(canvas, 0, 0);
+              finalImg.src = tempCanvas.toDataURL(fileExtension || 'image/png', 1.0);
+          } else { finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0); }
+      } catch (e) { finalImg.src = canvas.toDataURL(fileExtension || 'image/png', 1.0); }
+    } 
+  }
+  
+  window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
+  window.downloadImage = () => { 
+    const finalImg = document.getElementById('final-result-img'), link = document.createElement('a'); 
+    link.download = 'medical_report_image.' + (fileExtension.split('/')[1] || 'png'); link.href = finalImg.src;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  }
+  
+  brightness.addEventListener('input', updateStyles); contrast.addEventListener('input', updateStyles); sharp.addEventListener('input', updateStyles); smooth.addEventListener('input', updateStyles);
 });
 </script>
 </body>
