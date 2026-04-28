@@ -292,15 +292,15 @@ document.addEventListener("DOMContentLoaded", function () {
       advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลดำทึบมาก (Over ดำเยอะ) ตรงกับแพทเทิร์นภาพรังสีที่ได้รับปริมาณ Dose สูงเกินไป (Overexposure) <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> ภาพรังสีมืดทึบจนไม่เห็นรายละเอียด (Burn-out) แนะนำให้ <b>เพิ่ม Brightness (Level)</b> อย่างมากเพื่อดึงรายละเอียดที่จมในเงามืดออกมา และเพิ่ม <b>Contrast</b> เล็กน้อย",
       focusBtn: ""
     },
-    // --- [เพิ่มใหม่] โปรไฟล์: จดจำภาพลักษณะ Low Contrast (สีเทากลืนกันหมด) ---
+    // --- [อัปเดต] โปรไฟล์: จดจำภาพลักษณะ Low Contrast (สีเทากลืนกันหมด) ---
     {
       id: "low_contrast_pattern",
       name: "Low Contrast X-Ray Pattern",
-      // เจาะจงตรวจจับภาพที่สีเทากลืนกัน ขาดดำสนิทและขาวจัด (rms ต่ำมาก)
-      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => rms < 35 && pureBlack < 10 && bright < 15 && sp < 0.1,
+      // ปรับเกณฑ์ให้ครอบคลุมภาพปอด มือ และช่องท้องที่สีเทากลืนกัน (Low Contrast)
+      checkCondition: (sp, noise, rms, tissueBrightness, pureBlack, dark, bright) => rms < 40 && pureBlack < 15 && bright < 20 && sp < 0.1,
       statusClass: "text-info",
       statusText: "🧠 ระบบจดจำได้: ภาพขาดความเปรียบต่าง (Low Contrast)",
-      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลกระจุกตัวอยู่ระดับสีเทา (Low Contrast) เหมือนภาพตัวอย่างในฐานข้อมูล <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Contrast (Width)</b> เพื่อขยาย Windowing ให้กระดูกและเนื้อเยื่อแยกชั้นกันอย่างชัดเจน",
+      advice: "💡 <b>Pattern Recognized:</b> โครงสร้างพิกเซลกระจุกตัวอยู่ระดับสีเทา (Low Contrast) ขาดสีดำสนิทและขาวจัด ตรงกับฐานข้อมูลภาพที่ขาดความเปรียบต่าง <br>✅ <b>ข้อแนะนำทางการแพทย์:</b> แนะนำให้ <b>เพิ่ม Contrast (Width)</b> เพื่อขยายช่วงสี (Windowing) ให้ความแตกต่างระหว่างกระดูกและเนื้อเยื่ออ่อน (Soft tissue) แยกออกจากกันอย่างชัดเจน",
       focusBtn: ""
     },
     {
