@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let currentFilter = 'none', originalSrc = '', processedBaseSrc = '', fileExtension = 'image/png';
 
-  // --- ฟังก์ชันที่ปรับจูนให้รองรับภาพครอป ---
+  // --- ฟังก์ชันที่ถูกอัปเดตระบบวิเคราะห์โครงสร้างรอบทิศทาง ---
   function analyzeDiagnosticImage() {
     recBox.style.display = "block";
     const img = new Image();
@@ -269,7 +269,6 @@ document.addEventListener("DOMContentLoaded", function () {
       let generalNoiseCount = 0, saltPepperCount = 0;
       let lapSum = 0, lapSumSq = 0, lapCount = 0;
       let colorPixelCount = 0;
-      
       let structuralEdgeCount = 0; 
 
       for (let y = 1; y < h - 1; y++) {
@@ -280,19 +279,26 @@ document.addEventListener("DOMContentLoaded", function () {
           const b = pixelData[i + 2];
           
           let grayValue = (r + g + b) / 3;
-          let prevGray = (pixelData[i-4] + pixelData[i-3] + pixelData[i-2]) / 3;
-          let diff = Math.abs(grayValue - prevGray);
-          
           let maxColor = Math.max(r, g, b);
           let minColor = Math.min(r, g, b);
           
           if (maxColor - minColor > 30) colorPixelCount++;
           if (grayValue < 15) pureBlackCount++; 
-          if (diff > 35) generalNoiseCount++;
-          if ((grayValue > 240 && prevGray < 180) || (grayValue < 15 && prevGray > 60)) saltPepperCount++;
 
-          // [อัปเดต] ลดเกณฑ์ลงเพื่อให้จับซี่โครงง่ายขึ้น
-          if (grayValue > 90 && diff > 25) {
+          // คำนวณพิกเซลรอบข้างเพื่อหา Edge ทั้งแกน X และ Y
+          const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
+          const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
+          
+          // หาค่าความต่างสูดสุดไม่ว่าจะในแนวนอนหรือแนวตั้ง (ตรวจซี่โครงได้แม่นขึ้น)
+          let diffX = Math.abs(grayValue - l);
+          let diffY = Math.abs(grayValue - t);
+          let maxDiff = Math.max(diffX, diffY);
+
+          if (maxDiff > 35) generalNoiseCount++;
+          if ((grayValue > 240 && l < 180) || (grayValue < 15 && l > 60)) saltPepperCount++;
+
+          // [อัปเดต] เงื่อนไขตรวจโครงสร้างที่ยืดหยุ่นมากๆ
+          if (grayValue > 40 && maxDiff > 8) {
               structuralEdgeCount++;
           }
 
@@ -302,9 +308,7 @@ document.addEventListener("DOMContentLoaded", function () {
               if (grayValue > 220) brightPixels++;
               if (grayValue <= 60) darkPixels++;
               
-              const t = (pixelData[i - w*4] + pixelData[i - w*4 + 1] + pixelData[i - w*4 + 2]) / 3;
               const bot = (pixelData[i + w*4] + pixelData[i + w*4 + 1] + pixelData[i + w*4 + 2]) / 3;
-              const l = (pixelData[i - 4] + pixelData[i - 3] + pixelData[i - 2]) / 3;
               const r_pixel = (pixelData[i + 4] + pixelData[i + 5] + pixelData[i + 6]) / 3;
               const lap = 4 * grayValue - t - bot - l - r_pixel;
               lapSum += lap; lapSumSq += lap * lap; lapCount++;
@@ -328,20 +332,20 @@ document.addEventListener("DOMContentLoaded", function () {
       let advice = "", statusClass = "", statusText = "", focusBtn = "";
       let isMedicalImage = true;
 
-      // [อัปเดต] ปรับเกณฑ์การตรวจจับโครงสร้างให้ยืดหยุ่นขึ้นมาก
-      const isAnatomicalShapeDetected = (structuralRatio > 1.2) && (colorRatio < 5);
+      // [อัปเดต] ขอแค่ตรวจเจอ edge โครงสร้าง > 0.5% ก็ผ่านให้เลย
+      const isAnatomicalShapeDetected = (structuralRatio > 0.5);
 
-      if (colorRatio > 10) { 
+      // ผ่อนปรนเรื่องสีนิดหน่อย เผื่อภาพ X-ray มีโทนสีฟ้าหรือ JPG noise
+      if (colorRatio > 12) { 
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากตรวจพบว่าภาพมีเฉดสี (Color Image)";
+        advice = "ระบบประเมินว่านี่ไม่ใช่ภาพถ่ายทางการแพทย์ เนื่องจากมีเฉดสีมากเกินไป (Color Image)";
         isMedicalImage = false;
-      // [อัปเดต] ปรับลดเกณฑ์พื้นหลังดำลงเหลือ 1%
-      } else if (pureBlackRatio < 1 && !isAnatomicalShapeDetected) {
+      } else if (pureBlackRatio < 0.2 && !isAnatomicalShapeDetected) {
         statusText = "❌ ไม่สามารถประเมินได้"; statusClass = "text-danger";
-        advice = "ไม่พบพื้นหลังรังสี (Pure Black) และไม่พบโครงสร้างทางกายวิภาคที่ชัดเจน อาจเป็นภาพถ่ายขาวดำทั่วไป";
+        advice = "ไม่พบพื้นหลังรังสีและโครงสร้างทางกายวิภาคที่ชัดเจน ลองใช้ภาพที่มีความเปรียบต่างสูงกว่านี้";
         isMedicalImage = false;
       } else {
-        if (isAnatomicalShapeDetected && pureBlackRatio < 1) {
+        if (isAnatomicalShapeDetected && pureBlackRatio < 0.2) {
             console.log("Anatomical Structure Detected: Bypassed background check.");
         }
 
@@ -534,9 +538,6 @@ document.addEventListener("DOMContentLoaded", function () {
     reader.readAsDataURL(file);
   });
   
-  // ----------------------------------------------------
-  // นำระบบย่อขนาดออก ใช้ resolution เดิม 100%
-  // ----------------------------------------------------
   window.showFinal = function() { 
     editorUI.style.display = "none";
     document.getElementById('result-ui').classList.remove('hidden'); 
@@ -546,7 +547,6 @@ document.addEventListener("DOMContentLoaded", function () {
     img.src = mainImg.src; 
     
     img.onload = function() { 
-      // ใช้ความกว้างและความสูงตามภาพต้นฉบับ 100%
       canvas.width = img.naturalWidth; 
       canvas.height = img.naturalHeight; 
       ctx.imageSmoothingEnabled = false; 
@@ -554,7 +554,6 @@ document.addEventListener("DOMContentLoaded", function () {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
     } 
   }
-  // ----------------------------------------------------
   
   window.goBack = () => { editorUI.style.display = "block"; document.getElementById('result-ui').classList.add('hidden'); }
   window.downloadImage = () => { const canvas = document.getElementById('after-canvas'); const link = document.createElement('a'); link.download = 'medical_report_image.png'; link.href = canvas.toDataURL(fileExtension, 1.0); link.click(); }
